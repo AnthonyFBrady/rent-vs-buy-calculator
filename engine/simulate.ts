@@ -340,9 +340,13 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
       annualDifference > 0
         ? annualDifference * renterDiscipline
         : 0;
+    // Owner contribution uses market rent (not in-place rent) so rent control and
+    // renter move frequency do not affect the owner's wealth trajectory.
+    const ownerMarketDifference =
+      ownerBaselineCashOut - (currentMarketRent * 12 + currentRentInsurance * 12);
     const ownerContribution =
-      annualDifference < 0
-        ? Math.abs(annualDifference) * ownerDiscipline
+      ownerMarketDifference < 0
+        ? Math.abs(ownerMarketDifference) * ownerDiscipline
         : 0;
 
     // Distribute annual contribution: TFSA → RRSP → taxable (account priority order).

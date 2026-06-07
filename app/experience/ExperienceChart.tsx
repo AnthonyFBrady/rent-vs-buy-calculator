@@ -66,21 +66,29 @@ function renterChartValue(snap: { renterPortfolioEnd: number; renterRrspBalance:
 function computeEvents(result: SimulationResult, inputs: CalculatorInputs): EventMarker[] {
   const events: EventMarker[] = [];
 
+  // Build adjusted owner y values matching the chart line (cumulative move costs stripped out)
+  const ownerAdjY = new Map<number, number>();
+  let cumMoveCost = 0;
+  for (const snap of result.yearByYear) {
+    cumMoveCost += snap.ownerMoveTransactionCost;
+    ownerAdjY.set(snap.year, ownerTotal(snap) - cumMoveCost);
+  }
+
   // Renewal events — one per term boundary after the first
   for (let i = 1; i < result.renewalBoundaries.length; i++) {
     const rb = result.renewalBoundaries[i]!;
-    const yr = rb.termStartYear; // first year of the renewed term
+    const yr = rb.termStartYear;
     if (yr >= inputs.holdingPeriodYears || yr >= inputs.amortizationYears) continue;
     const snap = result.yearByYear[yr - 1];
     const prev = result.yearByYear[yr - 2];
     if (!snap) continue;
     const delta = snap.ownerMonthlyPayment - (prev?.ownerMonthlyPayment ?? snap.ownerMonthlyPayment);
-    if (Math.abs(delta) < 2) continue; // suppress trivial rounding differences
+    if (Math.abs(delta) < 2) continue;
     events.push({
       id: `renewal-${yr}`,
       year: yr,
       side: 'owner',
-      yValue: ownerTotal(snap),
+      yValue: ownerAdjY.get(yr) ?? ownerTotal(snap),
       line1: 'Rate renewed',
       line2: `${delta > 0 ? '+' : ''}${fmtWealth(delta)}/mo`,
       amount: -delta * 12,
@@ -94,7 +102,7 @@ function computeEvents(result: SimulationResult, inputs: CalculatorInputs): Even
     if (snap) {
       events.push({
         id: 'breakeven', year: result.breakEvenYear, side: 'both',
-        yValue: (ownerTotal(snap) + renterChartValue(snap)) / 2,
+        yValue: ((ownerAdjY.get(result.breakEvenYear) ?? ownerTotal(snap)) + renterChartValue(snap)) / 2,
         line1: 'Lines cross', line2: `Yr ${result.breakEvenYear}`,
         amount: 0, isPositive: true,
         description: 'Owner net worth catches up to the renter for the first time.',
@@ -107,16 +115,14 @@ function computeEvents(result: SimulationResult, inputs: CalculatorInputs): Even
     const snap = result.yearByYear[amort - 1];
     if (snap) {
       const freed = snap.ownerMonthlyPayment;
-      const holdingPeriod = inputs.holdingPeriodYears;
-      const exitNote = holdingPeriod === amort
-        ? ' Exit costs shown are for a sale at this exact year.'
-        : '';
+      const exitNote = inputs.holdingPeriodYears === amort ? ' Exit costs shown are for a sale at this exact year.' : '';
       events.push({
-        id: 'payoff', year: amort, side: 'owner', yValue: ownerTotal(snap),
+        id: 'payoff', year: amort, side: 'owner',
+        yValue: ownerAdjY.get(amort) ?? ownerTotal(snap),
         line1: 'Mortgage free',
         line2: `+${fmtWealth(freed)}/mo freed`,
         amount: freed * 12, isPositive: true,
-        description: `${fmtFull.format(freed)}/mo freed — owner now invests the same as the renter. Owner wealth accelerates from here.${exitNote}`,
+        description: `${fmtFull.format(freed)}/mo freed — owner now invests the difference.${exitNote}`,
       });
     }
   }
@@ -124,7 +130,8 @@ function computeEvents(result: SimulationResult, inputs: CalculatorInputs): Even
   for (const snap of result.yearByYear) {
     if (snap.ownerMoveOccurredThisYear) {
       events.push({
-        id: `owner-move-${snap.year}`, year: snap.year, side: 'owner', yValue: ownerTotal(snap),
+        id: `owner-move-${snap.year}`, year: snap.year, side: 'owner',
+        yValue: ownerAdjY.get(snap.year) ?? ownerTotal(snap),
         line1: 'Owner moved',
         line2: `−${fmtWealth(snap.ownerMoveTransactionCost)}`,
         amount: -snap.ownerMoveTransactionCost, isPositive: false,
@@ -157,8 +164,8 @@ function computeEvents(result: SimulationResult, inputs: CalculatorInputs): Even
 }
 
 export function ExperienceChart({ result, sensitivity, phase, isDark, activeEvent, onEventClick, inputs, activeSide, ownerLabel, renterLabel }: Props) {
-  const OWNER_COLOR = isDark ? '#E8C87A' : '#7C5A00';
-  const RENTER_COLOR = isDark ? '#6CBFB8' : '#0A7068';
+  const OWNER_COLOR = isDark ? '#E8C87A' : '#A86A00';
+  const RENTER_COLOR = isDark ? '#6CBFB8' : '#0B8278';
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 800, h: 500 });
@@ -515,8 +522,17 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
             ))}
           </g>
 
+          {/* Negative zone — tinted red below zero */}
+          {yMin < 0 && y(0) < innerHeight && (
+            <rect
+              x={0} y={y(0)} width={innerWidth}
+              height={Math.max(0, innerHeight - y(0))}
+              fill={isDark ? 'rgba(220,60,40,0.07)' : 'rgba(200,40,20,0.05)'}
+            />
+          )}
+
           {/* Zero line */}
-          {yMin < 0 && <line x1={0} x2={innerWidth} y1={y(0)} y2={y(0)} stroke={axisColor} strokeDasharray="4 4" strokeWidth={1} />}
+          {yMin < 0 && <line x1={0} x2={innerWidth} y1={y(0)} y2={y(0)} stroke={isDark ? 'rgba(220,80,60,0.35)' : 'rgba(200,40,20,0.30)'} strokeDasharray="4 4" strokeWidth={1.5} />}
 
           {/* Intro wandering placeholder lines (phases 0–3). AnimatePresence gives them a
               graceful exit when phase 4 is entered — they slide down and fade before the
@@ -554,6 +570,7 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
                   fillOpacity={0.85}
                   fontFamily="var(--font-sans), system-ui, sans-serif"
                   fontWeight={500}
+                  initial={{ x: innerWidth + 4, y: innerHeight * 0.35 }}
                   animate={{
                     x: [innerWidth + 4, innerWidth + 4, innerWidth * 0.78 + 4, innerWidth + 4],
                     y: [innerHeight * 0.35, innerHeight * 0.11, innerHeight * 0.25, innerHeight * 0.35],
@@ -569,6 +586,7 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
                   fillOpacity={0.85}
                   fontFamily="var(--font-sans), system-ui, sans-serif"
                   fontWeight={500}
+                  initial={{ x: innerWidth + 4, y: innerHeight * 0.43 }}
                   animate={{
                     x: [innerWidth + 4, innerWidth * 0.72 + 4, innerWidth + 4, innerWidth + 4],
                     y: [innerHeight * 0.43, innerHeight * 0.52, innerHeight * 0.05, innerHeight * 0.43],
@@ -588,17 +606,17 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
             </g>
           )}
 
-          {/* Future payoff annotation */}
-          {futurePayoffYear !== null && phase >= 4 && (
-            <g transform={`translate(${innerWidth},${innerHeight * 0.5})`}>
-              <text
-                x={4} dy="0.32em" fontSize={9} fill={OWNER_COLOR} fillOpacity={0.5}
-                fontFamily="var(--font-sans), system-ui, sans-serif"
-                stroke={labelHalo} strokeWidth={2.5} strokeLinejoin="round" paintOrder="stroke"
-              >
-                Free yr {futurePayoffYear} →
-              </text>
-            </g>
+          {/* Mortgage-free year — top-left label, shown from phase 7 once amort is confirmed */}
+          {phase >= 7 && (
+            <motion.text
+              x={0} y={-22}
+              fontSize={10} fill={OWNER_COLOR} fillOpacity={0.5}
+              fontFamily="var(--font-sans), system-ui, sans-serif"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              transition={{ duration: 0.4 }}
+            >
+              Mortgage-free yr {inputs.amortizationYears}
+            </motion.text>
           )}
 
           {/* Post-payoff acceleration zone */}
@@ -831,31 +849,6 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
             );
           })}
 
-          {/* Year-0 owner upfront cost annotation */}
-          {drawn && phase >= 4 && result.commitment.ownerStartingCashOut > 0 && (
-            <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4, delay: 0.2 }}>
-              <text x={x(0) + 6} y={y(0) - 8} fontSize={9} fill={OWNER_COLOR}
-                fontFamily="var(--font-sans), system-ui, sans-serif"
-                stroke={labelHalo} strokeWidth={3} strokeLinejoin="round" paintOrder="stroke"
-                fillOpacity={0.6}>
-                ↓ {fmtWealth(result.commitment.ownerStartingCashOut)} upfront
-              </text>
-            </motion.g>
-          )}
-
-          {/* Year-0 renter investment anchor */}
-          {drawn && phase >= 9 && renterYear0 > 0 && (
-            <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4, delay: 0.3 }}>
-              <line x1={x(0)} y1={y(renterYear0) + 6} x2={x(0)} y2={y(0) - 6}
-                stroke={RENTER_COLOR} strokeOpacity={0.25} strokeWidth={1} />
-              <text x={x(0) + 8} y={y(renterYear0) - 6} fontSize={9} fill={RENTER_COLOR}
-                fontFamily="var(--font-sans), system-ui, sans-serif"
-                stroke={labelHalo} strokeWidth={3} strokeLinejoin="round" paintOrder="stroke"
-                fillOpacity={0.7}>
-                ↑ {fmtWealth(renterYear0)} invested
-              </text>
-            </motion.g>
-          )}
 
           {/* Hover crosshair */}
           {hoverData && (
@@ -896,6 +889,23 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
                     <span style={{ fontSize: '11px', color: textColor, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>{renterLabel}</span>
                   </div>
                   <span style={{ fontSize: '12px', color: textColor, fontFamily: 'var(--font-serif), Georgia, serif', fontWeight: 500 }}>{fmtWealth(hoverData.renter)}</span>
+                </div>
+              )}
+              {/* Year-0 breakdown — explains different starting positions */}
+              {phase >= 4 && hoverData.year === 0 && (
+                <div style={{ marginTop: '4px', paddingTop: '6px', borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`, display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                  {phase >= 4 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '9.5px', color: OWNER_COLOR, opacity: 0.75, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>Down payment equity</span>
+                      <span style={{ fontSize: '9.5px', color: OWNER_COLOR, opacity: 0.75, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>{Math.round(inputs.downPaymentPct * 100)}% of home</span>
+                    </div>
+                  )}
+                  {phase >= 9 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '9.5px', color: RENTER_COLOR, opacity: 0.75, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>Invested equivalent</span>
+                      <span style={{ fontSize: '9.5px', color: RENTER_COLOR, opacity: 0.75, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>down pmt − deposit</span>
+                    </div>
+                  )}
                 </div>
               )}
               {phase >= 9 && hoverData.year > 0 && (

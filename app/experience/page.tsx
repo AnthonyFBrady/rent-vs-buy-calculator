@@ -349,7 +349,7 @@ export default function ExperiencePage() {
             )}
           </AnimatePresence>
 
-          <div style={{ flex: 1, minHeight: 0 }}>
+          <div style={{ flex: 1, minHeight: 0, paddingBottom: inResultPhase ? '60px' : '0' }}>
           <ExperienceChart
             result={sim}
             sensitivity={sensitivity}
