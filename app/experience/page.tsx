@@ -387,7 +387,7 @@ export default function ExperiencePage() {
               zIndex: 10,
             }}
           >
-            <div style={{ width: '100%', display: 'flex', height: '50vh', overflow: 'hidden' }}>
+            <div style={{ width: '100%', display: 'flex', height: '52vh', overflow: 'hidden' }}>
               {/* Left column — questions and controls */}
               <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 {/* Progress bar — sits at top of panel, no padding */}
@@ -396,7 +396,7 @@ export default function ExperiencePage() {
                 )}
 
                 {/* Content — no scroll, phases are sized to fit */}
-                <div style={{ flex: 1, overflow: 'hidden', padding: `${phase > 1 ? '40px' : '24px'} 28px 12px`, position: 'relative' }}>
+                <div style={{ flex: 1, overflow: 'hidden', padding: `${phase > 1 ? '36px' : '20px'} 22px 10px`, position: 'relative' }}>
                   {phase > 1 && (
                     <button
                       onClick={back}
@@ -428,7 +428,7 @@ export default function ExperiencePage() {
                       <Phase2Province key="p3" inputs={inputs} patch={patch} />
                     )}
                     {phase === 4 && (
-                      <Phase3Down key="p4" inputs={inputs} patch={patch} />
+                      <Phase3Down key="p4" inputs={inputs} patch={patch} name={name} city={inputs.province === 'ON' ? 'Ontario' : inputs.province} />
                     )}
                     {phase === 5 && (
                       <Phase3Price key="p5" inputs={inputs} patch={patch} />

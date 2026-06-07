@@ -348,11 +348,11 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
     <div
       className="hidden md:flex flex-col"
       style={{
-        width: '300px',
+        width: '272px',
         flexShrink: 0,
         backgroundColor: CHALK_BG,
         borderLeft: '1px solid rgba(244,240,230,0.07)',
-        padding: '24px 20px',
+        padding: '20px 18px',
         overflow: 'hidden',
       }}
     >
