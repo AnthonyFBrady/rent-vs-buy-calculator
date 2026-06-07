@@ -246,14 +246,15 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
     ]);
   }, [innerWidth, innerHeight]);
 
-  // Race frames — both trend upward-right (A=even, B=owner surges, C=renter surges)
-  // xFrac < 1 = shorter line = falling behind; xFrac = 1 = full width = leading
-  const ownerRaceA = useMemo(() => introLinePath(makeRacePath([0.82, 0.73, 0.64, 0.55, 0.47, 0.41, 0.37, 0.35], 1.00)) ?? '', [introLinePath, makeRacePath]);
-  const ownerRaceB = useMemo(() => introLinePath(makeRacePath([0.82, 0.68, 0.50, 0.35, 0.23, 0.16, 0.13, 0.11], 1.00)) ?? '', [introLinePath, makeRacePath]);
-  const ownerRaceC = useMemo(() => introLinePath(makeRacePath([0.35, 0.33, 0.31, 0.29, 0.27, 0.26, 0.25, 0.25], 0.78)) ?? '', [introLinePath, makeRacePath]);
-  const renterRaceA = useMemo(() => introLinePath(makeRacePath([0.85, 0.77, 0.69, 0.61, 0.54, 0.48, 0.45, 0.43], 1.00)) ?? '', [introLinePath, makeRacePath]);
-  const renterRaceB = useMemo(() => introLinePath(makeRacePath([0.85, 0.79, 0.73, 0.67, 0.62, 0.57, 0.54, 0.52], 0.72)) ?? '', [introLinePath, makeRacePath]);
-  const renterRaceC = useMemo(() => introLinePath(makeRacePath([0.43, 0.33, 0.23, 0.15, 0.10, 0.07, 0.06, 0.05], 1.00)) ?? '', [introLinePath, makeRacePath]);
+  // Race frames — all reach x=innerWidth so labels always live in the right margin.
+  // A=even race, B=owner surges to top, C=renter surges to top.
+  // More dramatic y shapes give a "financial chart" feel.
+  const ownerRaceA = useMemo(() => introLinePath(makeRacePath([0.82, 0.72, 0.60, 0.50, 0.42, 0.37, 0.34, 0.33], 1.00)) ?? '', [introLinePath, makeRacePath]);
+  const ownerRaceB = useMemo(() => introLinePath(makeRacePath([0.82, 0.64, 0.43, 0.26, 0.14, 0.09, 0.07, 0.07], 1.00)) ?? '', [introLinePath, makeRacePath]);
+  const ownerRaceC = useMemo(() => introLinePath(makeRacePath([0.62, 0.56, 0.49, 0.43, 0.37, 0.32, 0.28, 0.27], 1.00)) ?? '', [introLinePath, makeRacePath]);
+  const renterRaceA = useMemo(() => introLinePath(makeRacePath([0.85, 0.76, 0.68, 0.60, 0.53, 0.47, 0.43, 0.42], 1.00)) ?? '', [introLinePath, makeRacePath]);
+  const renterRaceB = useMemo(() => introLinePath(makeRacePath([0.85, 0.80, 0.73, 0.66, 0.60, 0.54, 0.50, 0.48], 1.00)) ?? '', [introLinePath, makeRacePath]);
+  const renterRaceC = useMemo(() => introLinePath(makeRacePath([0.72, 0.60, 0.45, 0.31, 0.20, 0.12, 0.08, 0.07], 1.00)) ?? '', [introLinePath, makeRacePath]);
 
   const mergedPts = useMemo(() =>
     ownerPoints.map((op, i) => ({ year: op.year, owner: op.value, renter: renterPoints[i]?.value ?? 0 })),
@@ -284,12 +285,16 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
 
   const linePath = useMemo(() => d3.line<{ year: number; value: number }>().x(d => x(d.year)).y(d => y(d.value)).curve(d3.curveMonotoneX), [x, y]);
   const areaPath = useMemo(() => d3.area<{ year: number; low: number; high: number }>().x(d => x(d.year)).y0(d => y(d.low)).y1(d => y(d.high)).curve(d3.curveMonotoneX), [x, y]);
+  // Baseline area fill: line → bottom of chart. For gradient fills under each wealth line.
+  const baselineAreaGen = useMemo(() => d3.area<{ year: number; value: number }>().x(d => x(d.year)).y0(innerHeight).y1(d => y(d.value)).curve(d3.curveMonotoneX), [x, y, innerHeight]);
 
   const renterLeadArea = useMemo(() => d3.area<{ year: number; owner: number; renter: number }>().x(d => x(d.year)).y0(d => y(d.owner)).y1(d => y(Math.max(d.owner, d.renter))).curve(d3.curveMonotoneX), [x, y]);
   const ownerLeadArea = useMemo(() => d3.area<{ year: number; owner: number; renter: number }>().x(d => x(d.year)).y0(d => y(d.renter)).y1(d => y(Math.max(d.owner, d.renter))).curve(d3.curveMonotoneX), [x, y]);
 
   const ownerPath = phase >= 4 ? (linePath(ownerPoints) ?? '') : '';
   const renterPath = phase >= 9 ? (linePath(renterPoints) ?? '') : '';
+  const ownerAreaFill = phase >= 4 ? (baselineAreaGen(ownerPoints) ?? '') : '';
+  const renterAreaFill = phase >= 9 ? (baselineAreaGen(renterPoints) ?? '') : '';
   const renterLeadPath = (phase >= 9 ? renterLeadArea(mergedPts) : null) ?? '';
   const ownerLeadPath = (phase >= 4 ? ownerLeadArea(mergedPts) : null) ?? '';
 
@@ -437,7 +442,7 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
           {' with '}
           {phase >= 4 ? `${Math.round(inputs.downPaymentPct * 100)}%` : '______'}
           {' down'}
-          {phase >= 5 && (
+          {phase >= 4 && (
             <>{' · '}<span style={{ color: OWNER_COLOR }}>{fmtWealth(inputs.homePrice)}</span></>
           )}
           {phase >= 6 && inputs.homeType && (
@@ -457,6 +462,14 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
           <clipPath id="chart-clip">
             <rect x={0} y={0} width={innerWidth} height={innerHeight} />
           </clipPath>
+          <linearGradient id="owner-fill-grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={OWNER_COLOR} stopOpacity={0.14} />
+            <stop offset="100%" stopColor={OWNER_COLOR} stopOpacity={0.01} />
+          </linearGradient>
+          <linearGradient id="renter-fill-grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={RENTER_COLOR} stopOpacity={0.11} />
+            <stop offset="100%" stopColor={RENTER_COLOR} stopOpacity={0.01} />
+          </linearGradient>
         </defs>
         <g transform={`translate(${MARGIN.left},${MARGIN.top})`}>
 
@@ -576,10 +589,10 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
                   fillOpacity={0.85}
                   fontFamily="var(--font-sans), system-ui, sans-serif"
                   fontWeight={500}
-                  initial={{ x: innerWidth + 4, y: innerHeight * 0.35 }}
+                  initial={{ x: innerWidth + 4, y: innerHeight * 0.33 }}
                   animate={{
-                    x: [innerWidth + 4, innerWidth + 4, innerWidth * 0.78 + 4, innerWidth + 4],
-                    y: [innerHeight * 0.35, innerHeight * 0.11, innerHeight * 0.25, innerHeight * 0.35],
+                    x: innerWidth + 4,
+                    y: [innerHeight * 0.33, innerHeight * 0.07, innerHeight * 0.27, innerHeight * 0.33],
                   }}
                   transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut', repeatDelay: 0.5 }}
                 >
@@ -592,10 +605,10 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
                   fillOpacity={0.85}
                   fontFamily="var(--font-sans), system-ui, sans-serif"
                   fontWeight={500}
-                  initial={{ x: innerWidth + 4, y: innerHeight * 0.43 }}
+                  initial={{ x: innerWidth + 4, y: innerHeight * 0.42 }}
                   animate={{
-                    x: [innerWidth + 4, innerWidth * 0.72 + 4, innerWidth + 4, innerWidth + 4],
-                    y: [innerHeight * 0.43, innerHeight * 0.52, innerHeight * 0.05, innerHeight * 0.43],
+                    x: innerWidth + 4,
+                    y: [innerHeight * 0.42, innerHeight * 0.48, innerHeight * 0.07, innerHeight * 0.42],
                   }}
                   transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 0.3, repeatDelay: 0.5 }}
                 >
@@ -699,6 +712,22 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
                 transition={{ type: 'spring', stiffness: 340, damping: 24, delay: 0.55 }}
               />
             </>
+          )}
+
+          {/* Area fills — gradient from line to chart baseline, rendered behind line strokes */}
+          {phase >= 4 && ownerAreaFill && (
+            <motion.path
+              d={ownerAreaFill} fill="url(#owner-fill-grad)" stroke="none" clipPath="url(#chart-clip)"
+              initial={{ opacity: 0 }} animate={{ opacity: 1, d: ownerAreaFill }}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
+            />
+          )}
+          {phase >= 9 && renterAreaFill && (
+            <motion.path
+              d={renterAreaFill} fill="url(#renter-fill-grad)" stroke="none" clipPath="url(#chart-clip)"
+              initial={{ opacity: 0 }} animate={{ opacity: 1, d: renterAreaFill }}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
+            />
           )}
 
           {/* Owner line (phase 4+) — progressive commitment: dashed+translucent at phase 4,

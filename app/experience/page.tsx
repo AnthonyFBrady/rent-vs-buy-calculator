@@ -7,7 +7,7 @@ import type { CalculatorInputs } from '@/engine';
 import { ExperienceChart } from './ExperienceChart';
 import { LeverPanel } from './LeverPanel';
 import { SummaryPanel } from './SummaryPanel';
-import { ProgressBar } from './components';
+import { ProgressBar, ChalkPanel } from './components';
 import { Phase0Intro } from './phases/Phase0Intro';
 import { Phase1About } from './phases/Phase1About';
 import { Phase1TimeHorizon } from './phases/Phase1TimeHorizon';
@@ -387,99 +387,104 @@ export default function ExperiencePage() {
               zIndex: 10,
             }}
           >
-            <div style={{
-              maxWidth: '840px', margin: '0 auto', width: '100%',
-              display: 'flex', flexDirection: 'column', height: '50vh',
-            }}>
-              {/* Progress bar — sits at top of panel, no padding */}
-              {phase >= 1 && phase <= 13 && (
-                <ProgressBar phase={phase} total={MAX_PHASE - 1} />
-              )}
-
-              {/* Content — no scroll, phases are sized to fit */}
-              <div style={{ flex: 1, overflow: 'hidden', padding: `${phase > 1 ? '44px' : '28px'} 36px 12px`, position: 'relative' }}>
-                {phase > 1 && (
-                  <button
-                    onClick={back}
-                    style={{
-                      position: 'absolute',
-                      top: '16px',
-                      left: '36px',
-                      color: mutedColor,
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontSize: '13px',
-                    }}
-                  >
-                    ←
-                  </button>
+            <div style={{ width: '100%', display: 'flex', height: '50vh', overflow: 'hidden' }}>
+              {/* Left column — questions and controls */}
+              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                {/* Progress bar — sits at top of panel, no padding */}
+                {phase >= 1 && phase <= 13 && (
+                  <ProgressBar phase={phase} total={MAX_PHASE - 1} />
                 )}
 
-                {/* Phase content */}
-                <AnimatePresence mode="wait">
-                  {phase === 0 && <Phase0Intro key="p0" />}
-                  {phase === 1 && (
-                    <Phase1About key="p1" name={name} onName={setName} inputs={inputs} patch={patch} />
+                {/* Content — no scroll, phases are sized to fit */}
+                <div style={{ flex: 1, overflow: 'hidden', padding: `${phase > 1 ? '40px' : '24px'} 28px 12px`, position: 'relative' }}>
+                  {phase > 1 && (
+                    <button
+                      onClick={back}
+                      style={{
+                        position: 'absolute',
+                        top: '14px',
+                        left: '28px',
+                        color: mutedColor,
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                      }}
+                    >
+                      ←
+                    </button>
                   )}
-                  {phase === 2 && (
-                    <Phase1TimeHorizon key="p2" inputs={inputs} patch={patch} />
-                  )}
-                  {phase === 3 && (
-                    <Phase2Province key="p3" inputs={inputs} patch={patch} />
-                  )}
-                  {phase === 4 && (
-                    <Phase3Down key="p4" inputs={inputs} patch={patch} />
-                  )}
-                  {phase === 5 && (
-                    <Phase3Price key="p5" inputs={inputs} patch={patch} />
-                  )}
-                  {phase === 6 && (
-                    <Phase3HomeType key="p6" inputs={inputs} patch={patch} />
-                  )}
-                  {phase === 7 && (
-                    <Phase7Rate key="p7" inputs={inputs} patch={patch} />
-                  )}
-                  {phase === 8 && (
-                    <Phase8Amort key="p8" inputs={inputs} patch={patch} />
-                  )}
-                  {phase === 9 && (
-                    <Phase4Renting key="p9" inputs={inputs} patch={patch} />
-                  )}
-                  {phase === 10 && (
-                    <Phase10RentGrowth key="p10" inputs={inputs} patch={patch} />
-                  )}
-                  {phase === 11 && (
-                    <Phase5Mobility key="p11" inputs={inputs} patch={patch} />
-                  )}
-                  {phase === 12 && (
-                    <Phase9Shelters key="p12" inputs={inputs} patch={patch} sim={sim} />
-                  )}
-                  {phase === 13 && (
-                    <Phase6Financial key="p13" inputs={inputs} patch={patch} sim={sim} />
-                  )}
-                </AnimatePresence>
+
+                  {/* Phase content */}
+                  <AnimatePresence mode="wait">
+                    {phase === 0 && <Phase0Intro key="p0" />}
+                    {phase === 1 && (
+                      <Phase1About key="p1" name={name} onName={setName} inputs={inputs} patch={patch} />
+                    )}
+                    {phase === 2 && (
+                      <Phase1TimeHorizon key="p2" inputs={inputs} patch={patch} />
+                    )}
+                    {phase === 3 && (
+                      <Phase2Province key="p3" inputs={inputs} patch={patch} />
+                    )}
+                    {phase === 4 && (
+                      <Phase3Down key="p4" inputs={inputs} patch={patch} />
+                    )}
+                    {phase === 5 && (
+                      <Phase3Price key="p5" inputs={inputs} patch={patch} />
+                    )}
+                    {phase === 6 && (
+                      <Phase3HomeType key="p6" inputs={inputs} patch={patch} />
+                    )}
+                    {phase === 7 && (
+                      <Phase7Rate key="p7" inputs={inputs} patch={patch} />
+                    )}
+                    {phase === 8 && (
+                      <Phase8Amort key="p8" inputs={inputs} patch={patch} />
+                    )}
+                    {phase === 9 && (
+                      <Phase4Renting key="p9" inputs={inputs} patch={patch} />
+                    )}
+                    {phase === 10 && (
+                      <Phase10RentGrowth key="p10" inputs={inputs} patch={patch} />
+                    )}
+                    {phase === 11 && (
+                      <Phase5Mobility key="p11" inputs={inputs} patch={patch} />
+                    )}
+                    {phase === 12 && (
+                      <Phase9Shelters key="p12" inputs={inputs} patch={patch} sim={sim} />
+                    )}
+                    {phase === 13 && (
+                      <Phase6Financial key="p13" inputs={inputs} patch={patch} sim={sim} />
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Footer button */}
+                {phase > 0 && phase <= 13 && (
+                  <div style={{ padding: '8px 28px 24px', flexShrink: 0, paddingBottom: 'max(24px, env(safe-area-inset-bottom, 0px))' }}>
+                    <button
+                      onClick={advance}
+                      style={{
+                        width: '100%', borderRadius: '8px', height: '56px',
+                        fontSize: '14px', fontWeight: 500, cursor: 'pointer',
+                        border: 'none', letterSpacing: '-0.01em',
+                        backgroundColor: phase === 13 ? 'var(--color-accent-cta)' : 'var(--color-btn-primary-bg)',
+                        color: phase === 13 ? '#1C1B1B' : 'var(--color-btn-primary-text)',
+                        transition: 'opacity 0.15s',
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
+                      onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+                    >
+                      {phase === 13 ? 'See your result →' : 'Continue →'}
+                    </button>
+                  </div>
+                )}
               </div>
 
-              {/* Footer button */}
-              {phase > 0 && phase <= 13 && (
-                <div style={{ padding: '10px 36px 28px', flexShrink: 0, paddingBottom: 'max(28px, env(safe-area-inset-bottom, 0px))' }}>
-                  <button
-                    onClick={advance}
-                    style={{
-                      width: '100%', borderRadius: '8px', height: '56px',
-                      fontSize: '14px', fontWeight: 500, cursor: 'pointer',
-                      border: 'none', letterSpacing: '-0.01em',
-                      backgroundColor: phase === 13 ? 'var(--color-accent-cta)' : 'var(--color-btn-primary-bg)',
-                      color: phase === 13 ? '#1C1B1B' : 'var(--color-btn-primary-text)',
-                      transition: 'opacity 0.15s',
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
-                    onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-                  >
-                    {phase === 13 ? 'See your result →' : 'Continue →'}
-                  </button>
-                </div>
+              {/* Right column — chalkboard context panel (hidden below md breakpoint) */}
+              {phase >= 1 && phase <= 13 && (
+                <ChalkPanel phase={phase} inputs={inputs} sim={sim} />
               )}
             </div>
           </motion.div>

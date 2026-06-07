@@ -2,7 +2,7 @@
 
 import { motion } from 'motion/react';
 import type { CalculatorInputs } from '@/engine';
-import { TextInput, Callout } from '../components';
+import { TextInput } from '../components';
 
 interface Props {
   inputs: CalculatorInputs;
@@ -49,19 +49,13 @@ export function Phase4Renting({ inputs, patch }: Props) {
           description={`For a comparable home. First + last deposit (${fmt.format(deposit)}) is invested by the renter at year 0 and returned at exit.`}
         />
 
-        {/* Rent-to-price signal */}
         {inputs.homePrice > 0 && (
-          <Callout
-            variant={rtpSignal === 'low' ? 'owner' : rtpSignal === 'high' ? 'renter' : 'neutral'}
-            className="mt-3"
-          >
-            <p className="text-xs font-medium">
-              {rtpSignal === 'low' && `Low rent-to-price ratio (${rtpPct}%). Buying tends to win at this level.`}
-              {rtpSignal === 'mid' && `Moderate rent-to-price ratio (${rtpPct}%). Outcome is sensitive to assumptions.`}
-              {rtpSignal === 'high' && `High rent-to-price ratio (${rtpPct}%). Renting often wins at this level.`}
-            </p>
-            <p className="mt-0.5 text-[10px]" style={{ opacity: 0.5 }}>Annual rent / home price. Ben Felix framework.</p>
-          </Callout>
+          <p className="mt-2 text-xs leading-relaxed text-muted">
+            Rent-to-price ratio: {rtpPct}%
+            {rtpSignal === 'low' && ' — buying tends to win at this level.'}
+            {rtpSignal === 'mid' && ' — outcome is assumption-sensitive.'}
+            {rtpSignal === 'high' && ' — renting often wins at this level.'}
+          </p>
         )}
       </div>
 

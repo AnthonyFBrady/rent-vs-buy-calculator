@@ -2,7 +2,7 @@
 
 import { motion } from 'motion/react';
 import type { CalculatorInputs } from '@/engine';
-import { RangeInput, Callout } from '../components';
+import { RangeInput } from '../components';
 
 interface Props {
   inputs: CalculatorInputs;
@@ -55,20 +55,14 @@ export function Phase10RentGrowth({ inputs, patch }: Props) {
       </div>
 
       {hasRentControl && tenYearGap !== null && tenYearGap > 0 && (
-        <Callout variant="renter" className="mt-5">
-          <p className="text-xs font-medium">Stay-longer benefit: {tenYearGap}% below asking after 10 years.</p>
-          <p className="mt-0.5 text-[10px] leading-relaxed" style={{ opacity: 0.6 }}>
-            CMHC data: Ontario long-term tenants pay 20–40% below market. Moving resets this permanently.
-          </p>
-        </Callout>
+        <p className="mt-4 text-xs leading-relaxed text-muted">
+          Stay-longer benefit: ~{tenYearGap}% below asking after 10 years. Moving permanently resets this.
+        </p>
       )}
-
       {!hasRentControl && (
-        <Callout variant="neutral" className="mt-5">
-          <p className="text-xs leading-relaxed" style={{ opacity: 0.65 }}>
-            No rent control in {inputs.province}. Rent resets to market on each renewal — staying put gives no discount.
-          </p>
-        </Callout>
+        <p className="mt-4 text-xs leading-relaxed text-muted">
+          No rent control in {inputs.province}. Staying put gives no discount.
+        </p>
       )}
     </motion.div>
   );

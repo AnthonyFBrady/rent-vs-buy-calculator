@@ -2,7 +2,7 @@
 
 import { motion } from 'motion/react';
 import type { CalculatorInputs } from '@/engine';
-import { RangeInput, Toggle, Callout } from '../components';
+import { RangeInput, Toggle } from '../components';
 
 interface Props {
   inputs: CalculatorInputs;
@@ -37,7 +37,7 @@ export function Phase3Down({ inputs, patch }: Props) {
       className="flex flex-col"
     >
       <h2 className="mt-4 font-serif text-3xl leading-[1.15] tracking-[-0.02em] sm:text-4xl">
-        Down payment.
+        How much are you putting down?
       </h2>
 
       <div className="mt-6">
@@ -65,8 +65,8 @@ export function Phase3Down({ inputs, patch }: Props) {
         <Toggle
           checked={hasEquity}
           onChange={(v) => patch({ ownerPriorEquity: v ? Math.max(downAmount + 50000, 300000) : 0 })}
-          label="I have equity to deploy"
-          description="From a home sale or savings you're choosing not to put toward the mortgage."
+          label="I have additional cash to deploy"
+          description="Savings, investments, or home equity you're putting toward the purchase."
         />
       </div>
 
@@ -89,14 +89,9 @@ export function Phase3Down({ inputs, patch }: Props) {
             minLabel="$100k"
             maxLabel="$2M"
           />
-          <Callout variant="owner" className="mt-3">
-            <p className="text-xs font-medium">
-              {fmt.format(equityToHouse)} goes to the house. {fmt.format(equityKept)} stays invested.
-            </p>
-            <p className="mt-0.5 text-[10px] leading-relaxed" style={{ opacity: 0.55 }}>
-              The renter comparison: all {fmt.format(priorEquity)} invested from day 1.
-            </p>
-          </Callout>
+          <p className="mt-2 text-xs leading-relaxed text-muted">
+            {fmt.format(equityToHouse)} goes to the house. {fmt.format(equityKept)} stays invested.
+          </p>
         </motion.div>
       )}
     </motion.div>

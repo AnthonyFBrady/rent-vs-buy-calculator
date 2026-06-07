@@ -3,7 +3,6 @@
 import { motion, AnimatePresence } from 'motion/react';
 import type { CalculatorInputs, HomeType } from '@/engine';
 import { homeTypeDefaults, HOME_TYPES } from '@/engine';
-import { Callout } from '../components';
 
 interface Props {
   inputs: CalculatorInputs;
@@ -117,10 +116,10 @@ export function Phase3HomeType({ inputs, patch }: Props) {
               transition={{ duration: 0.22 }}
               className="mt-4"
             >
-              <Callout variant="owner">
-                <p className="text-xs font-medium leading-snug">{impact.headline}</p>
-                <p className="mt-1.5 text-xs leading-relaxed" style={{ opacity: 0.6 }}>{impact.details}</p>
-              </Callout>
+              <div>
+                <p className="text-xs font-medium leading-snug" style={{ color: 'var(--color-owner)' }}>{impact.headline}</p>
+                <p className="mt-1.5 text-xs leading-relaxed text-muted">{impact.details}</p>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

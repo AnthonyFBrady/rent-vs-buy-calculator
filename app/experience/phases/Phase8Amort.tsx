@@ -2,7 +2,7 @@
 
 import { motion } from 'motion/react';
 import type { CalculatorInputs } from '@/engine';
-import { RangeInput, Callout } from '../components';
+import { RangeInput } from '../components';
 
 interface Props {
   inputs: CalculatorInputs;
@@ -73,12 +73,6 @@ export function Phase8Amort({ inputs, patch }: Props) {
               : 'Same as initial rate — no payment change at renewal.'
           }
         />
-        <Callout variant="neutral" className="mt-3">
-          <p className="text-xs font-medium">5-year fixed renews every 5 years in Canada.</p>
-          <p className="mt-0.5 text-[10px] leading-relaxed" style={{ opacity: 0.6 }}>
-            Jun 2026 5-yr fixed: ~4.2–4.8%. Stress test (qualification) = contract rate + 2%. If buying today at ~4.5%, a worst-case renewal at 6.5% is plausible. Historical average since 1990 is ~5.5%.
-          </p>
-        </Callout>
       </div>
     </motion.div>
   );

@@ -2,7 +2,7 @@
 
 import { motion } from 'motion/react';
 import type { CalculatorInputs } from '@/engine';
-import { TextInput, Callout } from '../components';
+import { TextInput } from '../components';
 
 interface Props {
   inputs: CalculatorInputs;
@@ -54,14 +54,9 @@ export function Phase3Price({ inputs, patch }: Props) {
           step={25000}
           focusColor="var(--color-owner)"
         />
-        <Callout variant="owner" className="mt-3">
-          <p className="text-xs font-medium">
-            ~{unrecoverablePct}% of price per year builds no equity ({fmt.format(Math.round(yr1Unrecoverable))}/yr).
-          </p>
-          <p className="mt-0.5 text-[10px] leading-relaxed" style={{ opacity: 0.55 }}>
-            Interest {fmt.format(Math.round(yr1Interest))} + tax {fmt.format(Math.round(yr1Tax))} + maintenance + insurance{yr1Strata > 0 ? ' + strata' : ''}.
-          </p>
-        </Callout>
+        <p className="mt-2 text-xs leading-relaxed text-muted">
+          ~{unrecoverablePct}% per year builds no equity ({fmt.format(Math.round(yr1Unrecoverable))}/yr in interest, tax, maintenance, and insurance{yr1Strata > 0 ? ', strata' : ''}).
+        </p>
       </div>
     </motion.div>
   );

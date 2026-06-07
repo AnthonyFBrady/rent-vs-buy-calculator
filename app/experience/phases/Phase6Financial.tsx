@@ -2,7 +2,7 @@
 
 import { motion } from 'motion/react';
 import type { CalculatorInputs, SimulationResult } from '@/engine';
-import { RangeInput, Callout } from '../components';
+import { RangeInput } from '../components';
 
 interface Props {
   inputs: CalculatorInputs;
@@ -69,19 +69,13 @@ export function Phase6Financial({ inputs, patch, sim }: Props) {
           maxLabel="100%"
         />
         {monthlyGap > 0 ? (
-          <Callout variant="renter" className="mt-3">
-            <p className="text-xs font-medium">
-              {disc === 100
-                ? `Investing the full ${fmt.format(Math.round(monthlyGap))}/mo cash-flow advantage.`
-                : disc === 0
-                ? 'Not investing any of the monthly advantage.'
-                : `Investing ${fmt.format(Math.round(actualMonthly))}/mo of a ${fmt.format(Math.round(monthlyGap))}/mo advantage.`
-              }
-            </p>
-            <p className="mt-1 text-[10px] leading-relaxed" style={{ opacity: 0.5 }}>
-              On top of {fmt.format(Math.round(inputs.monthlyRent))}/mo rent. If the renter does not invest the difference, renting almost always loses.
-            </p>
-          </Callout>
+          <p className="mt-3 text-xs leading-relaxed text-muted">
+            {disc === 100
+              ? `Investing the full ${fmt.format(Math.round(monthlyGap))}/mo housing advantage.`
+              : disc === 0
+              ? 'Not investing the monthly advantage — renting almost always loses this way.'
+              : `Investing ${fmt.format(Math.round(actualMonthly))}/mo of a ${fmt.format(Math.round(monthlyGap))}/mo advantage.`}
+          </p>
         ) : (
           <p className="mt-3 text-xs leading-relaxed text-muted">
             Owner's monthly costs are lower — no renter investment gap this year.

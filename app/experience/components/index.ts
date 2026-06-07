@@ -1,3 +1,4 @@
+export { ChalkPanel } from './ChalkPanel';
 export { PhaseButton } from './PhaseButton';
 export { ProgressBar } from './ProgressBar';
 export { RangeInput } from './RangeInput';
