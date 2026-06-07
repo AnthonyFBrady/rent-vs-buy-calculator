@@ -131,17 +131,28 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
 
   // TFSA room: lifetime cap $95k accumulated through 2025.
   // Simplified: each year from max(birthYear+18, 2009) to 2025 contributes $7k.
+  // renterTfsaRoomOverride lets the user specify exact remaining room directly.
   const birthYear = inputs.birthYear ?? 1990;
   const tfsaEligibleSince = Math.max(birthYear + 18, 2009);
   const TFSA_ANNUAL_ACCRUAL = 7_000;
   const TFSA_LIFETIME_CAP = 95_000;
-  let tfsaRemainingRoom = inputs.renterUsesTFSA
+  const computedTfsaRoom = inputs.renterUsesTFSA
     ? Math.min(TFSA_LIFETIME_CAP, Math.max(0, (2026 - tfsaEligibleSince) * TFSA_ANNUAL_ACCRUAL))
     : 0;
+  let tfsaRemainingRoom = inputs.renterTfsaRoomOverride !== undefined
+    ? (inputs.renterUsesTFSA ? inputs.renterTfsaRoomOverride : 0)
+    : computedTfsaRoom;
 
   // RRSP annual deduction limit: 18% of prior-year earned income, max $31,560 (2024 limit).
+  // renterRrspCarryforward is extra unused room the user can contribute in year 1.
   const annualIncome = inputs.annualIncome ?? 120_000;
   const rrspAnnualRoom = Math.min(annualIncome * 0.18, 31_560);
+  let rrspCarryforwardRemaining = inputs.renterUsesRRSP ? (inputs.renterRrspCarryforward ?? 0) : 0;
+
+  // FHSA: use renterFhsaRoomOverride if provided; otherwise start with the full $40k cap.
+  const fhsaInitialRoom = inputs.useFHSA
+    ? (inputs.renterFhsaRoomOverride !== undefined ? inputs.renterFhsaRoomOverride : FHSA_LIFETIME_LIMIT)
+    : 0;
 
   // (firstTermMonthlyPayment and firstTermYears are no longer needed — see multi-term loop below)
 
@@ -364,9 +375,9 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
     }
 
     // 2. FHSA (tax-deductible, tax-free growth; pooled with TFSA at exit)
-    //    $8K/yr annual room, $40K lifetime cap, tax refund reinvested into taxable.
-    if (useFHSA && remaining > 0 && fhsaLifetimeContributed < FHSA_LIFETIME_LIMIT) {
-      const fhsaRoomThisYear = Math.min(FHSA_ANNUAL_ROOM, FHSA_LIFETIME_LIMIT - fhsaLifetimeContributed);
+    //    $8K/yr annual room, lifetime cap from fhsaInitialRoom, tax refund reinvested into taxable.
+    if (useFHSA && remaining > 0 && fhsaLifetimeContributed < fhsaInitialRoom) {
+      const fhsaRoomThisYear = Math.min(FHSA_ANNUAL_ROOM, fhsaInitialRoom - fhsaLifetimeContributed);
       const fhsaContrib = Math.min(remaining, fhsaRoomThisYear);
       if (fhsaContrib > 0) {
         fhsaLifetimeContributed += fhsaContrib;
@@ -379,8 +390,11 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
     }
 
     // 3. RRSP (deferred tax; refund reinvested into taxable portfolio)
+    //    In year 1, carryforward room is added to annual room.
     if (renterUsesRRSP && remaining > 0) {
-      rrspContributionThisYear = Math.min(remaining, rrspAnnualRoom);
+      const rrspRoomThisYear = rrspAnnualRoom + rrspCarryforwardRemaining;
+      rrspCarryforwardRemaining = 0;
+      rrspContributionThisYear = Math.min(remaining, rrspRoomThisYear);
       const rrspRefund = rrspContributionThisYear * marginalTaxRatePct;
       renterTaxableContribThisYear += rrspRefund;
       renterTaxableCostBasis += rrspRefund;

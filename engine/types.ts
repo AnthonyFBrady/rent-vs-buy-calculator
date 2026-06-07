@@ -192,6 +192,29 @@ export interface CalculatorInputs {
    * Default 0 (fresh buyer, no prior equity).
    */
   ownerPriorEquity?: number;
+
+  /**
+   * Explicit TFSA room available at the start of the simulation. When set,
+   * overrides the birth-year-derived TFSA room calculation. Useful when the
+   * user knows their exact remaining room (e.g., $60k of $95k used).
+   * Only relevant when renterUsesTFSA = true.
+   */
+  renterTfsaRoomOverride?: number;
+
+  /**
+   * Explicit FHSA lifetime room remaining at the start of the simulation.
+   * Overrides the default $40k lifetime cap. Set to 0 if already exhausted.
+   * Only relevant when useFHSA = true.
+   */
+  renterFhsaRoomOverride?: number;
+
+  /**
+   * Explicit RRSP room available at the start of the simulation (unused
+   * contribution room carried forward). When set, the renter can contribute
+   * up to this amount in year 1 in addition to that year's annual room.
+   * Default 0 (no prior room assumed).
+   */
+  renterRrspCarryforward?: number;
 }
 
 export interface YearSnapshot {

@@ -152,6 +152,29 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
 
     5: (
       <>
+        <Section label="Why account type changes the math">
+          <p style={{ fontSize: '12px', lineHeight: 1.65, color: CHALK_TEXT }}>
+            The same dollars in a TFSA grow and exit tax-free. In a taxable account, gains are taxed at exit. This gap compounds over 10–25 years.
+          </p>
+        </Section>
+        <Divider />
+        <Section label="Optimal fill order">
+          <Row label="1st" value="TFSA" color={CHALK_RENTER} />
+          <Row label="2nd" value="FHSA ($40k lifetime)" color={CHALK_RENTER} />
+          <Row label="3rd" value="RRSP" color={CHALK_TEXT} />
+          <Row label="Remainder" value="Taxable" color={CHALK_MUTED} />
+        </Section>
+        <Divider />
+        <Section label="FHSA bonus">
+          <p style={{ fontSize: '11px', lineHeight: 1.6, color: CHALK_MUTED }}>
+            FHSA contributions are tax-deductible. The annual refund gets reinvested, compounding the advantage. Up to $8k/yr, $40k lifetime.
+          </p>
+        </Section>
+      </>
+    ),
+
+    6: (
+      <>
         <Section label={`Unrecoverable cost — ${unrecoverablePct}% of price per year`}>
           <p style={{ fontSize: '11px', lineHeight: 1.6, color: CHALK_MUTED, marginBottom: '10px' }}>
             Costs that build no equity, paid every year regardless of the market.
@@ -167,7 +190,7 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
       </>
     ),
 
-    6: (
+    7: (
       <>
         {inputs.monthlyStrataFee && inputs.monthlyStrataFee > 0 ? (
           <Section label="Condo costs">
@@ -191,7 +214,7 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
       </>
     ),
 
-    7: (
+    8: (
       <>
         <Section label="Rate impact">
           <p style={{ fontSize: '11px', lineHeight: 1.6, color: CHALK_MUTED, marginBottom: '8px' }}>
@@ -209,7 +232,7 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
       </>
     ),
 
-    8: (
+    9: (
       <>
         <Section label="Canadian renewal reality">
           <p style={{ fontSize: '12px', lineHeight: 1.65, color: CHALK_TEXT }}>
@@ -226,7 +249,7 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
       </>
     ),
 
-    9: (
+    10: (
       <>
         <Section label="Rent-to-price signal">
           <p style={{ fontSize: '12px', lineHeight: 1.65, color: rtpSignal === 'buy' ? CHALK_OWNER : rtpSignal === 'rent' ? CHALK_RENTER : CHALK_TEXT }}>
@@ -245,7 +268,7 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
       </>
     ),
 
-    10: (
+    11: (
       <>
         {hasRentControl ? (
           <Section label="Rent control benefit">
@@ -272,7 +295,7 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
       </>
     ),
 
-    11: (
+    12: (
       <>
         <Section label="The asymmetry">
           <p style={{ fontSize: '12px', lineHeight: 1.65, color: CHALK_TEXT }}>
@@ -291,7 +314,7 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
       </>
     ),
 
-    12: (
+    13: (
       <>
         <Section label="Account priority">
           <Row label="1st" value="TFSA" color={CHALK_RENTER} />
@@ -308,7 +331,7 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
       </>
     ),
 
-    13: (
+    14: (
       <>
         {monthlyGap > 0 ? (
           <Section label="Invest the difference">

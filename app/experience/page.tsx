@@ -15,6 +15,7 @@ import { Phase2Province } from './phases/Phase2Province';
 import { Phase3HomeType } from './phases/Phase3HomeType';
 import { Phase3Price } from './phases/Phase3Price';
 import { Phase3Down } from './phases/Phase3Down';
+import { Phase4Accounts } from './phases/Phase4Accounts';
 import { Phase7Rate } from './phases/Phase7Rate';
 import { Phase8Amort } from './phases/Phase8Amort';
 import { Phase4Renting } from './phases/Phase4Renting';
@@ -29,24 +30,24 @@ import { Phase6Financial } from './phases/Phase6Financial';
 //  2  Time horizon
 //  3  Province
 //  4  Down payment + equity
-//  5  Home price
-//  6  Home type
-//  7  Mortgage rate
-//  8  Amortization + renewal
-//  9  Monthly rent
-// 10  Rent growth
-// 11  Mobility
-// 12  Tax shelters
-// 13  Tax rate + discipline
-// 14  Done (results)
-type Phase = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14;
-const MAX_PHASE = 14;
+//  5  Account allocation (TFSA / FHSA / RRSP room)
+//  6  Home price
+//  7  Home type
+//  8  Mortgage rate
+//  9  Amortization + renewal
+// 10  Monthly rent
+// 11  Rent growth
+// 12  Mobility
+// 13  Tax shelters (FTB + review)
+// 14  Tax rate + discipline
+// 15  Done (results)
+type Phase = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15;
+const MAX_PHASE = 15;
 
 // Owner-specific inputs: changing these should NOT animate the renter line
-// Phase 11 (mobility) is included so owner-move changes don't animate the renter line
-const OWNER_PHASES = new Set<Phase>([4, 5, 6, 7, 8, 11]);
+const OWNER_PHASES = new Set<Phase>([4, 6, 7, 8, 9, 12]);
 // Renter-specific inputs: changing these should NOT animate the owner line
-const RENTER_PHASES = new Set<Phase>([9, 10]);
+const RENTER_PHASES = new Set<Phase>([5, 10, 11]);
 
 interface State {
   phase: Phase;
@@ -158,7 +159,7 @@ export default function ExperiencePage() {
     }
   }
 
-  const showOverlay = phase >= 0 && phase <= 13;
+  const showOverlay = phase >= 0 && phase <= 14;
 
   // Line isolation: label which side is "active" so the chart can animate only that line
   const activeSide: 'owner' | 'renter' | 'both' =
@@ -391,7 +392,7 @@ export default function ExperiencePage() {
               {/* Left column — questions and controls */}
               <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 {/* Progress bar — sits at top of panel, no padding */}
-                {phase >= 1 && phase <= 13 && (
+                {phase >= 1 && phase <= 14 && (
                   <ProgressBar phase={phase} total={MAX_PHASE - 1} />
                 )}
 
@@ -431,37 +432,40 @@ export default function ExperiencePage() {
                       <Phase3Down key="p4" inputs={inputs} patch={patch} name={name} city={inputs.province === 'ON' ? 'Ontario' : inputs.province} />
                     )}
                     {phase === 5 && (
-                      <Phase3Price key="p5" inputs={inputs} patch={patch} />
+                      <Phase4Accounts key="p5" inputs={inputs} patch={patch} />
                     )}
                     {phase === 6 && (
-                      <Phase3HomeType key="p6" inputs={inputs} patch={patch} />
+                      <Phase3Price key="p6" inputs={inputs} patch={patch} />
                     )}
                     {phase === 7 && (
-                      <Phase7Rate key="p7" inputs={inputs} patch={patch} />
+                      <Phase3HomeType key="p7" inputs={inputs} patch={patch} />
                     )}
                     {phase === 8 && (
-                      <Phase8Amort key="p8" inputs={inputs} patch={patch} />
+                      <Phase7Rate key="p8" inputs={inputs} patch={patch} />
                     )}
                     {phase === 9 && (
-                      <Phase4Renting key="p9" inputs={inputs} patch={patch} />
+                      <Phase8Amort key="p9" inputs={inputs} patch={patch} />
                     )}
                     {phase === 10 && (
-                      <Phase10RentGrowth key="p10" inputs={inputs} patch={patch} />
+                      <Phase4Renting key="p10" inputs={inputs} patch={patch} />
                     )}
                     {phase === 11 && (
-                      <Phase5Mobility key="p11" inputs={inputs} patch={patch} />
+                      <Phase10RentGrowth key="p11" inputs={inputs} patch={patch} />
                     )}
                     {phase === 12 && (
-                      <Phase9Shelters key="p12" inputs={inputs} patch={patch} sim={sim} />
+                      <Phase5Mobility key="p12" inputs={inputs} patch={patch} />
                     )}
                     {phase === 13 && (
-                      <Phase6Financial key="p13" inputs={inputs} patch={patch} sim={sim} />
+                      <Phase9Shelters key="p13" inputs={inputs} patch={patch} sim={sim} />
+                    )}
+                    {phase === 14 && (
+                      <Phase6Financial key="p14" inputs={inputs} patch={patch} sim={sim} />
                     )}
                   </AnimatePresence>
                 </div>
 
                 {/* Footer button */}
-                {phase > 0 && phase <= 13 && (
+                {phase > 0 && phase <= 14 && (
                   <div style={{ padding: '8px 28px 24px', flexShrink: 0, paddingBottom: 'max(24px, env(safe-area-inset-bottom, 0px))' }}>
                     <button
                       onClick={advance}
@@ -469,21 +473,21 @@ export default function ExperiencePage() {
                         width: '100%', borderRadius: '8px', height: '56px',
                         fontSize: '14px', fontWeight: 500, cursor: 'pointer',
                         border: 'none', letterSpacing: '-0.01em',
-                        backgroundColor: phase === 13 ? 'var(--color-accent-cta)' : 'var(--color-btn-primary-bg)',
-                        color: phase === 13 ? '#1C1B1B' : 'var(--color-btn-primary-text)',
+                        backgroundColor: phase === 14 ? 'var(--color-accent-cta)' : 'var(--color-btn-primary-bg)',
+                        color: phase === 14 ? '#1C1B1B' : 'var(--color-btn-primary-text)',
                         transition: 'opacity 0.15s',
                       }}
                       onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
                       onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
                     >
-                      {phase === 13 ? 'See your result →' : 'Continue →'}
+                      {phase === 14 ? 'See your result →' : 'Continue →'}
                     </button>
                   </div>
                 )}
               </div>
 
               {/* Right column — chalkboard context panel (hidden below md breakpoint) */}
-              {phase >= 1 && phase <= 13 && (
+              {phase >= 1 && phase <= 14 && (
                 <ChalkPanel phase={phase} inputs={inputs} sim={sim} />
               )}
             </div>
