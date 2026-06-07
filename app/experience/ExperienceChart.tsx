@@ -236,7 +236,7 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
   const renterExitValue = result.exit.finalRenterWealth;
   const exitYear = result.inputs.holdingPeriodYears;
 
-  const introLinePath = useMemo(() => d3.line<[number, number]>().x(d => d[0]).y(d => d[1]).curve(d3.curveMonotoneX), []);
+  const introLinePath = useMemo(() => d3.line<[number, number]>().x(d => d[0]).y(d => d[1]).curve(d3.curveCatmullRom.alpha(0.5)), []);
 
   const makeRacePath = useCallback((yFracs: number[], xFrac = 1.0): [number, number][] => {
     const n = yFracs.length;
@@ -283,13 +283,13 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
   const x = useMemo(() => d3.scaleLinear().domain([0, xMax]).range([0, innerWidth]), [xMax, innerWidth]);
   const y = useMemo(() => d3.scaleLinear().domain([yMin, yMax]).nice().range([innerHeight, 0]), [yMin, yMax, innerHeight]);
 
-  const linePath = useMemo(() => d3.line<{ year: number; value: number }>().x(d => x(d.year)).y(d => y(d.value)).curve(d3.curveMonotoneX), [x, y]);
-  const areaPath = useMemo(() => d3.area<{ year: number; low: number; high: number }>().x(d => x(d.year)).y0(d => y(d.low)).y1(d => y(d.high)).curve(d3.curveMonotoneX), [x, y]);
+  const linePath = useMemo(() => d3.line<{ year: number; value: number }>().x(d => x(d.year)).y(d => y(d.value)).curve(d3.curveCatmullRom.alpha(0.5)), [x, y]);
+  const areaPath = useMemo(() => d3.area<{ year: number; low: number; high: number }>().x(d => x(d.year)).y0(d => y(d.low)).y1(d => y(d.high)).curve(d3.curveCatmullRom.alpha(0.5)), [x, y]);
   // Baseline area fill: line → bottom of chart. For gradient fills under each wealth line.
-  const baselineAreaGen = useMemo(() => d3.area<{ year: number; value: number }>().x(d => x(d.year)).y0(innerHeight).y1(d => y(d.value)).curve(d3.curveMonotoneX), [x, y, innerHeight]);
+  const baselineAreaGen = useMemo(() => d3.area<{ year: number; value: number }>().x(d => x(d.year)).y0(innerHeight).y1(d => y(d.value)).curve(d3.curveCatmullRom.alpha(0.5)), [x, y, innerHeight]);
 
-  const renterLeadArea = useMemo(() => d3.area<{ year: number; owner: number; renter: number }>().x(d => x(d.year)).y0(d => y(d.owner)).y1(d => y(Math.max(d.owner, d.renter))).curve(d3.curveMonotoneX), [x, y]);
-  const ownerLeadArea = useMemo(() => d3.area<{ year: number; owner: number; renter: number }>().x(d => x(d.year)).y0(d => y(d.renter)).y1(d => y(Math.max(d.owner, d.renter))).curve(d3.curveMonotoneX), [x, y]);
+  const renterLeadArea = useMemo(() => d3.area<{ year: number; owner: number; renter: number }>().x(d => x(d.year)).y0(d => y(d.owner)).y1(d => y(Math.max(d.owner, d.renter))).curve(d3.curveCatmullRom.alpha(0.5)), [x, y]);
+  const ownerLeadArea = useMemo(() => d3.area<{ year: number; owner: number; renter: number }>().x(d => x(d.year)).y0(d => y(d.renter)).y1(d => y(Math.max(d.owner, d.renter))).curve(d3.curveCatmullRom.alpha(0.5)), [x, y]);
 
   const ownerPath = phase >= 4 ? (linePath(ownerPoints) ?? '') : '';
   const renterPath = phase >= 9 ? (linePath(renterPoints) ?? '') : '';
@@ -463,11 +463,13 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
             <rect x={0} y={0} width={innerWidth} height={innerHeight} />
           </clipPath>
           <linearGradient id="owner-fill-grad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={OWNER_COLOR} stopOpacity={0.14} />
+            <stop offset="0%" stopColor={OWNER_COLOR} stopOpacity={0.22} />
+            <stop offset="60%" stopColor={OWNER_COLOR} stopOpacity={0.08} />
             <stop offset="100%" stopColor={OWNER_COLOR} stopOpacity={0.01} />
           </linearGradient>
           <linearGradient id="renter-fill-grad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={RENTER_COLOR} stopOpacity={0.11} />
+            <stop offset="0%" stopColor={RENTER_COLOR} stopOpacity={0.18} />
+            <stop offset="60%" stopColor={RENTER_COLOR} stopOpacity={0.07} />
             <stop offset="100%" stopColor={RENTER_COLOR} stopOpacity={0.01} />
           </linearGradient>
         </defs>
@@ -794,11 +796,12 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
                 y: ownerDTransition,
               }}
             >
-              <rect x={innerWidth + 6} y={-14} width={ownerPillWidth} height={28} rx={3} fill={pillBg} />
-              <text x={innerWidth + 12} y={-4} dy="0.32em" fontSize={10} fill={OWNER_COLOR} fontWeight={500} fontFamily="var(--font-sans), system-ui, sans-serif">
+              <line x1={0} y1={0} x2={8} y2={0} stroke={OWNER_COLOR} strokeWidth={1.5} strokeOpacity={0.5} />
+              <rect x={innerWidth + 10} y={-14} width={ownerPillWidth} height={28} rx={3} fill={pillBg} />
+              <text x={innerWidth + 16} y={-4} dy="0.32em" fontSize={10} fill={OWNER_COLOR} fontWeight={500} fontFamily="var(--font-sans), system-ui, sans-serif">
                 {ownerLabel}
               </text>
-              <text x={innerWidth + 12} y={10} dy="0.32em" fontSize={13} fill={OWNER_COLOR} fontWeight={600} fontFamily="var(--font-serif), Georgia, serif">
+              <text x={innerWidth + 16} y={10} dy="0.32em" fontSize={13} fill={OWNER_COLOR} fontWeight={600} fontFamily="var(--font-serif), Georgia, serif">
                 {ownerValueStr}
               </text>
             </motion.g>
@@ -812,18 +815,19 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
                 y: renterDTransition,
               }}
             >
-              <rect x={innerWidth + 6} y={-14} width={renterPillWidth} height={28} rx={3} fill={pillBg} />
-              <text x={innerWidth + 12} y={-4} dy="0.32em" fontSize={10} fill={RENTER_COLOR} fontWeight={500} fontFamily="var(--font-sans), system-ui, sans-serif">
+              <line x1={0} y1={0} x2={8} y2={0} stroke={RENTER_COLOR} strokeWidth={1.5} strokeOpacity={0.5} />
+              <rect x={innerWidth + 10} y={-14} width={renterPillWidth} height={28} rx={3} fill={pillBg} />
+              <text x={innerWidth + 16} y={-4} dy="0.32em" fontSize={10} fill={RENTER_COLOR} fontWeight={500} fontFamily="var(--font-sans), system-ui, sans-serif">
                 {renterLabel}
               </text>
-              <text x={innerWidth + 12} y={10} dy="0.32em" fontSize={13} fill={RENTER_COLOR} fontWeight={600} fontFamily="var(--font-serif), Georgia, serif">
+              <text x={innerWidth + 16} y={10} dy="0.32em" fontSize={13} fill={RENTER_COLOR} fontWeight={600} fontFamily="var(--font-serif), Georgia, serif">
                 {renterValueStr}
               </text>
             </motion.g>
           )}
           {drawn && phase >= 14 && (
             <motion.text
-              x={innerWidth + 8}
+              x={innerWidth + 12}
               dy="0.35em"
               fontSize={9}
               fill={labelColor}
