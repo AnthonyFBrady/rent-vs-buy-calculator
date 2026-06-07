@@ -290,16 +290,15 @@ describe('FHSA modeling', () => {
     expect(fhsa.exit.renterCapitalGainsTax).toBe(0);
   });
 
-  it('adds a marginal-rate × $40K refund stipend to year-0 lump sum', () => {
+  it('year-0 lump sum is identical with and without FHSA (contributions are annual)', () => {
     const inputs = defaultInputsFor('ON');
     const taxable = simulate({ ...inputs, useFHSA: false });
     const fhsa = simulate({ ...inputs, useFHSA: true });
 
-    const expectedStipend = 40_000 * inputs.marginalTaxRatePct;
-    const stipendDelta =
-      fhsa.commitment.renterStartingLumpSum -
-      taxable.commitment.renterStartingLumpSum;
-    expect(stipendDelta).toBeCloseTo(expectedStipend, 0);
+    expect(fhsa.commitment.renterStartingLumpSum).toBeCloseTo(
+      taxable.commitment.renterStartingLumpSum,
+      0,
+    );
   });
 
   it('shifts wealth outcome toward the renter', () => {

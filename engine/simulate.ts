@@ -13,12 +13,13 @@
 //
 // Renter path:
 //   Year 0: Invest (owner year-0 cash-out − renter moving cost − first+last deposit).
-//           If useFHSA, add a marginalTaxRate × $40,000 FHSA refund stipend on top.
 //   Each year: Pay rent + renter insurance + deposit delta on move years + moving cost.
 //              In-place rent escalates at min(market, rentControlCapPct) when a cap is set.
 //              At move years, in-place rent jumps to current market (vacancy decontrol).
 //              Invest the difference between owner and renter cash-out, monthly compounded.
-//              If renterUsesRRSP: contributions go to RRSP, annual refund to taxable account.
+//              Priority order: TFSA → FHSA ($8K/yr, $40K lifetime, tax-deductible + tax-free)
+//                              → RRSP (deferred; annual refund to taxable) → taxable remainder.
+//              FHSA contributions pool with TFSA (same tax-free exit treatment).
 //   Exit: Liquidate portfolio + RRSP (income tax on RRSP) + deposit returned.
 //         renterUsesTFSA or useFHSA eliminates exit cap gains on the taxable portfolio.
 //
@@ -50,6 +51,7 @@ const INSURANCE_ESCALATION_OVER_INFLATION_PCT = 0.03;
 
 /** FHSA lifetime contribution room. $8K/yr for 5 years. */
 const FHSA_LIFETIME_LIMIT = 40_000;
+const FHSA_ANNUAL_ROOM = 8_000;
 
 /**
  * Compute the years a move occurs given an evenly-spaced moves count.
@@ -163,16 +165,13 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
   // First + last month deposit paid by renter at move-in.
   const firstLastDeposit = 2 * monthlyRent;
 
-  // The renter invests: owner's year-0 outlay + FHSA stipend − deposit − moving cost.
+  // The renter invests: owner's year-0 outlay − deposit − moving cost.
   // If the owner is deploying prior equity, the renter comparison uses the full equity
   // amount (they keep all of it invested instead of splitting it toward a down payment).
-  const fhsaRefundStipend = useFHSA
-    ? FHSA_LIFETIME_LIMIT * marginalTaxRatePct
-    : 0;
   const priorEquity = inputs.ownerPriorEquity ?? 0;
   const equityBase = priorEquity > 0 ? priorEquity : ownerYear0CashOut;
   const renterYear0Investment =
-    equityBase + fhsaRefundStipend - firstLastDeposit - renterMovingCostPerMove;
+    equityBase - firstLastDeposit - renterMovingCostPerMove;
 
   // ─── Multi-term mortgage schedule ─────────────────────────────────────
   // Each 5-year renewal recalculates the monthly payment from the current
@@ -257,6 +256,7 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
   let currentDeposit = firstLastDeposit;
   let renterRrspBalance = 0;
   let renterRrspCostBasis = 0;
+  let fhsaLifetimeContributed = 0;
   let breakEvenYear: number | null = null;
 
   const insuranceEscalationPct =
@@ -349,7 +349,7 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
         ? Math.abs(ownerMarketDifference) * ownerDiscipline
         : 0;
 
-    // Distribute annual contribution: TFSA → RRSP → taxable (account priority order).
+    // Distribute annual contribution: TFSA → FHSA → RRSP → taxable (account priority order).
     if (inputs.renterUsesTFSA) tfsaRemainingRoom += TFSA_ANNUAL_ACCRUAL;
     let remaining = renterContribution;
     let renterTfsaContribThisYear = 0;
@@ -363,7 +363,22 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
       remaining -= renterTfsaContribThisYear;
     }
 
-    // 2. RRSP (deferred tax; refund reinvested into taxable portfolio)
+    // 2. FHSA (tax-deductible, tax-free growth; pooled with TFSA at exit)
+    //    $8K/yr annual room, $40K lifetime cap, tax refund reinvested into taxable.
+    if (useFHSA && remaining > 0 && fhsaLifetimeContributed < FHSA_LIFETIME_LIMIT) {
+      const fhsaRoomThisYear = Math.min(FHSA_ANNUAL_ROOM, FHSA_LIFETIME_LIMIT - fhsaLifetimeContributed);
+      const fhsaContrib = Math.min(remaining, fhsaRoomThisYear);
+      if (fhsaContrib > 0) {
+        fhsaLifetimeContributed += fhsaContrib;
+        const fhsaRefund = fhsaContrib * marginalTaxRatePct;
+        renterTfsaContribThisYear += fhsaContrib; // FHSA pools with TFSA (tax-free exit)
+        renterTaxableContribThisYear += fhsaRefund; // refund reinvested in taxable
+        renterTaxableCostBasis += fhsaRefund;
+        remaining -= fhsaContrib;
+      }
+    }
+
+    // 3. RRSP (deferred tax; refund reinvested into taxable portfolio)
     if (renterUsesRRSP && remaining > 0) {
       rrspContributionThisYear = Math.min(remaining, rrspAnnualRoom);
       const rrspRefund = rrspContributionThisYear * marginalTaxRatePct;
@@ -374,7 +389,7 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
       remaining -= rrspContributionThisYear;
     }
 
-    // 3. Taxable remainder
+    // 4. Taxable remainder
     renterTaxableContribThisYear += remaining;
     renterTaxableCostBasis += remaining;
 

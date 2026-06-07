@@ -31,7 +31,6 @@ interface Props {
 }
 
 const CROSS_COLOR = '#A78BFA';
-const MARGIN = { top: 44, right: 108, bottom: 44, left: 72 };
 
 const PROVINCE_NAMES: Record<string, string> = {
   ON: 'Ontario', BC: 'British Columbia', AB: 'Alberta', QC: 'Quebec',
@@ -206,6 +205,13 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
   }, [phase, renterDrawn]);
 
   const { w: width, h: height } = size;
+  const isNarrow = width < 520;
+  const MARGIN = {
+    top: 44,
+    right: isNarrow ? 72 : 108,
+    bottom: 44,
+    left: isNarrow ? 44 : 72,
+  };
   const innerWidth = Math.max(0, width - MARGIN.left - MARGIN.right);
   const innerHeight = Math.max(0, height - MARGIN.top - MARGIN.bottom);
   const xMax = result.inputs.holdingPeriodYears;
@@ -454,8 +460,8 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
         </defs>
         <g transform={`translate(${MARGIN.left},${MARGIN.top})`}>
 
-          {/* Province stamp — top-right of chart, persists from phase 3 */}
-          {phase >= 3 && phase < 14 && (
+          {/* Province stamp — top-right of chart, persists from phase 3; hidden on narrow to avoid overlap with narrative header */}
+          {!isNarrow && phase >= 3 && phase < 14 && (
             <motion.text
               x={innerWidth}
               y={-22}

@@ -26,7 +26,8 @@ export function Phase9Shelters({ inputs, patch, sim }: Props) {
     ? `$${Math.round(tfsaRoom / 1000)}k in TFSA room. Saves ${fmt.format(tfsaSavings)} in cap gains tax at exit.`
     : null;
 
-  const fhsaImpact = `Adds ${fmt.format(Math.round(40_000 * inputs.marginalTaxRatePct))} to the renter's starting investment via FHSA refund.`;
+  const fhsaTotalRefund = Math.round(40_000 * inputs.marginalTaxRatePct);
+  const fhsaImpact = `$8k/yr (up to $40k lifetime) invested tax-free. Generates ${fmt.format(fhsaTotalRefund)} in total refunds reinvested in taxable. All gains sheltered at exit.`;
 
   const rrspImpact = `Up to ${fmt.format(Math.round(rrspAnnualRoom))}/yr sheltered in RRSP. Refunds reinvested. Balance taxed as income at exit.`;
 
@@ -68,7 +69,7 @@ export function Phase9Shelters({ inputs, patch, sim }: Props) {
             checked={inputs.useFHSA ?? false}
             onChange={(v) => patch({ useFHSA: v })}
             label="Renter uses FHSA"
-            description="First Home Savings Account. ~$17k refund added to starting lump sum. All gains sheltered."
+            description="First Home Savings Account. $8k/yr tax-deductible, tax-free growth, pools with TFSA at exit."
             impact={fhsaImpact}
           />
         </div>
