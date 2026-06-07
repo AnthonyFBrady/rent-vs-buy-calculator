@@ -9,7 +9,7 @@ interface Props {
   patch: (p: Partial<CalculatorInputs>) => void;
 }
 
-export function Phase10RentGrowth({ inputs, patch }: Props) {
+export function StepRentGrowth({ inputs, patch }: Props) {
   const escalPct = (inputs.rentEscalationPct * 100).toFixed(1);
   const hasRentControl = inputs.rentControlCapPct != null && inputs.rentControlCapPct > 0;
   const capPct = inputs.rentControlCapPct != null ? (inputs.rentControlCapPct * 100).toFixed(1) : null;

@@ -15,7 +15,7 @@ const fmt = new Intl.NumberFormat('en-CA', {
   maximumFractionDigits: 0,
 });
 
-export function Phase3Price({ inputs, patch }: Props) {
+export function StepHomePrice({ inputs, patch }: Props) {
   const loanAmount = inputs.homePrice * (1 - inputs.downPaymentPct);
   const yr1Interest = loanAmount * inputs.mortgageRatePct;
   const yr1Tax = inputs.propertyTaxPct * inputs.homePrice;

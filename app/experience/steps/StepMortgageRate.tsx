@@ -9,7 +9,7 @@ interface Props {
   patch: (p: Partial<CalculatorInputs>) => void;
 }
 
-export function Phase7Rate({ inputs, patch }: Props) {
+export function StepMortgageRate({ inputs, patch }: Props) {
   const monthlyPayment = (() => {
     const principal = inputs.homePrice * (1 - inputs.downPaymentPct);
     const r = inputs.mortgageRatePct / 2; // Canadian semi-annual compounding → effective monthly

@@ -25,7 +25,7 @@ const fmt = new Intl.NumberFormat('en-CA', {
   maximumFractionDigits: 0,
 });
 
-export function Phase3Down({ inputs, patch, name, city }: Props) {
+export function StepDownPayment({ inputs, patch, name, city }: Props) {
   const downPct = Math.round(inputs.downPaymentPct * 100);
   const downAmount = inputs.homePrice * inputs.downPaymentPct;
   const isCMHC = inputs.downPaymentPct < 0.2;

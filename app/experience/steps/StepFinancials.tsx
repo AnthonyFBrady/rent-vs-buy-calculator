@@ -16,7 +16,7 @@ const fmt = new Intl.NumberFormat('en-CA', {
   maximumFractionDigits: 0,
 });
 
-export function Phase6Financial({ inputs, patch, sim }: Props) {
+export function StepFinancials({ inputs, patch, sim }: Props) {
   const mtr = Math.round(inputs.marginalTaxRatePct * 100);
   const disc = Math.round(inputs.savingsDisciplinePct * 100);
   const monthlyGap = Math.max(0, (sim.yearByYear[0]?.cashOutDelta ?? 0) / 12);

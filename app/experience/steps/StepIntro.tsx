@@ -2,7 +2,7 @@
 
 import { motion } from 'motion/react';
 
-export function Phase0Intro() {
+export function StepIntro() {
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}

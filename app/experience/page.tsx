@@ -8,46 +8,25 @@ import { ExperienceChart } from './ExperienceChart';
 import { LeverPanel } from './LeverPanel';
 import { SummaryPanel } from './SummaryPanel';
 import { ProgressBar, ChalkPanel } from './components';
-import { Phase0Intro } from './phases/Phase0Intro';
-import { Phase1About } from './phases/Phase1About';
-import { Phase1TimeHorizon } from './phases/Phase1TimeHorizon';
-import { Phase2Province } from './phases/Phase2Province';
-import { Phase3HomeType } from './phases/Phase3HomeType';
-import { Phase3Price } from './phases/Phase3Price';
-import { Phase3Down } from './phases/Phase3Down';
-import { Phase4Accounts } from './phases/Phase4Accounts';
-import { Phase7Rate } from './phases/Phase7Rate';
-import { Phase8Amort } from './phases/Phase8Amort';
-import { Phase4Renting } from './phases/Phase4Renting';
-import { Phase10RentGrowth } from './phases/Phase10RentGrowth';
-import { Phase5Mobility } from './phases/Phase5Mobility';
-import { Phase9Shelters } from './phases/Phase9Shelters';
-import { Phase6Financial } from './phases/Phase6Financial';
+import { STEP, OWNER_STEPS, RENTER_STEPS, TOTAL_STEPS } from './config/steps';
+import { StepIntro } from './steps/StepIntro';
+import { StepAbout } from './steps/StepAbout';
+import { StepTimeHorizon } from './steps/StepTimeHorizon';
+import { StepProvince } from './steps/StepProvince';
+import { StepDownPayment } from './steps/StepDownPayment';
+import { StepAccounts } from './steps/StepAccounts';
+import { StepHomePrice } from './steps/StepHomePrice';
+import { StepHomeType } from './steps/StepHomeType';
+import { StepMortgageRate } from './steps/StepMortgageRate';
+import { StepAmortization } from './steps/StepAmortization';
+import { StepRentAmount } from './steps/StepRentAmount';
+import { StepRentGrowth } from './steps/StepRentGrowth';
+import { StepMobility } from './steps/StepMobility';
+import { StepTaxShelters } from './steps/StepTaxShelters';
+import { StepFinancials } from './steps/StepFinancials';
 
-// Phase map:
-//  0  Intro (auto)
-//  1  About you (name + income)
-//  2  Time horizon
-//  3  Province
-//  4  Down payment + equity
-//  5  Account allocation (TFSA / FHSA / RRSP room)
-//  6  Home price
-//  7  Home type
-//  8  Mortgage rate
-//  9  Amortization + renewal
-// 10  Monthly rent
-// 11  Rent growth
-// 12  Mobility
-// 13  Tax shelters (FTB + review)
-// 14  Tax rate + discipline
-// 15  Done (results)
 type Phase = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15;
-const MAX_PHASE = 15;
-
-// Owner-specific inputs: changing these should NOT animate the renter line
-const OWNER_PHASES = new Set<Phase>([4, 6, 7, 8, 9, 12]);
-// Renter-specific inputs: changing these should NOT animate the owner line
-const RENTER_PHASES = new Set<Phase>([5, 10, 11]);
+const MAX_PHASE = TOTAL_STEPS;
 
 interface State {
   phase: Phase;
@@ -159,12 +138,12 @@ export default function ExperiencePage() {
     }
   }
 
-  const showOverlay = phase >= 0 && phase <= 14;
+  const showOverlay = phase >= 0 && phase <= STEP.FINANCIALS;
 
   // Line isolation: label which side is "active" so the chart can animate only that line
   const activeSide: 'owner' | 'renter' | 'both' =
-    OWNER_PHASES.has(phase as Phase) ? 'owner'
-    : RENTER_PHASES.has(phase as Phase) ? 'renter'
+    OWNER_STEPS.has(phase) ? 'owner'
+    : RENTER_STEPS.has(phase) ? 'renter'
     : 'both';
 
   const bgColor = 'var(--color-bg)';
@@ -392,7 +371,7 @@ export default function ExperiencePage() {
               {/* Left column — questions and controls */}
               <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 {/* Progress bar — sits at top of panel, no padding */}
-                {phase >= 1 && phase <= 14 && (
+                {phase >= 1 && phase <= STEP.FINANCIALS && (
                   <ProgressBar phase={phase} total={MAX_PHASE - 1} />
                 )}
 
@@ -418,54 +397,54 @@ export default function ExperiencePage() {
 
                   {/* Phase content */}
                   <AnimatePresence mode="wait">
-                    {phase === 0 && <Phase0Intro key="p0" />}
-                    {phase === 1 && (
-                      <Phase1About key="p1" name={name} onName={setName} inputs={inputs} patch={patch} />
+                    {phase === STEP.INTRO && <StepIntro key="intro" />}
+                    {phase === STEP.ABOUT && (
+                      <StepAbout key="about" name={name} onName={setName} inputs={inputs} patch={patch} />
                     )}
-                    {phase === 2 && (
-                      <Phase1TimeHorizon key="p2" inputs={inputs} patch={patch} />
+                    {phase === STEP.TIME_HORIZON && (
+                      <StepTimeHorizon key="time-horizon" inputs={inputs} patch={patch} />
                     )}
-                    {phase === 3 && (
-                      <Phase2Province key="p3" inputs={inputs} patch={patch} />
+                    {phase === STEP.PROVINCE && (
+                      <StepProvince key="province" inputs={inputs} patch={patch} />
                     )}
-                    {phase === 4 && (
-                      <Phase3Down key="p4" inputs={inputs} patch={patch} name={name} city={inputs.province === 'ON' ? 'Ontario' : inputs.province} />
+                    {phase === STEP.DOWN_PAYMENT && (
+                      <StepDownPayment key="down-payment" inputs={inputs} patch={patch} name={name} city={inputs.province === 'ON' ? 'Ontario' : inputs.province} />
                     )}
-                    {phase === 5 && (
-                      <Phase4Accounts key="p5" inputs={inputs} patch={patch} />
+                    {phase === STEP.ACCOUNTS && (
+                      <StepAccounts key="accounts" inputs={inputs} patch={patch} />
                     )}
-                    {phase === 6 && (
-                      <Phase3Price key="p6" inputs={inputs} patch={patch} />
+                    {phase === STEP.HOME_PRICE && (
+                      <StepHomePrice key="home-price" inputs={inputs} patch={patch} />
                     )}
-                    {phase === 7 && (
-                      <Phase3HomeType key="p7" inputs={inputs} patch={patch} />
+                    {phase === STEP.HOME_TYPE && (
+                      <StepHomeType key="home-type" inputs={inputs} patch={patch} />
                     )}
-                    {phase === 8 && (
-                      <Phase7Rate key="p8" inputs={inputs} patch={patch} />
+                    {phase === STEP.MORTGAGE_RATE && (
+                      <StepMortgageRate key="mortgage-rate" inputs={inputs} patch={patch} />
                     )}
-                    {phase === 9 && (
-                      <Phase8Amort key="p9" inputs={inputs} patch={patch} />
+                    {phase === STEP.AMORTIZATION && (
+                      <StepAmortization key="amortization" inputs={inputs} patch={patch} />
                     )}
-                    {phase === 10 && (
-                      <Phase4Renting key="p10" inputs={inputs} patch={patch} />
+                    {phase === STEP.RENT_AMOUNT && (
+                      <StepRentAmount key="rent-amount" inputs={inputs} patch={patch} />
                     )}
-                    {phase === 11 && (
-                      <Phase10RentGrowth key="p11" inputs={inputs} patch={patch} />
+                    {phase === STEP.RENT_GROWTH && (
+                      <StepRentGrowth key="rent-growth" inputs={inputs} patch={patch} />
                     )}
-                    {phase === 12 && (
-                      <Phase5Mobility key="p12" inputs={inputs} patch={patch} />
+                    {phase === STEP.MOBILITY && (
+                      <StepMobility key="mobility" inputs={inputs} patch={patch} />
                     )}
-                    {phase === 13 && (
-                      <Phase9Shelters key="p13" inputs={inputs} patch={patch} sim={sim} />
+                    {phase === STEP.TAX_SHELTERS && (
+                      <StepTaxShelters key="tax-shelters" inputs={inputs} patch={patch} sim={sim} />
                     )}
-                    {phase === 14 && (
-                      <Phase6Financial key="p14" inputs={inputs} patch={patch} sim={sim} />
+                    {phase === STEP.FINANCIALS && (
+                      <StepFinancials key="financials" inputs={inputs} patch={patch} sim={sim} />
                     )}
                   </AnimatePresence>
                 </div>
 
                 {/* Footer button */}
-                {phase > 0 && phase <= 14 && (
+                {phase > 0 && phase <= STEP.FINANCIALS && (
                   <div style={{ padding: '8px 28px 24px', flexShrink: 0, paddingBottom: 'max(24px, env(safe-area-inset-bottom, 0px))' }}>
                     <button
                       onClick={advance}
@@ -473,21 +452,21 @@ export default function ExperiencePage() {
                         width: '100%', borderRadius: '8px', height: '56px',
                         fontSize: '14px', fontWeight: 500, cursor: 'pointer',
                         border: 'none', letterSpacing: '-0.01em',
-                        backgroundColor: phase === 14 ? 'var(--color-accent-cta)' : 'var(--color-btn-primary-bg)',
-                        color: phase === 14 ? '#1C1B1B' : 'var(--color-btn-primary-text)',
+                        backgroundColor: phase === STEP.FINANCIALS ? 'var(--color-accent-cta)' : 'var(--color-btn-primary-bg)',
+                        color: phase === STEP.FINANCIALS ? '#1C1B1B' : 'var(--color-btn-primary-text)',
                         transition: 'opacity 0.15s',
                       }}
                       onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
                       onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
                     >
-                      {phase === 14 ? 'See your result →' : 'Continue →'}
+                      {phase === STEP.FINANCIALS ? 'See your result →' : 'Continue →'}
                     </button>
                   </div>
                 )}
               </div>
 
               {/* Right column — chalkboard context panel (hidden below md breakpoint) */}
-              {phase >= 1 && phase <= 14 && (
+              {phase >= 1 && phase <= STEP.FINANCIALS && (
                 <ChalkPanel phase={phase} inputs={inputs} sim={sim} />
               )}
             </div>

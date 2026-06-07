@@ -15,7 +15,7 @@ const fmt = new Intl.NumberFormat('en-CA', {
   maximumFractionDigits: 0,
 });
 
-export function Phase4Renting({ inputs, patch }: Props) {
+export function StepRentAmount({ inputs, patch }: Props) {
   const deposit = 2 * inputs.monthlyRent;
 
   const rentToPrice = inputs.homePrice > 0 ? (inputs.monthlyRent * 12) / inputs.homePrice : 0;

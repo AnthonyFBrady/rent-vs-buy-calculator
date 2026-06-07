@@ -15,7 +15,7 @@ const fmt = new Intl.NumberFormat('en-CA', {
   maximumFractionDigits: 0,
 });
 
-export function Phase4Accounts({ inputs, patch }: Props) {
+export function StepAccounts({ inputs, patch }: Props) {
   const totalCash = inputs.ownerPriorEquity ?? 0;
   const hasCash = totalCash > 0;
 

@@ -24,7 +24,7 @@ const PROVINCES: { value: Province; label: string; note?: string }[] = [
   { value: 'PE', label: 'PEI' },
 ];
 
-export function Phase2Province({ inputs, patch }: Props) {
+export function StepProvince({ inputs, patch }: Props) {
   const current = inputs.province;
   const [taxOpen, setTaxOpen] = useState(false);
   const taxPct = (inputs.propertyTaxPct * 100).toFixed(2);

@@ -8,7 +8,7 @@ interface Props {
   patch: (p: Partial<CalculatorInputs>) => void;
 }
 
-export function Phase1TimeHorizon({ inputs, patch }: Props) {
+export function StepTimeHorizon({ inputs, patch }: Props) {
   const years = inputs.holdingPeriodYears;
 
   return (

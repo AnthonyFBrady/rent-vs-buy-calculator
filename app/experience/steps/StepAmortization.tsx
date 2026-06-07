@@ -9,7 +9,7 @@ interface Props {
   patch: (p: Partial<CalculatorInputs>) => void;
 }
 
-export function Phase8Amort({ inputs, patch }: Props) {
+export function StepAmortization({ inputs, patch }: Props) {
   const currentYear = new Date().getFullYear();
   const ratePct = (inputs.mortgageRatePct * 100).toFixed(1);
   const renewalRatePct = ((inputs.mortgageRenewalRatePct ?? inputs.mortgageRatePct) * 100).toFixed(1);

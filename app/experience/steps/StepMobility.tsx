@@ -15,7 +15,7 @@ const fmtCad = new Intl.NumberFormat('en-CA', {
   maximumFractionDigits: 0,
 });
 
-export function Phase5Mobility({ inputs, patch }: Props) {
+export function StepMobility({ inputs, patch }: Props) {
   const ownerMoves = inputs.ownerMoves ?? 0;
   const renterMoves = inputs.renterMoves ?? 0;
   const ownerCostEst = inputs.homePrice * 0.09;

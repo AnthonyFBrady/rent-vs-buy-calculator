@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as d3 from 'd3';
 import type { CalculatorInputs, SimulationResult, SensitivityResult } from '@/engine';
+import { STEP, OWNER_LINE_STEP, RENTER_LINE_STEP, RESULTS_STEP } from './config/steps';
 
 interface EventMarker {
   id: string;
@@ -191,14 +192,14 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
   }, []);
 
   useEffect(() => {
-    if (phase >= 4 && !ownerDrawn) {
+    if (phase >= OWNER_LINE_STEP && !ownerDrawn) {
       const t = setTimeout(() => setOwnerDrawn(true), 800);
       return () => clearTimeout(t);
     }
   }, [phase, ownerDrawn]);
 
   useEffect(() => {
-    if (phase >= 10 && !renterDrawn) {
+    if (phase >= RENTER_LINE_STEP && !renterDrawn) {
       const t = setTimeout(() => setRenterDrawn(true), 800);
       return () => clearTimeout(t);
     }
@@ -262,7 +263,7 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
   );
 
   const bands = useMemo(() => {
-    if (!sensitivity || phase < 15) return null;
+    if (!sensitivity || phase < RESULTS_STEP) return null;
     const ownerLowPts = [{ year: 0, value: 0 }, ...sensitivity.ownerLow.yearByYear.map((y) => ({ year: y.year, value: ownerTotal(y) }))];
     const ownerHighPts = [{ year: 0, value: 0 }, ...sensitivity.ownerHigh.yearByYear.map((y) => ({ year: y.year, value: ownerTotal(y) }))];
     const renterLowPts = [{ year: 0, value: sensitivity.renterLow.yearByYear[0]?.renterPortfolioStart ?? 0 }, ...sensitivity.renterLow.yearByYear.map((y) => ({ year: y.year, value: renterTotal(y) }))];
@@ -291,12 +292,12 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
   const renterLeadArea = useMemo(() => d3.area<{ year: number; owner: number; renter: number }>().x(d => x(d.year)).y0(d => y(d.owner)).y1(d => y(Math.max(d.owner, d.renter))).curve(d3.curveCatmullRom.alpha(0.5)), [x, y]);
   const ownerLeadArea = useMemo(() => d3.area<{ year: number; owner: number; renter: number }>().x(d => x(d.year)).y0(d => y(d.renter)).y1(d => y(Math.max(d.owner, d.renter))).curve(d3.curveCatmullRom.alpha(0.5)), [x, y]);
 
-  const ownerPath = phase >= 4 ? (linePath(ownerPoints) ?? '') : '';
-  const renterPath = phase >= 10 ? (linePath(renterPoints) ?? '') : '';
-  const ownerAreaFill = phase >= 4 ? (baselineAreaGen(ownerPoints) ?? '') : '';
-  const renterAreaFill = phase >= 10 ? (baselineAreaGen(renterPoints) ?? '') : '';
-  const renterLeadPath = (phase >= 10 ? renterLeadArea(mergedPts) : null) ?? '';
-  const ownerLeadPath = (phase >= 4 ? ownerLeadArea(mergedPts) : null) ?? '';
+  const ownerPath = phase >= OWNER_LINE_STEP ? (linePath(ownerPoints) ?? '') : '';
+  const renterPath = phase >= RENTER_LINE_STEP ? (linePath(renterPoints) ?? '') : '';
+  const ownerAreaFill = phase >= OWNER_LINE_STEP ? (baselineAreaGen(ownerPoints) ?? '') : '';
+  const renterAreaFill = phase >= RENTER_LINE_STEP ? (baselineAreaGen(renterPoints) ?? '') : '';
+  const renterLeadPath = (phase >= RENTER_LINE_STEP ? renterLeadArea(mergedPts) : null) ?? '';
+  const ownerLeadPath = (phase >= OWNER_LINE_STEP ? ownerLeadArea(mergedPts) : null) ?? '';
 
   const ownerBandPath = useMemo(() => { if (!bands) return ''; const m = bands.ownerLowPts.map((p, i) => ({ year: p.year, low: Math.min(p.value, bands.ownerHighPts[i]?.value ?? p.value), high: Math.max(p.value, bands.ownerHighPts[i]?.value ?? p.value) })); return areaPath(m) ?? ''; }, [bands, areaPath]);
   const renterBandPath = useMemo(() => { if (!bands) return ''; const m = bands.renterLowPts.map((p, i) => ({ year: p.year, low: Math.min(p.value, bands.renterHighPts[i]?.value ?? p.value), high: Math.max(p.value, bands.renterHighPts[i]?.value ?? p.value) })); return areaPath(m) ?? ''; }, [bands, areaPath]);
@@ -305,8 +306,8 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
   const yTicks = y.ticks(5);
 
   const events = useMemo(() => {
-    if (phase < 4) return [];
-    return computeEvents(result, inputs).filter(ev => ev.id !== 'breakeven' || phase >= 10);
+    if (phase < OWNER_LINE_STEP) return [];
+    return computeEvents(result, inputs).filter(ev => ev.id !== 'breakeven' || phase >= RENTER_LINE_STEP);
   }, [result, inputs, phase]);
 
   const hoverData = useMemo(() => {
@@ -347,26 +348,26 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
   const advantage = result.exit.netAdvantageToOwner;
   const winner = advantage > 5000 ? 'buy' : advantage < -5000 ? 'rent' : 'tie';
 
-  const ownerLabelValue = phase >= 15
+  const ownerLabelValue = phase >= RESULTS_STEP
     ? ownerExitValue
     : (ownerPoints[ownerPoints.length - 1]?.value ?? 0);
-  const renterLabelValue = phase >= 15
+  const renterLabelValue = phase >= RESULTS_STEP
     ? renterExitValue
     : (renterPoints[renterPoints.length - 1]?.value ?? 0);
-  const ownerEndRawY = phase >= 4 ? y(ownerLabelValue) : 0;
-  const renterEndRawY = phase >= 10 ? y(renterLabelValue) : 0;
+  const ownerEndRawY = phase >= OWNER_LINE_STEP ? y(ownerLabelValue) : 0;
+  const renterEndRawY = phase >= RENTER_LINE_STEP ? y(renterLabelValue) : 0;
   const MIN_GAP = 26;
   let ownerLabelY = ownerEndRawY;
   let renterLabelY = renterEndRawY;
-  if (phase >= 10 && Math.abs(ownerEndRawY - renterEndRawY) < MIN_GAP) {
+  if (phase >= RENTER_LINE_STEP && Math.abs(ownerEndRawY - renterEndRawY) < MIN_GAP) {
     const mid = (ownerEndRawY + renterEndRawY) / 2;
     ownerLabelY = ownerEndRawY <= renterEndRawY ? mid - MIN_GAP / 2 : mid + MIN_GAP / 2;
     renterLabelY = ownerEndRawY <= renterEndRawY ? mid + MIN_GAP / 2 : mid - MIN_GAP / 2;
   }
 
-  const showXAxis = phase >= 2;
-  const showYAxis = phase >= 4;
-  const showGrid = phase >= 4;
+  const showXAxis = phase >= STEP.TIME_HORIZON;
+  const showYAxis = phase >= OWNER_LINE_STEP;
+  const showGrid = phase >= OWNER_LINE_STEP;
 
   const tooltipLeft = cursorPos ? (cursorPos.x > width * 0.58 ? cursorPos.x - 168 : cursorPos.x + 16) : 0;
   const tooltipTop = cursorPos ? Math.max(8, cursorPos.y - 60) : 0;
@@ -396,14 +397,14 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
   // Each phase adds a confirmed parameter: price (5), down payment (6), rate (7), amort (8).
   // The line transitions from dashed+translucent toward fully solid.
   const ownerLineDash: string =
-    phase <= 5 ? '7 5' :
-    phase === 6 ? '4 3' :
-    phase === 7 ? '2 1.5' :
+    phase <= STEP.ACCOUNTS ? '7 5' :
+    phase === STEP.HOME_PRICE ? '4 3' :
+    phase === STEP.HOME_TYPE ? '2 1.5' :
     '1000 0';
   const ownerLineOpacity: number =
-    phase <= 5 ? 0.45 :
-    phase === 6 ? 0.68 :
-    phase === 7 ? 0.88 :
+    phase <= STEP.ACCOUNTS ? 0.45 :
+    phase === STEP.HOME_PRICE ? 0.68 :
+    phase === STEP.HOME_TYPE ? 0.88 :
     1.0;
 
   return (
@@ -412,7 +413,7 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
       {/* Outcome headline — handled by the hero banner in page.tsx at phase 14 */}
 
       {/* Narrative progress header — fills in as user answers each phase */}
-      {phase >= 1 && phase < 15 && (
+      {phase >= 1 && phase < RESULTS_STEP && (
         <motion.div
           key="narrative-header"
           initial={{ opacity: 0 }}
@@ -438,14 +439,14 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
             {displayName ?? '______'}
           </span>
           {' buys or rents in '}
-          {phase >= 3 ? (PROVINCE_NAMES[inputs.province] ?? inputs.province) : '______'}
+          {phase >= STEP.PROVINCE ? (PROVINCE_NAMES[inputs.province] ?? inputs.province) : '______'}
           {' with '}
-          {phase >= 4 ? `${Math.round(inputs.downPaymentPct * 100)}%` : '______'}
+          {phase >= OWNER_LINE_STEP ? `${Math.round(inputs.downPaymentPct * 100)}%` : '______'}
           {' down'}
-          {phase >= 4 && (
+          {phase >= OWNER_LINE_STEP && (
             <>{' · '}<span style={{ color: OWNER_COLOR }}>{fmtWealth(inputs.homePrice)}</span></>
           )}
-          {phase >= 7 && inputs.homeType && (
+          {phase >= STEP.HOME_TYPE && inputs.homeType && (
             <>{' '}<span style={{ opacity: 0.7 }}>{
               inputs.homeType === 'condo-apt' ? 'condo' :
               inputs.homeType === 'condo-townhouse' ? 'condo TH' :
@@ -476,7 +477,7 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
         <g transform={`translate(${MARGIN.left},${MARGIN.top})`}>
 
           {/* Province stamp — top-right of chart, persists from phase 3; hidden on narrow to avoid overlap with narrative header */}
-          {!isNarrow && phase >= 3 && phase < 15 && (
+          {!isNarrow && phase >= STEP.PROVINCE && phase < RESULTS_STEP && (
             <motion.text
               x={innerWidth}
               y={-22}
@@ -559,7 +560,7 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
               graceful exit when phase 4 is entered — they slide down and fade before the
               owner data line draws in at phase 5. */}
           <AnimatePresence>
-            {phase <= 3 && innerWidth > 0 && ownerRaceA && renterRaceA && (
+            {phase <= STEP.PROVINCE && innerWidth > 0 && ownerRaceA && renterRaceA && (
               <motion.g
                 key="intro-lines"
                 initial={{ opacity: 1, y: 0 }}
@@ -621,14 +622,14 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
           </AnimatePresence>
 
           {/* Break-even guide */}
-          {result.breakEvenYear !== null && phase >= 10 && (
+          {result.breakEvenYear !== null && phase >= RENTER_LINE_STEP && (
             <g transform={`translate(${x(result.breakEvenYear)},0)`}>
               <line y1={0} y2={innerHeight} stroke={CROSS_COLOR} strokeDasharray="3 5" strokeOpacity={0.4} strokeWidth={1.5} />
             </g>
           )}
 
           {/* Mortgage-free year — top-left label, shown from phase 7 once amort is confirmed */}
-          {phase >= 8 && (
+          {phase >= STEP.MORTGAGE_RATE && (
             <motion.text
               x={0} y={-22}
               fontSize={10} fill={OWNER_COLOR} fillOpacity={0.5}
@@ -641,7 +642,7 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
           )}
 
           {/* Post-payoff acceleration zone */}
-          {inputs.amortizationYears < inputs.holdingPeriodYears && phase >= 4 && (
+          {inputs.amortizationYears < inputs.holdingPeriodYears && phase >= OWNER_LINE_STEP && (
             <motion.g
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -671,7 +672,7 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
           )}
 
           {/* Interline fill (both lines present) */}
-          {phase >= 10 && (
+          {phase >= RENTER_LINE_STEP && (
             <g clipPath="url(#chart-clip)">
               <motion.path d={renterLeadPath} fill={RENTER_COLOR} fillOpacity={0.09} stroke="none"
                 initial={{ opacity: 0 }} animate={{ opacity: 1, d: renterLeadPath }}
@@ -687,7 +688,7 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
           {renterBandPath && <motion.path d={renterBandPath} fill={RENTER_COLOR} fillOpacity={0.06} stroke="none" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.2 }} />}
 
           {/* Exit haircut dashed segments (results phase only) */}
-          {phase >= 15 && (
+          {phase >= RESULTS_STEP && (
             <>
               <motion.line
                 x1={x(exitYear)} y1={y(ownerPoints[ownerPoints.length - 1]?.value ?? 0)}
@@ -717,14 +718,14 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
           )}
 
           {/* Area fills — gradient from line to chart baseline, rendered behind line strokes */}
-          {phase >= 4 && ownerAreaFill && (
+          {phase >= OWNER_LINE_STEP && ownerAreaFill && (
             <motion.path
               d={ownerAreaFill} fill="url(#owner-fill-grad)" stroke="none" clipPath="url(#chart-clip)"
               initial={{ opacity: 0 }} animate={{ opacity: 1, d: ownerAreaFill }}
               transition={{ duration: 0.6, ease: 'easeOut' }}
             />
           )}
-          {phase >= 10 && renterAreaFill && (
+          {phase >= RENTER_LINE_STEP && renterAreaFill && (
             <motion.path
               d={renterAreaFill} fill="url(#renter-fill-grad)" stroke="none" clipPath="url(#chart-clip)"
               initial={{ opacity: 0 }} animate={{ opacity: 1, d: renterAreaFill }}
@@ -734,7 +735,7 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
 
           {/* Owner line (phase 4+) — progressive commitment: dashed+translucent at phase 4,
               solidifying through phases 5–6, fully solid at phase 7+ */}
-          {phase >= 4 && ownerPath && (
+          {phase >= OWNER_LINE_STEP && ownerPath && (
             <motion.path
               d={ownerPath} fill="none" stroke={OWNER_COLOR} strokeWidth={2.5}
               strokeLinecap="round" strokeLinejoin="round"
@@ -760,7 +761,7 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
           )}
 
           {/* Renter line (phase 9+) */}
-          {phase >= 10 && renterPath && (
+          {phase >= RENTER_LINE_STEP && renterPath && (
             <motion.path
               d={renterPath} fill="none" stroke={RENTER_COLOR} strokeWidth={2.5}
               strokeLinecap="round" strokeLinejoin="round"
@@ -774,20 +775,20 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
           )}
 
           {/* Year-0 anchor dot — appears at phase 4 when down payment sets the starting position */}
-          {drawn && phase >= 4 && phase < 9 && (
+          {drawn && phase >= OWNER_LINE_STEP && phase < STEP.AMORTIZATION && (
             <motion.circle
               cx={x(0)}
               cy={y(ownerPoints[0]?.value ?? 0)}
               r={3.5}
               fill={OWNER_COLOR}
               initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: phase >= 8 ? 0 : 0.65 }}
+              animate={{ scale: 1, opacity: phase >= STEP.MORTGAGE_RATE ? 0 : 0.65 }}
               transition={{ type: 'spring', stiffness: 400, damping: 22, delay: 0.15 }}
             />
           )}
 
           {/* Owner label pill — appears at phase 7 once the line is nearly committed */}
-          {drawn && phase >= 8 && (
+          {drawn && phase >= STEP.MORTGAGE_RATE && (
             <motion.g
               initial={{ opacity: 0, y: ownerLabelY }}
               animate={{ opacity: 1, y: ownerLabelY }}
@@ -806,7 +807,7 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
               </text>
             </motion.g>
           )}
-          {drawn && phase >= 10 && (
+          {drawn && phase >= RENTER_LINE_STEP && (
             <motion.g
               initial={{ opacity: 0, y: renterLabelY }}
               animate={{ opacity: 1, y: renterLabelY }}
@@ -825,7 +826,7 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
               </text>
             </motion.g>
           )}
-          {drawn && phase >= 15 && (
+          {drawn && phase >= RESULTS_STEP && (
             <motion.text
               x={innerWidth + 12}
               dy="0.35em"
@@ -893,8 +894,8 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
           {hoverData && (
             <g transform={`translate(${x(hoverData.year)},0)`}>
               <line y1={0} y2={innerHeight} stroke={isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'} strokeWidth={1} />
-              {phase >= 4 && <circle cy={y(hoverData.owner)} r={4.5} fill={OWNER_COLOR} />}
-              {phase >= 10 && <circle cy={y(hoverData.renter)} r={4.5} fill={RENTER_COLOR} />}
+              {phase >= OWNER_LINE_STEP && <circle cy={y(hoverData.owner)} r={4.5} fill={OWNER_COLOR} />}
+              {phase >= RENTER_LINE_STEP && <circle cy={y(hoverData.renter)} r={4.5} fill={RENTER_COLOR} />}
             </g>
           )}
 
@@ -912,7 +913,7 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
             style={{ position: 'absolute', left: tooltipLeft, top: tooltipTop, pointerEvents: 'none', zIndex: 20, width: '180px', backgroundColor: surfaceColor, border: `1px solid ${borderColor}`, borderRadius: '7px', padding: '10px 13px', color: textColor }}>
             <p style={{ fontSize: '10px', letterSpacing: '0.07em', opacity: 0.4, marginBottom: '8px', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>YEAR {hoverData.year}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-              {phase >= 4 && (
+              {phase >= OWNER_LINE_STEP && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                     <span style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', backgroundColor: OWNER_COLOR, flexShrink: 0 }} />
@@ -921,7 +922,7 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
                   <span style={{ fontSize: '12px', color: textColor, fontFamily: 'var(--font-serif), Georgia, serif', fontWeight: 500 }}>{fmtWealth(hoverData.owner)}</span>
                 </div>
               )}
-              {phase >= 10 && (
+              {phase >= RENTER_LINE_STEP && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                     <span style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', backgroundColor: RENTER_COLOR, flexShrink: 0 }} />
@@ -931,15 +932,15 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
                 </div>
               )}
               {/* Year-0 breakdown — explains different starting positions */}
-              {phase >= 4 && hoverData.year === 0 && (
+              {phase >= OWNER_LINE_STEP && hoverData.year === 0 && (
                 <div style={{ marginTop: '4px', paddingTop: '6px', borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`, display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                  {phase >= 4 && (
+                  {phase >= OWNER_LINE_STEP && (
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ fontSize: '9.5px', color: OWNER_COLOR, opacity: 0.75, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>Down payment equity</span>
                       <span style={{ fontSize: '9.5px', color: OWNER_COLOR, opacity: 0.75, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>{Math.round(inputs.downPaymentPct * 100)}% of home</span>
                     </div>
                   )}
-                  {phase >= 10 && (
+                  {phase >= RENTER_LINE_STEP && (
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ fontSize: '9.5px', color: RENTER_COLOR, opacity: 0.75, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>Invested equivalent</span>
                       <span style={{ fontSize: '9.5px', color: RENTER_COLOR, opacity: 0.75, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>down pmt − deposit</span>
@@ -947,7 +948,7 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
                   )}
                 </div>
               )}
-              {phase >= 10 && hoverData.year > 0 && (
+              {phase >= RENTER_LINE_STEP && hoverData.year > 0 && (
                 <div style={{ marginTop: '4px', paddingTop: '6px', borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                   <span style={{ fontSize: '10px', opacity: 0.4, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>{hoverData.owner > hoverData.renter ? 'Buy leads' : 'Rent leads'}</span>
                   <span style={{ fontSize: '12px', color: hoverData.owner > hoverData.renter ? OWNER_COLOR : RENTER_COLOR, fontFamily: 'var(--font-serif), Georgia, serif' }}>
@@ -955,7 +956,7 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
                   </span>
                 </div>
               )}
-              {phase >= 10 && hoverData.inPlaceRent != null && hoverData.year > 0 && (
+              {phase >= RENTER_LINE_STEP && hoverData.inPlaceRent != null && hoverData.year > 0 && (
                 <div style={{ marginTop: '4px', paddingTop: '6px', borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`, display: 'flex', flexDirection: 'column', gap: '3px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                     <span style={{ fontSize: '10px', color: textColor, opacity: 0.6, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>In-place rent</span>
@@ -975,7 +976,7 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
                   )}
                 </div>
               )}
-              {phase >= 4 && hoverData.ownerMonthlyPayment != null && hoverData.ownerMonthlyPayment > 0 && hoverData.year > 0 && hoverData.year <= inputs.amortizationYears && (
+              {phase >= OWNER_LINE_STEP && hoverData.ownerMonthlyPayment != null && hoverData.ownerMonthlyPayment > 0 && hoverData.year > 0 && hoverData.year <= inputs.amortizationYears && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                   <span style={{ fontSize: '10px', color: textColor, opacity: 0.5, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>P+I</span>
                   <span style={{ fontSize: '10px', color: textColor, opacity: 0.7, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>{fmtWealth(hoverData.ownerMonthlyPayment)}/mo</span>
@@ -992,7 +993,7 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
           <motion.div key="event-card"
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }} transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
-            style={{ position: 'absolute', right: '24px', top: phase >= 15 ? '80px' : '24px', zIndex: 20, maxWidth: '228px', backgroundColor: surfaceColor, border: `1px solid ${borderColor}`, borderRadius: '8px', padding: '14px 16px', color: textColor }}>
+            style={{ position: 'absolute', right: '24px', top: phase >= RESULTS_STEP ? '80px' : '24px', zIndex: 20, maxWidth: '228px', backgroundColor: surfaceColor, border: `1px solid ${borderColor}`, borderRadius: '8px', padding: '14px 16px', color: textColor }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
               <div>
                 <p style={{ fontSize: '10px', letterSpacing: '0.06em', color: activeEventData.side === 'owner' ? OWNER_COLOR : activeEventData.side === 'renter' ? RENTER_COLOR : CROSS_COLOR, marginBottom: '3px', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
@@ -1013,12 +1014,12 @@ export function ExperienceChart({ result, sensitivity, phase, isDark, activeEven
       </AnimatePresence>
 
       {/* Bottom legend */}
-      {!hoverData && phase >= 8 && (
+      {!hoverData && phase >= STEP.MORTGAGE_RATE && (
         <div style={{ position: 'absolute', bottom: '8px', left: 0, right: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', fontSize: '11px', color: labelColor, fontFamily: 'var(--font-sans), system-ui, sans-serif', pointerEvents: 'none' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span style={{ display: 'inline-block', height: '2px', width: '16px', borderRadius: '2px', backgroundColor: OWNER_COLOR }} />{ownerLabel}
           </span>
-          {phase >= 10 && (
+          {phase >= RENTER_LINE_STEP && (
             <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ display: 'inline-block', height: '2px', width: '16px', borderRadius: '2px', backgroundColor: RENTER_COLOR }} />{renterLabel}
             </span>

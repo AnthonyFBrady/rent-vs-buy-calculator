@@ -16,7 +16,7 @@ const fmt = new Intl.NumberFormat('en-CA', {
   maximumFractionDigits: 0,
 });
 
-export function Phase9Shelters({ inputs, patch, sim }: Props) {
+export function StepTaxShelters({ inputs, patch, sim }: Props) {
   const annualIncome = inputs.annualIncome ?? 120_000;
   const rrspAnnualRoom = Math.min(annualIncome * 0.18, 31_560);
 

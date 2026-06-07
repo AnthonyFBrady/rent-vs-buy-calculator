@@ -38,7 +38,7 @@ function PersonIllustration() {
   );
 }
 
-export function Phase1About({ name, onName, inputs, patch }: Props) {
+export function StepAbout({ name, onName, inputs, patch }: Props) {
   const incomeK = Math.round((inputs.annualIncome ?? 120_000) / 1_000);
 
   return (

@@ -46,7 +46,7 @@ const HOME_TYPE_IMPACT: Record<HomeType, { headline: string; details: string }> 
   },
 };
 
-export function Phase3HomeType({ inputs, patch }: Props) {
+export function StepHomeType({ inputs, patch }: Props) {
   function handleHomeType(ht: HomeType) {
     const d = homeTypeDefaults(ht);
     patch({
