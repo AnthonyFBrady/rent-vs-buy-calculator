@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg:                #F5F3EF;
+  --color-surface:           #FCFCFC;
+  --color-hover:             #ECEAE6;
+  --color-text:              #32302F;
+  --color-text-muted:        #686664;
+  --color-outline:           #E4E2E1;
+  --color-outline-active:    #AFAAA7;
+  --color-btn-primary-bg:    #32302F;
+  --color-btn-primary-text:  #FFFFFF;
+  --color-btn-ghost-bg:      #FCFCFC;
+  --color-btn-ghost-text:    #32302F;
+  --color-input-bg:          #FFFFFF;
+  --color-input-text:        #32302F;
+  --color-input-placeholder: #686664;
+  --color-positive:          #486635;
+  --color-negative:          #A43D12;
+  --color-scrollbar:         #AFAAA7;
+  --color-owner:             #7C5A00;
+  --color-renter:            #0A7068;
+  --color-accent-cta:        #EEE3B1;
+  --color-cross:             #A78BFA;
+}
+
+.dark {
+  --color-bg:                #1C1B1B;
+  --color-surface:           #272523;
+  --color-hover:             #494645;
+  --color-text:              #FFFFFF;
+  --color-text-muted:        #C9C6C4;
+  --color-outline:           rgba(148,144,141,0.35);
+  --color-outline-active:    #1C1B1B;
+  --color-btn-primary-bg:    #FCFCFC;
+  --color-btn-primary-text:  #32302F;
+  --color-btn-ghost-bg:      #32302F;
+  --color-btn-ghost-text:    #FCFCFC;
+  --color-input-bg:          transparent;
+  --color-input-text:        #FFFFFF;
+  --color-input-placeholder: #C9C6C4;
+  --color-positive:          #99B56E;
+  --color-negative:          #FF8A71;
+  --color-scrollbar:         #FAF8F5;
+  --color-owner:             #E8C87A;
+  --color-renter:            #6CBFB8;
+  --color-accent-cta:        #EEE3B1;
+  --color-cross:             #A78BFA;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+  }
+
+  /* Optical sizing for all serif contexts — lets Fraunces choose the right design at any size */
+  .font-serif,
+  [class*="font-serif"] {
+    font-optical-sizing: auto;
+  }
+
+  /* Custom range slider — cross-browser, filled track via --slider-fill set in RangeInput.tsx */
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 2px;
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    background: linear-gradient(
+      to right,
+      var(--slider-color, var(--color-owner)) 0%,
+      var(--slider-color, var(--color-owner)) var(--slider-fill, 0%),
+      var(--color-outline) var(--slider-fill, 0%),
+      var(--color-outline) 100%
+    );
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--slider-color, var(--color-owner));
+    border: 2.5px solid var(--color-bg);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+
+  input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--slider-color, var(--color-owner));
+    border: 2.5px solid var(--color-bg);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+    cursor: pointer;
+  }
+
+  input[type="range"]:focus-visible::-webkit-slider-thumb {
+    outline: 2px solid var(--slider-color, var(--color-owner));
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .container-narrow {
+    @apply mx-auto max-w-3xl px-4 sm:px-6;
+  }
+}
+
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
