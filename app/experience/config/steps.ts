@@ -1,56 +1,54 @@
 /**
- * Canonical step registry.
- * When adding/removing a step: edit STEP here, then update page.tsx's STEP_COMPONENTS map.
- * All phase comparisons in ExperienceChart and elsewhere import from here — no magic numbers anywhere.
+ * Canonical step registry for the 8-step experience flow.
+ * No other file may hardcode phase numbers — always import from here.
  */
 
 export const STEP = {
-  INTRO:          0,
-  ABOUT:          1,
-  TIME_HORIZON:   2,
-  PROVINCE:       3,
-  DOWN_PAYMENT:   4,
-  ACCOUNTS:       5,
-  HOME_PRICE:     6,
-  HOME_TYPE:      7,
-  MORTGAGE_RATE:  8,
-  AMORTIZATION:   9,
-  RENT_AMOUNT:   10,
-  RENT_GROWTH:   11,
-  MOBILITY:      12,
-  TAX_SHELTERS:  13,
-  FINANCIALS:    14,
-  RESULTS:       15,
+  HOME:         0,
+  PROVINCE:     1,
+  DOWN_PAYMENT: 2,
+  MORTGAGE:     3,
+  RENT_HORIZON: 4,
+  MARKET:       5,
+  SITUATION:    6,
+  MOBILITY:     7,
 } as const;
 
 export type StepKey = keyof typeof STEP;
 export type StepIndex = typeof STEP[StepKey];
 
-/** Steps where only the owner line changes — renter line animates with duration: 0 */
-export const OWNER_STEPS = new Set<number>([
-  STEP.DOWN_PAYMENT,
-  STEP.HOME_PRICE,
-  STEP.HOME_TYPE,
-  STEP.MORTGAGE_RATE,
-  STEP.AMORTIZATION,
-  STEP.MOBILITY,
-]);
+/** Total question steps (exclusive — steps 0..7). */
+export const TOTAL_STEPS = 8;
 
-/** Steps where only the renter line changes — owner line animates with duration: 0 */
-export const RENTER_STEPS = new Set<number>([
-  STEP.ACCOUNTS,
-  STEP.RENT_AMOUNT,
-  STEP.RENT_GROWTH,
-]);
+export const STEP_HEADINGS: Record<number, string> = {
+  [STEP.PROVINCE]:     'Which province?',
+  [STEP.HOME]:         'What are you buying?',
+  [STEP.DOWN_PAYMENT]: 'How much are you putting down?',
+  [STEP.MORTGAGE]:     "What's the mortgage rate?",
+  [STEP.RENT_HORIZON]: "What's the rent, and how long will you stay?",
+  [STEP.MARKET]:       'What do the markets do?',
+  [STEP.SITUATION]:    'Tell me about yourself.',
+  [STEP.MOBILITY]:     'How often will each of you move?',
+};
 
-/** First step where the owner wealth line is drawn */
-export const OWNER_LINE_STEP  = STEP.DOWN_PAYMENT;  // 4
+export const STEP_WHY: Record<number, string> = {
+  [STEP.PROVINCE]:     'Land transfer tax and market conditions vary by province.',
+  [STEP.HOME]:         'Home price sets land transfer tax, CMHC, and total closing costs.',
+  [STEP.DOWN_PAYMENT]: 'Under 20% triggers CMHC insurance — a 2.8–4.0% upfront cost.',
+  [STEP.MORTGAGE]:     'Each 0.5% rate increase adds ~$50k to total interest on a $700k home.',
+  [STEP.RENT_HORIZON]: 'Your rent is the alternative. The horizon sets when the comparison ends.',
+  [STEP.MARKET]:       "Renting's advantage depends on what your down payment earns instead.",
+  [STEP.SITUATION]:    'Tax shelters shift the advantage by tens of thousands.',
+  [STEP.MOBILITY]:     'Owner moves cost roughly 9% of the home value each time. Renter moves are cheap but reset any rent-control discount.',
+};
 
-/** First step where the renter wealth line is drawn */
-export const RENTER_LINE_STEP = STEP.RENT_AMOUNT;   // 10
-
-/** First step where results-only UI (exit haircut, sensitivity bands) is shown */
-export const RESULTS_STEP     = STEP.RESULTS;        // 15
-
-/** Total number of question steps (excludes RESULTS). Used for progress bar. */
-export const TOTAL_STEPS      = STEP.RESULTS;        // 15
+export const CONTINUE_LABEL: Record<number, string> = {
+  [STEP.PROVINCE]:     'Continue',
+  [STEP.HOME]:         'Continue',
+  [STEP.DOWN_PAYMENT]: 'Continue',
+  [STEP.MORTGAGE]:     'Continue',
+  [STEP.RENT_HORIZON]: 'Continue',
+  [STEP.MARKET]:       'Continue',
+  [STEP.SITUATION]:    'Continue',
+  [STEP.MOBILITY]:     'See my result',
+};

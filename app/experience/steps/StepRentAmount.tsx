@@ -1,8 +1,7 @@
 ﻿'use client';
 
-import { motion } from 'motion/react';
 import type { CalculatorInputs } from '@/engine';
-import { TextInput } from '../components';
+import { TextInput, StepWrapper } from '../components';
 
 interface Props {
   inputs: CalculatorInputs;
@@ -23,17 +22,7 @@ export function StepRentAmount({ inputs, patch }: Props) {
   const rtpSignal: 'low' | 'mid' | 'high' = rentToPrice < 0.03 ? 'low' : rentToPrice > 0.05 ? 'high' : 'mid';
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -6 }}
-      transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-      className="flex flex-col"
-    >
-      <h2 className="mt-4 font-serif text-3xl leading-[1.15] tracking-[-0.02em] sm:text-4xl">
-        The renting scenario.
-      </h2>
-
+    <StepWrapper heading="Now: what would you pay in rent?">
       {/* Monthly rent */}
       <div className="mt-8">
         <TextInput
@@ -45,7 +34,6 @@ export function StepRentAmount({ inputs, patch }: Props) {
           min={500}
           max={20000}
           step={50}
-          focusColor="var(--color-renter)"
           description={`For a comparable home. First + last deposit (${fmt.format(deposit)}) is invested by the renter at year 0 and returned at exit.`}
         />
 
@@ -58,8 +46,6 @@ export function StepRentAmount({ inputs, patch }: Props) {
           </p>
         )}
       </div>
-
-
-    </motion.div>
+    </StepWrapper>
   );
 }

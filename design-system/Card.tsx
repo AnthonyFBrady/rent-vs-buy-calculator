@@ -34,7 +34,7 @@ export function Card({
   'aria-label': ariaLabel,
 }: CardProps) {
   const base: CSSProperties = {
-    borderRadius: '12px',
+    borderRadius: '16px',
     padding: PADDING[padding],
     transition: 'box-shadow 0.15s, border-color 0.15s',
     ...style,

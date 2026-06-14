@@ -1,10 +1,9 @@
-﻿'use client';
+'use client';
 
 import { useState } from 'react';
-import { motion } from 'motion/react';
 import type { CalculatorInputs, Province } from '@/engine';
 import { defaultInputsFor } from '@/engine';
-import { SelectionCard, RangeInput } from '../components';
+import { SelectionCard, RangeInput, StepAdvanced } from '../components';
 
 interface Props {
   inputs: CalculatorInputs;
@@ -12,9 +11,9 @@ interface Props {
 }
 
 const PROVINCES: { value: Province; label: string; note?: string }[] = [
-  { value: 'ON', label: 'Ontario', note: 'double LTT' },
+  { value: 'ON', label: 'Ontario',          note: '+Toronto LTT option' },
   { value: 'BC', label: 'British Columbia', note: 'rent control' },
-  { value: 'AB', label: 'Alberta', note: 'no LTT' },
+  { value: 'AB', label: 'Alberta',          note: 'no LTT' },
   { value: 'QC', label: 'Quebec' },
   { value: 'MB', label: 'Manitoba' },
   { value: 'SK', label: 'Saskatchewan' },
@@ -37,82 +36,83 @@ export function StepProvince({ inputs, patch }: Props) {
       homePrice: d.homePrice,
       monthlyRent: d.monthlyRent,
       rentControlCapPct: d.rentControlCapPct,
-      isTorontoMunicipalLTT: p === 'ON',
+      mortgageRatePct: d.mortgageRatePct,
+      isTorontoMunicipalLTT: false,
     });
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -6 }}
-      transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-      className="flex flex-col"
-    >
-
-      <h2 className="mt-4 font-serif text-3xl leading-[1.15] tracking-[-0.02em] sm:text-4xl">
-        Which province?
-      </h2>
-      <p className="mt-2 text-sm leading-relaxed text-muted">
-        Sets land transfer tax, rent control rules, and typical market prices.
-      </p>
-
-      <div className="mt-7 grid grid-cols-2 gap-2.5 sm:grid-cols-5">
+    <div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
         {PROVINCES.map((p) => (
           <SelectionCard
             key={p.value}
             selected={current === p.value}
             onClick={() => selectProvince(p.value)}
-            label={p.value}
-            note={p.note}
+            label={p.label}
+            sublabel={p.note}
+            compact
           />
         ))}
       </div>
 
       {current === 'ON' && (
-        <label className="mt-5 flex cursor-pointer items-center gap-3 text-sm">
+        <label
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            marginTop: '16px',
+            cursor: 'pointer',
+            fontSize: '13px',
+            color: 'var(--color-text-muted)',
+          }}
+        >
           <input
             type="checkbox"
-            checked={inputs.isTorontoMunicipalLTT ?? true}
+            checked={inputs.isTorontoMunicipalLTT ?? false}
             onChange={(e) => patch({ isTorontoMunicipalLTT: e.target.checked })}
-            style={{ accentColor: 'var(--color-owner)' }}
+            style={{ accentColor: 'var(--color-owner)', width: '15px', height: '15px' }}
           />
-          <span className="text-muted">Within the city of Toronto (adds municipal LTT)</span>
+          Within the City of Toronto (adds municipal LTT)
         </label>
       )}
 
-      {/* Property tax — collapsible */}
-      <div className="mt-5">
-        <button
-          type="button"
-          onClick={() => setTaxOpen((v) => !v)}
-          className="flex items-center gap-2 text-xs transition-opacity"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--color-text-muted)', opacity: 0.6 }}
-          onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.6'; }}
-        >
-          <span>{taxOpen ? '▾' : '▸'}</span>
-          <span>Property tax: {taxPct}%/yr</span>
-        </button>
-        {taxOpen && (
-          <div className="mt-3">
-            <RangeInput
-              label=""
-              value={inputs.propertyTaxPct * 100}
-              min={0.3}
-              max={2.5}
-              step={0.05}
-              onChange={(v) => patch({ propertyTaxPct: v / 100 })}
-              formatValue={(v) => `${v.toFixed(2)}%`}
-              color="var(--color-owner)"
-              minLabel="0.30%"
-              maxLabel="2.50%"
-              description="Ontario effective rate ~0.65–1.1% (Toronto lower end). BC ~0.3–0.6%. Province default applied on selection."
-            />
-          </div>
-        )}
-      </div>
+      <label
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          marginTop: '12px',
+          cursor: 'pointer',
+          fontSize: '13px',
+          color: 'var(--color-text-muted)',
+        }}
+      >
+        <input
+          type="checkbox"
+          checked={inputs.isFirstTimeBuyer ?? false}
+          onChange={(e) => patch({ isFirstTimeBuyer: e.target.checked })}
+          style={{ accentColor: 'var(--color-owner)', width: '15px', height: '15px' }}
+        />
+        First-time buyer (LTT rebate applied at closing)
+      </label>
 
-    </motion.div>
+      <StepAdvanced label="Property tax">
+        <RangeInput
+          label={`Property tax: ${taxPct}%/yr`}
+          value={inputs.propertyTaxPct * 100}
+          min={0.3}
+          max={2.5}
+          step={0.05}
+          onChange={(v) => patch({ propertyTaxPct: v / 100 })}
+          formatValue={(v) => `${v.toFixed(2)}%`}
+          color="var(--color-owner)"
+          minLabel="0.30%"
+          maxLabel="2.50%"
+          description="Province default applied on selection. Ontario ~0.65–1.1%, BC ~0.3–0.6%."
+        />
+      </StepAdvanced>
+    </div>
   );
 }

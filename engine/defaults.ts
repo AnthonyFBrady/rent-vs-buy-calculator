@@ -135,8 +135,10 @@ export function defaultInputsFor(
 
   return {
     province,
-    isTorontoMunicipalLTT: province === 'ON',
+    isTorontoMunicipalLTT: false,
     isFirstTimeBuyer: false,
+    ownerSurplusUsesTFSA: false,
+    ownerSurplusUsesRRSP: false,
     postalCode: prov.defaultPostalCode,
 
     homePrice: prov.exampleHomePrice,
@@ -168,6 +170,7 @@ export function defaultInputsFor(
     legalFeesAtSale: 1200,
 
     renterUsesTFSA: false,
+    renterStartingUsesTFSA: false,
 
     monthlyStrataFee: ht ? ht.monthlyStrataFee : 0,
     rentControlCapPct: prov.defaultRentControlCapPct,

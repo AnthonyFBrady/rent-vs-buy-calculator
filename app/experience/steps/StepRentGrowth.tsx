@@ -1,8 +1,7 @@
 ﻿'use client';
 
-import { motion } from 'motion/react';
 import type { CalculatorInputs } from '@/engine';
-import { RangeInput } from '../components';
+import { RangeInput, StepWrapper } from '../components';
 
 interface Props {
   inputs: CalculatorInputs;
@@ -23,22 +22,12 @@ export function StepRentGrowth({ inputs, patch }: Props) {
       : null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -6 }}
-      transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-      className="flex flex-col"
+    <StepWrapper
+      heading="How fast does rent grow?"
+      description={hasRentControl
+        ? `Market rate rises at the speed below. Your in-place rent is capped at ${capPct}%/yr.`
+        : `How fast asking rents grow. You track this rate — no cap in ${inputs.province}.`}
     >
-      <h2 className="mt-4 font-serif text-3xl leading-[1.15] tracking-[-0.02em] sm:text-4xl">
-        How fast does rent grow?
-      </h2>
-      <p className="mt-2 text-sm leading-relaxed text-muted">
-        {hasRentControl
-          ? `Market rate rises at the speed below. Your in-place rent is capped at ${capPct}%/yr.`
-          : `How fast asking rents grow. You track this rate — no cap in ${inputs.province}.`}
-      </p>
-
       <div className="mt-6">
         <RangeInput
           label="Market rent growth"
@@ -64,6 +53,6 @@ export function StepRentGrowth({ inputs, patch }: Props) {
           No rent control in {inputs.province}. Staying put gives no discount.
         </p>
       )}
-    </motion.div>
+    </StepWrapper>
   );
 }

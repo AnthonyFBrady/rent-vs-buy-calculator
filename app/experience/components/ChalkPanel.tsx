@@ -1,6 +1,7 @@
 'use client';
 
 import type { CalculatorInputs, SimulationResult } from '@/engine';
+import { landTransferTax } from '@/engine';
 
 interface Props {
   phase: number;
@@ -8,11 +9,11 @@ interface Props {
   sim: SimulationResult;
 }
 
-const CHALK_BG = '#0E1C1A';
-const CHALK_TEXT = 'rgba(244, 240, 230, 0.82)';
-const CHALK_MUTED = 'rgba(244, 240, 230, 0.40)';
-const CHALK_OWNER = 'rgba(232, 200, 122, 0.90)';
-const CHALK_RENTER = 'rgba(108, 191, 184, 0.90)';
+const CHALK_BG = 'var(--color-surface-raised)';
+const CHALK_TEXT = 'var(--color-text)';
+const CHALK_MUTED = 'var(--color-text-muted)';
+const CHALK_OWNER = 'var(--color-owner)';
+const CHALK_RENTER = 'var(--color-renter)';
 
 const fmt = new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 });
 
@@ -20,7 +21,7 @@ function Row({ label, value, color }: { label: string; value: string; color?: st
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '4px 0' }}>
       <span style={{ fontSize: '11px', color: CHALK_MUTED }}>{label}</span>
-      <span style={{ fontSize: '12px', fontFamily: 'var(--font-serif), Georgia, serif', color: color ?? CHALK_TEXT, fontWeight: 500 }}>{value}</span>
+      <span style={{ fontSize: '12px', fontFamily: 'var(--font-sans), system-ui, sans-serif', color: color ?? CHALK_TEXT, fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>{value}</span>
     </div>
   );
 }
@@ -28,14 +29,14 @@ function Row({ label, value, color }: { label: string; value: string; color?: st
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: '18px' }}>
-      <p style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: CHALK_MUTED, marginBottom: '8px' }}>{label}</p>
+      <p style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-text-faint)', marginBottom: '8px' }}>{label}</p>
       {children}
     </div>
   );
 }
 
 function Divider() {
-  return <div style={{ height: '1px', background: 'rgba(244,240,230,0.10)', margin: '12px 0' }} />;
+  return <div style={{ height: '1px', background: 'var(--color-outline)', margin: '12px 0' }} />;
 }
 
 export function ChalkPanel({ phase, inputs, sim }: Props) {
@@ -104,24 +105,42 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
       </>
     ),
 
-    3: (
-      <>
-        <Section label="Land transfer tax in your province">
-          <p style={{ fontSize: '11px', lineHeight: 1.6, color: CHALK_MUTED }}>
-            One-time cost paid at closing. Calculated on the full purchase price. First-time buyers qualify for a partial rebate in most provinces.
-          </p>
+    3: (() => {
+      const ltt = landTransferTax(inputs.homePrice, inputs.province, {
+        isTorontoMunicipalLTT: inputs.isTorontoMunicipalLTT,
+        isFirstTimeBuyer: inputs.isFirstTimeBuyer,
+      });
+      const closingCosts = sim.commitment.ownerStartingCashOut - inputs.homePrice * inputs.downPaymentPct;
+      const annualPropertyTax = inputs.propertyTaxPct * inputs.homePrice;
+      const monthlyPropertyTax = annualPropertyTax / 12;
+      return (
+        <>
+          <Section label="Land transfer tax in your province">
+            <p style={{ fontSize: '11px', lineHeight: 1.6, color: CHALK_MUTED }}>
+              One-time cost paid at closing. First-time buyers qualify for a partial rebate in most provinces.
+            </p>
+            <Divider />
+            {ltt.provincialLTT > 0 && <Row label="Provincial LTT" value={fmt.format(Math.round(ltt.provincialLTT))} />}
+            {ltt.municipalLTT > 0 && <Row label="Toronto MLTT" value={fmt.format(Math.round(ltt.municipalLTT))} />}
+            {ltt.ftbRebate > 0 && <Row label="FTB rebate" value={`−${fmt.format(Math.round(ltt.ftbRebate))}`} color={CHALK_RENTER} />}
+            <Row label="LTT total" value={fmt.format(Math.round(ltt.total))} color={CHALK_OWNER} />
+            <Divider />
+            <Row label="All closing costs" value={fmt.format(Math.round(closingCosts))} />
+            <p style={{ fontSize: '10px', color: CHALK_MUTED, marginTop: '6px' }}>
+              LTT + legal fees + CMHC PST if applicable. Does not include down payment.
+            </p>
+          </Section>
           <Divider />
-          <Row
-            label={`LTT on ${fmt.format(inputs.homePrice)}`}
-            value={fmt.format(sim.commitment.ownerStartingCashOut)}
-            color={CHALK_OWNER}
-          />
-          <p style={{ fontSize: '10px', color: CHALK_MUTED, marginTop: '6px' }}>
-            Includes LTT, legal fees, CMHC PST if applicable, and moving costs.
-          </p>
-        </Section>
-      </>
-    ),
+          <Section label="Property tax — ongoing yearly cost">
+            <Row label="Annual" value={fmt.format(Math.round(annualPropertyTax))} color={CHALK_OWNER} />
+            <Row label="Monthly" value={`${fmt.format(Math.round(monthlyPropertyTax))}/mo`} />
+            <p style={{ fontSize: '10px', color: CHALK_MUTED, marginTop: '6px' }}>
+              {(inputs.propertyTaxPct * 100).toFixed(2)}% of home value per year. Grows with assessed value over time.
+            </p>
+          </Section>
+        </>
+      );
+    })(),
 
     4: (
       <>
@@ -152,28 +171,43 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
 
     5: (
       <>
-        <Section label="Why account type changes the math">
+        <Section label="Starting lump sum">
           <p style={{ fontSize: '12px', lineHeight: 1.65, color: CHALK_TEXT }}>
-            The same dollars in a TFSA grow and exit tax-free. In a taxable account, gains are taxed at exit. This gap compounds over 10–25 years.
+            The same dollars the owner puts toward closing costs. The account they sit in determines how much survives tax at exit.
           </p>
         </Section>
         <Divider />
-        <Section label="Optimal fill order">
-          <Row label="1st" value="TFSA" color={CHALK_RENTER} />
-          <Row label="2nd" value="FHSA ($40k lifetime)" color={CHALK_RENTER} />
-          <Row label="3rd" value="RRSP" color={CHALK_TEXT} />
-          <Row label="Remainder" value="Taxable" color={CHALK_MUTED} />
-        </Section>
-        <Divider />
-        <Section label="FHSA bonus">
-          <p style={{ fontSize: '11px', lineHeight: 1.6, color: CHALK_MUTED }}>
-            FHSA contributions are tax-deductible. The annual refund gets reinvested, compounding the advantage. Up to $8k/yr, $40k lifetime.
+        <Section label="TFSA vs non-registered">
+          <Row label="TFSA gains" value="Tax-free" color={CHALK_RENTER} />
+          <Row label="Non-reg gains" value="50% inclusion" color={CHALK_OWNER} />
+          <p style={{ fontSize: '10px', color: CHALK_MUTED, marginTop: '8px' }}>
+            On a $200k lump sum growing at 7% for 15 years, the difference is roughly $30–50k after tax.
           </p>
         </Section>
       </>
     ),
 
     6: (
+      <>
+        <Section label="Fill order">
+          <p style={{ fontSize: '11px', lineHeight: 1.6, color: CHALK_MUTED, marginBottom: '8px' }}>
+            Each dollar of monthly surplus fills accounts in this order.
+          </p>
+          <Row label="1st" value="TFSA" color={CHALK_RENTER} />
+          <Row label="2nd" value="FHSA ($8k/yr)" color={CHALK_RENTER} />
+          <Row label="3rd" value="RRSP" color={CHALK_TEXT} />
+          <Row label="Remainder" value="Non-registered" color={CHALK_MUTED} />
+        </Section>
+        <Divider />
+        <Section label="FHSA edge">
+          <p style={{ fontSize: '11px', lineHeight: 1.6, color: CHALK_MUTED }}>
+            FHSA contributions are tax-deductible. The annual refund is reinvested — compounding the advantage. Up to $8k/yr, $40k lifetime.
+          </p>
+        </Section>
+      </>
+    ),
+
+    7: (
       <>
         <Section label={`Unrecoverable cost — ${unrecoverablePct}% of price per year`}>
           <p style={{ fontSize: '11px', lineHeight: 1.6, color: CHALK_MUTED, marginBottom: '10px' }}>
@@ -184,13 +218,13 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
           <Row label="Maintenance" value={fmt.format(Math.round(yr1Maintenance))} />
           <Row label="Insurance" value={fmt.format(Math.round(yr1Insurance))} />
           {yr1Strata > 0 && <Row label="Strata fees" value={fmt.format(Math.round(yr1Strata))} />}
-          <div style={{ height: '1px', background: CHALK_MUTED, opacity: 0.35, margin: '6px 0' }} />
+          <div style={{ height: '1px', background: 'var(--color-outline)', margin: '6px 0' }} />
           <Row label="Total unrecoverable" value={fmt.format(Math.round(yr1Unrecoverable))} color={CHALK_OWNER} />
         </Section>
       </>
     ),
 
-    7: (
+    8: (
       <>
         {inputs.monthlyStrataFee && inputs.monthlyStrataFee > 0 ? (
           <Section label="Condo costs">
@@ -214,7 +248,7 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
       </>
     ),
 
-    8: (
+    9: (
       <>
         <Section label="Rate impact">
           <p style={{ fontSize: '11px', lineHeight: 1.6, color: CHALK_MUTED, marginBottom: '8px' }}>
@@ -232,7 +266,7 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
       </>
     ),
 
-    9: (
+    10: (
       <>
         <Section label="Canadian renewal reality">
           <p style={{ fontSize: '12px', lineHeight: 1.65, color: CHALK_TEXT }}>
@@ -249,7 +283,7 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
       </>
     ),
 
-    10: (
+    11: (
       <>
         <Section label="Rent-to-price signal">
           <p style={{ fontSize: '12px', lineHeight: 1.65, color: rtpSignal === 'buy' ? CHALK_OWNER : rtpSignal === 'rent' ? CHALK_RENTER : CHALK_TEXT }}>
@@ -268,7 +302,7 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
       </>
     ),
 
-    11: (
+    12: (
       <>
         {hasRentControl ? (
           <Section label="Rent control benefit">
@@ -295,7 +329,7 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
       </>
     ),
 
-    12: (
+    13: (
       <>
         <Section label="The asymmetry">
           <p style={{ fontSize: '12px', lineHeight: 1.65, color: CHALK_TEXT }}>
@@ -314,7 +348,7 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
       </>
     ),
 
-    13: (
+    14: (
       <>
         <Section label="Account priority">
           <Row label="1st" value="TFSA" color={CHALK_RENTER} />
@@ -331,7 +365,7 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
       </>
     ),
 
-    14: (
+    15: (
       <>
         {monthlyGap > 0 ? (
           <Section label="Invest the difference">
@@ -374,7 +408,7 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
         width: '272px',
         flexShrink: 0,
         backgroundColor: CHALK_BG,
-        borderLeft: '1px solid rgba(244,240,230,0.07)',
+        borderLeft: '1px solid var(--color-outline)',
         padding: '20px 18px',
         overflow: 'hidden',
       }}

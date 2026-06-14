@@ -34,9 +34,9 @@ Favors **renter** = a higher value improves the renter's relative outcome.
 | Prior equity deployed | `ownerPriorEquity` | 0 | O + R | Neutral — both sides start with same capital | `simulate.ts` ~170 |
 | CMHC premium | computed from `downPaymentPct` | `taxes.ts` | O | Owner (adds to loan, reduces equity) | `simulate.ts` ~163–165 |
 | CMHC PST | computed + `province` | `taxes.ts` | O | Owner (ON/QC/SK only) | `simulate.ts` ~166 |
-| Land transfer tax | `province`, `isFirstTimeBuyer` | `taxes.ts` | O | Owner (reduces year-0 proceeds, reduces renter's starting lump sum) | `simulate.ts` ~167 |
+| Land transfer tax | `province`, `isFirstTimeBuyer` | `taxes.ts` | O + R | Renter (unrecoverable owner cost; equivalent capital invested by renter earns returns) | `simulate.ts` ~167 |
 | Legal fees at purchase | `legalFeesAtPurchase` | `defaults.ts` ($1,500) | O | Owner | `simulate.ts` ~168 |
-| First-time buyer | `isFirstTimeBuyer` | `defaults.ts` (true) | O | Owner (LTT rebate lowers closing cost) | `taxes.ts` |
+| First-time buyer | `isFirstTimeBuyer` | `defaults.ts` (false) | O + R | Owner (rebate reduces owner closing cost and reduces renter starting capital equally) | `taxes.ts` |
 | Toronto municipal LTT | `isTorontoMunicipalLTT` | `defaults.ts` (false) | O | Owner (additional LTT layer) | `taxes.ts` |
 | Home type | `homeType` | province default | O | Depends (drives maintenance and strata defaults) | `homeType.ts` |
 
@@ -46,7 +46,7 @@ Favors **renter** = a higher value improves the renter's relative outcome.
 
 | Factor | Input field | Default source | Affects | Direction | Computed in |
 |--------|-------------|----------------|---------|-----------|-------------|
-| Mortgage rate (initial) | `mortgageRatePct` | `defaults.ts` (5.5%) | O | Owner (higher rate = higher unrecoverable cost = renter favored) | `simulate.ts` ~190–220 |
+| Mortgage rate (initial) | `mortgageRatePct` | `defaults.ts` (5%) | O | Owner (higher rate = higher unrecoverable cost = renter favored) | `simulate.ts` ~190–220 |
 | Mortgage term length | `mortgageTermYears` | `defaults.ts` (5 yr) | O | Neutral (sets renewal timing) | `simulate.ts` ~190 |
 | Renewal rate | `mortgageRenewalRatePct` | equals `mortgageRatePct` | O | Owner (higher renewal = more unrecoverable interest post-renewal) | `simulate.ts` ~200 |
 | Amortization period | `amortizationYears` | `defaults.ts` (25 yr) | O | Owner (shorter = faster equity build, more P+I early) | `simulate.ts` ~215 |
@@ -73,7 +73,7 @@ Favors **renter** = a higher value improves the renter's relative outcome.
 | Factor | Input field | Default source | Affects | Direction | Computed in |
 |--------|-------------|----------------|---------|-----------|-------------|
 | Realtor commission | `realtorCommissionPct` | `defaults.ts` (5%) | O | Owner (reduces sale proceeds) | `simulate.ts` ~308, exit |
-| Legal fees at sale | `legalFeesAtSale` | `defaults.ts` ($1,500) | O | Owner | `simulate.ts` ~314, exit |
+| Legal fees at sale | `legalFeesAtSale` | `defaults.ts` ($1,200) | O | Owner | `simulate.ts` ~314, exit |
 | Owner moves (count) | `ownerMoves` | `defaults.ts` (0) | O | Owner (each move = ~9% friction) | `simulate.ts` ~306–314 |
 | Owner moving cost/move | `ownerMovingCostPerMove` | `defaults.ts` ($2,500) | O | Owner | `simulate.ts` ~306 |
 | Renter moves (count) | `renterMoves` | `defaults.ts` (0) | R | Renter (each move resets rent to market) | `simulate.ts` ~327 |
@@ -86,9 +86,9 @@ Favors **renter** = a higher value improves the renter's relative outcome.
 | Factor | Input field | Default source | Affects | Direction | Computed in |
 |--------|-------------|----------------|---------|-----------|-------------|
 | Monthly rent | `monthlyRent` | `postalCode.ts` / `ontarioBoroughs.ts` | R | Renter (lower rent = more invest-the-difference) | `simulate.ts` ~333 |
-| Rent escalation rate | `rentEscalationPct` | `defaults.ts` (2.5%) | R | Owner (higher market rent growth = less renter advantage over time) | `simulate.ts` ~492 |
+| Rent escalation rate | `rentEscalationPct` | `defaults.ts` (5%) | R | Owner (higher market rent growth = less renter advantage over time) | `simulate.ts` ~492 |
 | Rent control cap | `rentControlCapPct` | `defaults.ts` by province | R | Renter (cap means in-place rent rises slower than market) | `simulate.ts` ~291–294 |
-| Rent insurance | `rentInsuranceMonthly` | `defaults.ts` ($20/mo) | R | Owner (small cost to renter) | `simulate.ts` ~334 |
+| Rent insurance | `rentInsuranceMonthly` | `defaults.ts` ($25/mo) | R | Owner (small cost to renter) | `simulate.ts` ~334 |
 | Deposit (first+last) | computed: 2 × monthly rent | — | R | Owner (reduces renter's starting invested capital) | `simulate.ts` ~173–174 |
 
 ---
@@ -97,8 +97,8 @@ Favors **renter** = a higher value improves the renter's relative outcome.
 
 | Factor | Input field | Default source | Affects | Direction | Computed in |
 |--------|-------------|----------------|---------|-----------|-------------|
-| Investment return | `investmentReturnPct` | `defaults.ts` (6.0%) | R (primarily) | Renter (higher returns compound the renter's invest-the-difference) | `simulate.ts` ~413–430 |
-| Investment fee | `investmentFeePct` | `defaults.ts` (0.20%) | R (primarily) | Owner (higher fees hurt renter's net return) | `simulate.ts` net return |
+| Investment return | `investmentReturnPct` | `defaults.ts` (7.0%) | R (primarily) | Renter (higher returns compound the renter's invest-the-difference) | `simulate.ts` ~413–430 |
+| Investment fee | `investmentFeePct` | `defaults.ts` (0.60%) | R (primarily) | Owner (higher fees hurt renter's net return) | `simulate.ts` net return |
 | Net investment return | computed: return − fee | — | R | Renter | used throughout |
 | Inflation rate | `inflationPct` | `defaults.ts` (2.0%) | O + R | Neutral (escalates strata fee; used as floor for insurance) | `simulate.ts` ~495 |
 | Savings discipline (renter) | `renterSavingsDisciplinePct` | `savingsDisciplinePct` | R | Renter (< 100% means renter pockets the difference, losing the comparison) | `simulate.ts` ~353 |
@@ -111,9 +111,9 @@ Favors **renter** = a higher value improves the renter's relative outcome.
 
 | Factor | Input field | Default source | Affects | Direction | Computed in |
 |--------|-------------|----------------|---------|-----------|-------------|
-| Marginal tax rate | `marginalTaxRatePct` | `defaults.ts` (43.41%) | R | Renter (drives RRSP/FHSA refund size and exit cap gains) | `simulate.ts` ~384, 398, exit |
+| Marginal tax rate | `marginalTaxRatePct` | `defaults.ts` (43%) | O + R | Both (drives RRSP/FHSA refund size, renter cap gains, and owner surplus cap gains at exit) | `simulate.ts` ~384, 398, exit |
 | RRSP withdrawal tax rate | `rrspWithdrawalTaxRatePct` | equals marginal rate | R | Renter (lower rate at exit improves RRSP advantage) | `simulate.ts` exit ~532 |
-| Uses TFSA | `renterUsesTFSA` | `defaults.ts` (true) | R | Renter (shelters all capital gains) | `simulate.ts` ~364–375 |
+| Uses TFSA | `renterUsesTFSA` | `defaults.ts` (false) | R | Renter (shelters all capital gains) | `simulate.ts` ~364–375 |
 | TFSA room override | `renterTfsaRoomOverride` | computed from `birthYear` | R | Renter (more room = more sheltered gains) | `simulate.ts` ~139–150 |
 | Birth year (TFSA room) | `birthYear` | `defaults.ts` (1990) | R | Renter (earlier birth = more accumulated room) | `simulate.ts` ~134 |
 | Uses FHSA | `useFHSA` | `defaults.ts` (false) | R | Renter (deductible contributions + tax-free growth) | `simulate.ts` ~377–390 |
@@ -128,7 +128,7 @@ Favors **renter** = a higher value improves the renter's relative outcome.
 
 | Factor | Input field | Default source | Affects | Direction | Computed in |
 |--------|-------------|----------------|---------|-----------|-------------|
-| Holding period | `holdingPeriodYears` | `defaults.ts` (15 yr) | O + R | **Owner (longer = more time to recover transaction costs)** | `simulate.ts` loop |
+| Holding period | `holdingPeriodYears` | `defaults.ts` (10 yr) | O + R | **Owner (longer = more time to recover transaction costs)** | `simulate.ts` loop |
 | Owner cap gains tax | computed | `taxes.ts` | O | Owner (50% inclusion, owner's invested surplus only — PRE exempts the home) | `simulate.ts` ~515 |
 | Renter cap gains tax | computed | `taxes.ts` | R | Owner (50% inclusion on taxable gains) | `simulate.ts` ~524 |
 | FHSA exit tax | none (0) | — | R | Renter (FHSA gains exit tax-free) | `simulate.ts` ~526 |

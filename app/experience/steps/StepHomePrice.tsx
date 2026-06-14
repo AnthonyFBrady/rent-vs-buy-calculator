@@ -1,8 +1,7 @@
 ﻿'use client';
 
-import { motion } from 'motion/react';
 import type { CalculatorInputs } from '@/engine';
-import { TextInput } from '../components';
+import { TextInput, StepWrapper } from '../components';
 
 interface Props {
   inputs: CalculatorInputs;
@@ -28,20 +27,10 @@ export function StepHomePrice({ inputs, patch }: Props) {
     : '0.0';
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -6 }}
-      transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-      className="flex flex-col"
+    <StepWrapper
+      heading="What home are you considering?"
+      description="This sets the year-0 drop on the chart — down payment plus closing costs."
     >
-      <h2 className="mt-4 font-serif text-3xl leading-[1.15] tracking-[-0.02em] sm:text-4xl">
-        What's the home price?
-      </h2>
-      <p className="mt-2 text-sm leading-relaxed text-muted">
-        This sets the year-0 drop on the chart — down payment plus closing costs.
-      </p>
-
       <div className="mt-6">
         <TextInput
           label="Home price"
@@ -52,12 +41,11 @@ export function StepHomePrice({ inputs, patch }: Props) {
           min={100000}
           max={5000000}
           step={25000}
-          focusColor="var(--color-owner)"
         />
         <p className="mt-2 text-xs leading-relaxed text-muted">
           ~{unrecoverablePct}% per year builds no equity ({fmt.format(Math.round(yr1Unrecoverable))}/yr in interest, tax, maintenance, and insurance{yr1Strata > 0 ? ', strata' : ''}).
         </p>
       </div>
-    </motion.div>
+    </StepWrapper>
   );
 }

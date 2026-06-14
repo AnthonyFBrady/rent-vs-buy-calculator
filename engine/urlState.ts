@@ -33,6 +33,12 @@ const KEY_MAP: Record<keyof CalculatorInputs, string> = {
   legalFeesAtPurchase: 'lgp',
   legalFeesAtSale: 'lgs',
   renterUsesTFSA: 'tfsa',
+  renterStartingUsesTFSA: 'sttfsa',
+  renterTfsaStartingBalance: 'tfsabal',
+  renterFhsaStartingBalance: 'fhsabal',
+  renterRrspStartingBalance: 'rrspbal',
+  ownerSurplusUsesTFSA: 'osttfsa',
+  ownerSurplusUsesRRSP: 'ostrrsp',
   monthlyStrataFee: 'strata',
   rentControlCapPct: 'rcap',
   ownerMoves: 'om',
@@ -54,6 +60,9 @@ const KEY_MAP: Record<keyof CalculatorInputs, string> = {
   renterTfsaRoomOverride: 'tfsaroom',
   renterFhsaRoomOverride: 'fhsaroom',
   renterRrspCarryforward: 'rrspcarry',
+  // v4
+  monthlyRentalIncome: 'rsuite',
+  rentalIncomeGrowthPct: 'rsuiteG',
 };
 
 function isHomeType(v: string): v is HomeType {

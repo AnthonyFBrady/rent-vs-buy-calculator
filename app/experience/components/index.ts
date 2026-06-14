@@ -1,4 +1,6 @@
 export { ChalkPanel } from './ChalkPanel';
+export { StepWrapper } from './StepWrapper';
+export { StepAdvanced } from './StepAdvanced';
 export { PhaseButton } from './PhaseButton';
 export { ProgressBar } from './ProgressBar';
 export { RangeInput } from './RangeInput';
@@ -7,3 +9,4 @@ export { SelectionCard } from './SelectionCard';
 export { Callout } from './Callout';
 export { Toggle } from './Toggle';
 export { StepCounter } from './StepCounter';
+export { TrustSignal } from './TrustSignal';

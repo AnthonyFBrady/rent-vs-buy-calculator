@@ -12,7 +12,7 @@ export function StepIntro() {
       className="flex flex-col items-start gap-3 pt-2"
     >
       <p className="text-xs uppercase tracking-[0.1em] font-medium text-muted">Canada · Evidence-based</p>
-      <h1 className="font-serif text-2xl leading-snug sm:text-3xl">
+      <h1 className="font-sans text-2xl font-medium leading-snug sm:text-3xl">
         Two futures. Same starting money.
         <br />
         One buys. One rents.

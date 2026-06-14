@@ -1,97 +1,76 @@
-﻿'use client';
+'use client';
 
 import { motion } from 'motion/react';
-import type { CalculatorInputs, HomeType } from '@/engine';
+import type { CalculatorInputs } from '@/engine';
 import { RangeInput, Toggle } from '../components';
 
 interface Props {
   inputs: CalculatorInputs;
   patch: (p: Partial<CalculatorInputs>) => void;
-  name?: string;
-  city?: string;
 }
 
-const HOME_TYPE_LABEL: Record<HomeType, string> = {
-  'condo-apt': 'condo',
-  'condo-townhouse': 'condo TH',
-  'freehold-townhouse': 'freehold TH',
-  'semi-detached': 'semi',
-  'detached': 'detached',
-};
-
-const fmt = new Intl.NumberFormat('en-CA', {
-  style: 'currency',
-  currency: 'CAD',
-  maximumFractionDigits: 0,
+const fmtCAD = new Intl.NumberFormat('en-CA', {
+  style: 'currency', currency: 'CAD', maximumFractionDigits: 0,
 });
 
-export function StepDownPayment({ inputs, patch, name, city }: Props) {
-  const downPct = Math.round(inputs.downPaymentPct * 100);
+export function StepDownPayment({ inputs, patch }: Props) {
+  const downPct    = Math.round(inputs.downPaymentPct * 100);
   const downAmount = inputs.homePrice * inputs.downPaymentPct;
-  const isCMHC = inputs.downPaymentPct < 0.2;
-  const priorEquity = inputs.ownerPriorEquity ?? 0;
-  const hasEquity = priorEquity > 0;
-
+  const isCMHC     = inputs.downPaymentPct < 0.2;
   const closingApprox = inputs.homePrice * 0.02;
-  const ownerYear0Approx = downAmount + closingApprox;
-  const equityKept = Math.max(0, priorEquity - ownerYear0Approx);
-  const equityToHouse = Math.min(priorEquity, ownerYear0Approx);
+  const priorEquity   = inputs.ownerPriorEquity ?? 0;
+  const hasEquity     = priorEquity > 0;
+  const extraSavings  = Math.max(0, priorEquity - downAmount - closingApprox);
 
-  const homeTypeLabel = inputs.homeType ? HOME_TYPE_LABEL[inputs.homeType] : null;
-  const fmtCompact = new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0, notation: 'compact' });
-
-  const summaryLine = [
-    name ? `${name} buys` : null,
-    fmtCompact.format(inputs.homePrice),
-    homeTypeLabel,
-    city ? `in ${city}` : null,
-  ].filter(Boolean).join(' ');
+  const selectedAlloc =
+    (inputs.ownerSurplusUsesRRSP ?? false)  ? 'rrsp'    :
+    (inputs.ownerSurplusUsesTFSA ?? false)  ? 'tfsa'    :
+    'taxable';
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -6 }}
-      transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-      className="flex flex-col"
-    >
-      {summaryLine && (
-        <p className="mt-3 text-xs tracking-wide" style={{ opacity: 0.5 }}>
-          {summaryLine}
+    <div>
+      <RangeInput
+        label="Down payment"
+        value={downPct}
+        min={5}
+        max={50}
+        step={1}
+        onChange={(v) => {
+          const newDown = inputs.homePrice * (v / 100);
+          const newClosing = inputs.homePrice * 0.02;
+          patch({
+            downPaymentPct: v / 100,
+            ownerPriorEquity: hasEquity ? newDown + newClosing + extraSavings : 0,
+          });
+        }}
+        formatValue={(v) => `${v}%`}
+        color="var(--color-owner)"
+        minLabel="5% min"
+        maxLabel="50%"
+        description={fmtCAD.format(downAmount)}
+      />
+
+      {isCMHC && (
+        <p
+          style={{
+            marginTop: '8px',
+            fontSize: '12px',
+            color: 'var(--color-negative)',
+            fontFamily: 'var(--font-sans), system-ui, sans-serif',
+          }}
+        >
+          Under 20% — CMHC insurance premium added to mortgage balance (2.8–4.0%).
         </p>
       )}
 
-      <h2 className="mt-2 font-serif text-3xl leading-[1.15] tracking-[-0.02em] sm:text-4xl">
-        How much are you putting down?
-      </h2>
-
-      <div className="mt-6">
-        <RangeInput
-          label="Down payment"
-          value={downPct}
-          min={5}
-          max={50}
-          step={1}
-          onChange={(v) => patch({ downPaymentPct: v / 100 })}
-          formatValue={(v) => `${v}%`}
-          color="var(--color-owner)"
-          minLabel="5% min"
-          maxLabel="50%"
-          description={fmt.format(downAmount)}
-        />
-        {isCMHC && (
-          <p className="mt-2 text-xs" style={{ color: 'rgba(164,61,18,0.9)' }}>
-            Under 20% — CMHC insurance premium added to mortgage balance.
-          </p>
-        )}
-      </div>
-
-      <div className="mt-5">
+      <div style={{ marginTop: '20px' }}>
         <Toggle
           checked={hasEquity}
-          onChange={(v) => patch({ ownerPriorEquity: v ? Math.max(downAmount + 50000, 50000) : 0 })}
-          label="I have additional cash to deploy toward this purchase"
-          description="Savings, investments, or home equity beyond the down payment."
+          onChange={(v) => patch({
+            ownerPriorEquity: v ? downAmount + closingApprox + 50_000 : 0,
+          })}
+          label="I have savings to invest after closing"
+          description="The renter invests your down payment from day 1. This levels the field."
         />
       </div>
 
@@ -100,25 +79,86 @@ export function StepDownPayment({ inputs, patch, name, city }: Props) {
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           transition={{ duration: 0.2 }}
-          className="mt-4"
+          style={{ marginTop: '16px' }}
         >
           <RangeInput
-            label="Total cash to deploy"
-            value={priorEquity / 1000}
+            label="Savings to invest"
+            value={Math.round(extraSavings / 1000)}
             min={10}
             max={2000}
             step={10}
-            onChange={(v) => patch({ ownerPriorEquity: v * 1000 })}
+            onChange={(v) => patch({ ownerPriorEquity: downAmount + closingApprox + v * 1_000 })}
             formatValue={(v) => `$${v}k`}
             color="var(--color-owner)"
             minLabel="$10k"
             maxLabel="$2M"
           />
-          <p className="mt-2 text-xs leading-relaxed text-muted">
-            {fmt.format(equityToHouse)} goes to the house. {fmt.format(equityKept)} stays invested.
-          </p>
+
+          <div
+            style={{
+              marginTop: '16px',
+              padding: '12px 14px',
+              borderRadius: '8px',
+              border: '1px solid var(--color-outline)',
+              backgroundColor: 'var(--color-bg-elevated)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '6px' }}>
+              <span>Down payment</span>
+              <span>{fmtCAD.format(downAmount)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '6px' }}>
+              <span>Closing costs (est. 2%)</span>
+              <span>~{fmtCAD.format(closingApprox)}</span>
+            </div>
+            <div style={{
+              display: 'flex', justifyContent: 'space-between', fontSize: '12px',
+              color: 'var(--color-text)',
+              borderTop: '1px solid var(--color-outline)',
+              paddingTop: '6px', marginTop: '2px', fontWeight: 500,
+            }}>
+              <span>Invested on day 1</span>
+              <span>{fmtCAD.format(extraSavings)}</span>
+            </div>
+          </div>
+
+          {extraSavings > 500 && (
+            <div style={{ marginTop: '16px' }}>
+              <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '8px' }}>
+                Where does this get invested?
+              </p>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {(['tfsa', 'rrsp', 'taxable'] as const).map((type) => {
+                  const selected = type === selectedAlloc;
+                  return (
+                    <button
+                      key={type}
+                      onClick={() => patch({
+                        ownerSurplusUsesTFSA: type === 'tfsa',
+                        ownerSurplusUsesRRSP: type === 'rrsp',
+                      })}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        border: `1px solid ${selected ? 'var(--color-owner)' : 'var(--color-outline)'}`,
+                        background: selected
+                          ? 'color-mix(in srgb, var(--color-owner) 10%, transparent)'
+                          : 'none',
+                        color: selected ? 'var(--color-owner)' : 'var(--color-text-muted)',
+                        cursor: 'pointer',
+                        fontFamily: 'var(--font-sans), system-ui, sans-serif',
+                      }}
+                    >
+                      {type === 'tfsa' ? 'TFSA' : type === 'rrsp' ? 'RRSP' : 'Non-registered'}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </motion.div>
       )}
-    </motion.div>
+    </div>
   );
 }

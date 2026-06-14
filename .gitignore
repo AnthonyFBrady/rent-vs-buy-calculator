@@ -10,3 +10,6 @@ build/
 coverage/
 .turbo/
 next-env.d.ts
+tsconfig.tsbuildinfo
+*.png
+screenshot-result.mjs

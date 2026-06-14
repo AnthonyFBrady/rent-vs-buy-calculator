@@ -1,8 +1,7 @@
 ﻿'use client';
 
-import { motion } from 'motion/react';
 import type { CalculatorInputs } from '@/engine';
-import { RangeInput } from '../components';
+import { RangeInput, StepWrapper, TrustSignal } from '../components';
 
 interface Props {
   inputs: CalculatorInputs;
@@ -20,20 +19,10 @@ export function StepMortgageRate({ inputs, patch }: Props) {
   })();
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -6 }}
-      transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-      className="flex flex-col"
+    <StepWrapper
+      heading="Initial mortgage rate."
+      description="The rate for your first 5-year term. Drives the monthly payment line on the chart."
     >
-      <h2 className="mt-4 font-serif text-3xl leading-[1.15] tracking-[-0.02em] sm:text-4xl">
-        Initial mortgage rate.
-      </h2>
-      <p className="mt-2 text-sm leading-relaxed text-muted">
-        The rate for your first 5-year term. Drives the monthly payment line on the chart.
-      </p>
-
       <div className="mt-6">
         <RangeInput
           label="Rate"
@@ -50,7 +39,10 @@ export function StepMortgageRate({ inputs, patch }: Props) {
             ? `Monthly payment: $${Math.round(monthlyPayment).toLocaleString('en-CA')} principal + interest.`
             : '5-year fixed rate, first term.'}
         />
+        <TrustSignal>
+          Rate for your first 5-year term. Renewals use Bank of Canada forward curve defaults.
+        </TrustSignal>
       </div>
-    </motion.div>
+    </StepWrapper>
   );
 }

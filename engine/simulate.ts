@@ -123,7 +123,11 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
     ownerMovingCostPerMove = 2_500,
     renterMovingCostPerMove = 400,
     renterUsesRRSP = false,
+    // v4
+    monthlyRentalIncome = 0,
   } = inputs;
+
+  const rentalIncomeGrowthPct = inputs.rentalIncomeGrowthPct ?? rentEscalationPct;
 
   const effectiveRenewalRate = inputs.mortgageRenewalRatePct ?? mortgageRatePct;
   const renterDiscipline = inputs.renterSavingsDisciplinePct ?? savingsDisciplinePct;
@@ -136,11 +140,12 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
   const tfsaEligibleSince = Math.max(birthYear + 18, 2009);
   const TFSA_ANNUAL_ACCRUAL = 7_000;
   const TFSA_LIFETIME_CAP = 95_000;
-  const computedTfsaRoom = inputs.renterUsesTFSA
+  const usesTfsaAnywhere = (inputs.renterStartingUsesTFSA ?? false) || inputs.renterUsesTFSA;
+  const computedTfsaRoom = usesTfsaAnywhere
     ? Math.min(TFSA_LIFETIME_CAP, Math.max(0, (2026 - tfsaEligibleSince) * TFSA_ANNUAL_ACCRUAL))
     : 0;
   let tfsaRemainingRoom = inputs.renterTfsaRoomOverride !== undefined
-    ? (inputs.renterUsesTFSA ? inputs.renterTfsaRoomOverride : 0)
+    ? (usesTfsaAnywhere ? inputs.renterTfsaRoomOverride : 0)
     : computedTfsaRoom;
 
   // RRSP annual deduction limit: 18% of prior-year earned income, max $31,560 (2024 limit).
@@ -237,37 +242,81 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
 
   let currentHomeValue = homePrice;
 
-  // Renter portfolio split: TFSA (tax-free) and taxable (cap-gains on exit).
-  // Year-0 lump sum is allocated to TFSA first (up to room), then taxable.
+  // Renter portfolio: year-0 lump sum allocated by existing account balances.
+  // Priority: TFSA → FHSA → RRSP → non-registered.
+  // If explicit starting balances are provided, use them directly.
+  // Otherwise fall back to room-based inference (renterStartingUsesTFSA).
   let renterTfsaPortfolio = 0;
   let renterTaxablePortfolio = 0;
   let renterTaxableCostBasis = 0;
-  if (inputs.renterUsesTFSA && tfsaRemainingRoom > 0) {
-    const tfsaAlloc = Math.min(renterYear0Investment, tfsaRemainingRoom);
-    renterTfsaPortfolio = tfsaAlloc;
-    renterTaxablePortfolio = Math.max(0, renterYear0Investment - tfsaAlloc);
-    tfsaRemainingRoom -= tfsaAlloc;
+  let renterRrspBalance = 0;
+  let renterRrspCostBasis = 0;
+  let fhsaLifetimeContributed = 0;
+
+  const tfsaBal = inputs.renterTfsaStartingBalance;
+  const fhsaBal = inputs.renterFhsaStartingBalance;
+  const rrspBal = inputs.renterRrspStartingBalance;
+  const hasExplicitBalances = tfsaBal !== undefined || fhsaBal !== undefined || rrspBal !== undefined;
+
+  if (hasExplicitBalances) {
+    const tfsa = Math.min(tfsaBal ?? 0, renterYear0Investment);
+    const fhsa = Math.min(fhsaBal ?? 0, Math.max(0, renterYear0Investment - tfsa));
+    const rrsp = Math.min(rrspBal ?? 0, Math.max(0, renterYear0Investment - tfsa - fhsa));
+    const taxable = Math.max(0, renterYear0Investment - tfsa - fhsa - rrsp);
+
+    renterTfsaPortfolio = tfsa + fhsa; // FHSA pools with TFSA (tax-free exit)
+    renterRrspBalance = rrsp;
+    renterRrspCostBasis = rrsp;
+    renterTaxablePortfolio = taxable;
+    renterTaxableCostBasis = taxable;
+
+    // Update room tracking so future contributions don't double-count
+    tfsaRemainingRoom = Math.max(0, tfsaRemainingRoom - tfsa);
+    if (fhsa > 0) fhsaLifetimeContributed += fhsa;
+    if (rrsp > 0) rrspCarryforwardRemaining = Math.max(0, rrspCarryforwardRemaining - rrsp);
   } else {
-    renterTaxablePortfolio = Math.max(0, renterYear0Investment);
+    // Legacy path: room-based inference from renterStartingUsesTFSA
+    const startUsesTfsa = inputs.renterStartingUsesTFSA ?? inputs.renterUsesTFSA;
+    if (startUsesTfsa && tfsaRemainingRoom > 0) {
+      const tfsaAlloc = Math.min(renterYear0Investment, tfsaRemainingRoom);
+      renterTfsaPortfolio = tfsaAlloc;
+      renterTaxablePortfolio = Math.max(0, renterYear0Investment - tfsaAlloc);
+      tfsaRemainingRoom -= tfsaAlloc;
+    } else {
+      renterTaxablePortfolio = Math.max(0, renterYear0Investment);
+    }
+    renterTaxableCostBasis = renterTaxablePortfolio;
   }
-  renterTaxableCostBasis = renterTaxablePortfolio;
 
   // Owner-side surplus portfolio. Starts at 0 for fresh buyers; non-zero if
   // the owner deploys prior equity that exceeds the year-0 cash-out.
   const ownerStartingEquity = priorEquity > ownerYear0CashOut
     ? priorEquity - ownerYear0CashOut
     : 0;
-  let ownerPortfolio = ownerStartingEquity;
-  let ownerPortfolioCostBasis = ownerStartingEquity;
+
+  const ownerSurplusUsesRrsp = inputs.ownerSurplusUsesRRSP === true;
+  let ownerSurplusRrspBal = 0;
+
+  let ownerPortfolio: number;
+  let ownerPortfolioCostBasis: number;
+
+  if (ownerStartingEquity > 0 && ownerSurplusUsesRrsp) {
+    // Surplus goes into RRSP. Refund (tax deduction) is reinvested in taxable.
+    ownerSurplusRrspBal = ownerStartingEquity;
+    const rrspRefund = ownerStartingEquity * marginalTaxRatePct;
+    ownerPortfolio = rrspRefund;
+    ownerPortfolioCostBasis = rrspRefund;
+  } else {
+    ownerPortfolio = ownerStartingEquity;
+    ownerPortfolioCostBasis = ownerStartingEquity;
+  }
   let currentRent = monthlyRent;       // in-place rent (what renter actually pays)
   let currentMarketRent = monthlyRent;  // open-market rent for a new lease
   let currentHomeInsurance = homeInsuranceMonthly;
   let currentRentInsurance = rentInsuranceMonthly;
   let currentStrataFee = monthlyStrataFee;
   let currentDeposit = firstLastDeposit;
-  let renterRrspBalance = 0;
-  let renterRrspCostBasis = 0;
-  let fhsaLifetimeContributed = 0;
+  let currentMonthlyRentalIncome = monthlyRentalIncome;
   let breakEvenYear: number | null = null;
 
   const insuranceEscalationPct =
@@ -343,9 +392,13 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
     // Track cumulative mid-hold move costs — deducted from finalOwnerWealth at exit.
     cumulativeOwnerMoveCosts += ownerMoveTransactionCost;
 
+    // Annual suite income grows each year and reduces the owner's effective cost.
+    const annualRentalIncome = currentMonthlyRentalIncome * 12;
+
     // Owner move transaction costs are friction losses, not investable savings for the renter.
     // Excluding them keeps the renter line flat when only the owner's move frequency changes.
-    const ownerBaselineCashOut = ownerAnnualCashOut - ownerMoveTransactionCost;
+    // Suite income is also excluded from the baseline so it only benefits the invest-the-difference calc.
+    const ownerBaselineCashOut = ownerAnnualCashOut - ownerMoveTransactionCost - annualRentalIncome;
     const annualDifference = ownerBaselineCashOut - renterAnnualCashOut;
     const renterContribution =
       annualDifference > 0
@@ -430,13 +483,19 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
     ownerPortfolioCostBasis += ownerContribution;
     ownerPortfolio = ownerPortfolioEnd;
 
+    // Owner RRSP surplus grows tax-deferred
+    if (ownerSurplusUsesRrsp) {
+      ownerSurplusRrspBal *= (1 + netInvestmentReturnPct);
+    }
+
     // Owner home value appreciates
     currentHomeValue = currentHomeValue * (1 + homeAppreciationPct);
     const ownerMortgageBalance = amort.endingBalance;
     const ownerEquity = currentHomeValue - ownerMortgageBalance;
 
-    // Wealth comparison: owner equity + owner portfolio vs renter portfolio + RRSP + deposit
-    const ownerWealthThisYear = ownerEquity + ownerPortfolioEnd;
+    // Wealth comparison: owner equity + owner portfolio (+ RRSP net) vs renter portfolio + RRSP + deposit
+    const ownerRrspNetThisYear = ownerSurplusRrspBal * (1 - marginalTaxRatePct);
+    const ownerWealthThisYear = ownerEquity + ownerPortfolioEnd + ownerRrspNetThisYear;
     const renterWealthThisYear = renterPortfolioEnd + renterRrspBalance + currentDeposit;
     const wealthDelta = ownerWealthThisYear - renterWealthThisYear;
     if (breakEvenYear === null && wealthDelta >= 0 && y > 0) {
@@ -465,6 +524,7 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
       ownerPortfolioGrowth,
       ownerPortfolioEnd,
       ownerPortfolioCostBasis,
+      ownerSurplusRrspBalance: ownerSurplusRrspBal,
       renterAnnualRent,
       renterAnnualInsurance,
       renterAnnualCashOut,
@@ -481,7 +541,7 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
       renterPortfolioGrowth,
       renterPortfolioEnd,
       renterCostBasis: renterTaxableCostBasis,
-      cashOutDelta: ownerAnnualCashOut - renterAnnualCashOut,
+      cashOutDelta: (ownerAnnualCashOut - annualRentalIncome) - renterAnnualCashOut,
       wealthDelta,
     });
 
@@ -493,6 +553,7 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
     currentHomeInsurance = currentHomeInsurance * (1 + insuranceEscalationPct);
     currentRentInsurance = currentRentInsurance * (1 + insuranceEscalationPct);
     currentStrataFee = currentStrataFee * (1 + inflationPct);
+    currentMonthlyRentalIncome = currentMonthlyRentalIncome * (1 + rentalIncomeGrowthPct);
   }
 
   // ─── Exit summary ─────────────────────────────────────────────────────
@@ -511,19 +572,23 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
     0,
     ownerPortfolioValue - lastYear.ownerPortfolioCostBasis,
   );
-  // Owner's surplus portfolio is always taxable — no owner TFSA in this model.
-  const ownerPortfolioCapGainsTax = capitalGainsTax(ownerPortfolioRealizedGain, marginalTaxRatePct);
+  const ownerPortfolioCapGainsTax = (inputs.ownerSurplusUsesTFSA ?? false)
+    ? 0
+    : capitalGainsTax(ownerPortfolioRealizedGain, marginalTaxRatePct);
   const ownerPortfolioNetProceeds =
     ownerPortfolioValue - ownerPortfolioCapGainsTax;
 
+  const ownerSurplusRrspNet = ownerSurplusUsesRrsp
+    ? ownerSurplusRrspBal * (1 - marginalTaxRatePct)
+    : 0;
+
   // Renter exit: TFSA (no tax) + taxable (cap gains on taxable portion only) + RRSP net + deposit.
   // TFSA is already split out — renterTaxablePortfolio tracks only the non-sheltered portion.
-  // FHSA overrides: shelters any remaining taxable gains (fully simplified model).
+  // FHSA contributions are pooled into renterTfsaPortfolio during the year loop (tax-free bucket).
+  // The taxable portfolio still owes capital gains regardless of FHSA — the shelter is already captured.
   const renterPortfolioValue = lastYear.renterPortfolioEnd; // total TFSA + taxable (for display)
   const renterTaxableRealizedGain = Math.max(0, renterTaxablePortfolio - lastYear.renterCostBasis);
-  const renterCapGainsTax = useFHSA
-    ? 0
-    : capitalGainsTax(renterTaxableRealizedGain, marginalTaxRatePct);
+  const renterCapGainsTax = capitalGainsTax(renterTaxableRealizedGain, marginalTaxRatePct);
   // Expose combined gain for ExitSummary (total unrealized gain across both TFSA and taxable).
   const renterRealizedGain = Math.max(0, renterPortfolioValue - lastYear.renterCostBasis);
 
@@ -537,7 +602,7 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
   const renterNetProceeds =
     renterPortfolioValue - renterCapGainsTax + renterDepositReturned + renterRrspNetProceeds;
 
-  const finalOwnerWealth = ownerHomeNetProceeds + ownerPortfolioNetProceeds - cumulativeOwnerMoveCosts;
+  const finalOwnerWealth = ownerHomeNetProceeds + ownerPortfolioNetProceeds + ownerSurplusRrspNet - cumulativeOwnerMoveCosts;
   const finalRenterWealth = renterNetProceeds;
   const netAdvantageToOwner = finalOwnerWealth - finalRenterWealth;
 

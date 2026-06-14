@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from 'motion/react';
 import type { CalculatorInputs, HomeType } from '@/engine';
 import { homeTypeDefaults, HOME_TYPES } from '@/engine';
+import { StepWrapper } from '../components';
 
 interface Props {
   inputs: CalculatorInputs;
@@ -61,20 +62,10 @@ export function StepHomeType({ inputs, patch }: Props) {
   const impact = selectedType ? HOME_TYPE_IMPACT[selectedType] : null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -6 }}
-      transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-      className="flex flex-col"
+    <StepWrapper
+      heading="What are you buying?"
+      description="Home type sets appreciation rate, maintenance budget, and strata fee — watch the owner line react."
     >
-      <h2 className="mt-4 font-serif text-3xl leading-[1.15] tracking-[-0.02em] sm:text-4xl">
-        What are you buying?
-      </h2>
-      <p className="mt-2 text-sm leading-relaxed text-muted">
-        Home type sets appreciation rate, maintenance budget, and strata fee — watch the owner line react.
-      </p>
-
       <div className="mt-6">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {HOME_TYPES.map((ht) => {
@@ -124,6 +115,6 @@ export function StepHomeType({ inputs, patch }: Props) {
           )}
         </AnimatePresence>
       </div>
-    </motion.div>
+    </StepWrapper>
   );
 }

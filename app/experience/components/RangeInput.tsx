@@ -33,10 +33,19 @@ export function RangeInput({
   return (
     <div>
       <div className="flex items-baseline justify-between mb-2">
-        <p className="text-xs uppercase tracking-[0.1em] font-medium" style={{ color: 'var(--color-text-muted)' }}>
+        <p className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>
           {label}
         </p>
-        <span className="font-serif text-2xl tabular-nums" style={{ color: 'var(--color-text)', letterSpacing: '-0.02em' }}>
+        <span
+          className="tabular"
+          style={{
+            fontFamily: 'var(--font-sans), system-ui, sans-serif',
+            fontSize: 'clamp(22px, 6vw, 28px)',
+            fontWeight: 600,
+            letterSpacing: '-0.025em',
+            color: 'var(--color-text)',
+          }}
+        >
           {display}
         </span>
       </div>
@@ -47,10 +56,12 @@ export function RangeInput({
         step={step}
         value={value}
         onChange={(e) => onChange(parseFloat(e.target.value))}
+        onFocus={(e) => { e.currentTarget.scrollIntoView({ block: 'center', behavior: 'smooth' }); }}
         className="w-full"
         style={{
           '--slider-color': color,
           '--slider-fill': `${fillPct}%`,
+          height: '4px',
         } as React.CSSProperties}
       />
       {(minLabel || maxLabel) && (

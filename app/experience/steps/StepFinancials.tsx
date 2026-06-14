@@ -1,8 +1,7 @@
 ﻿'use client';
 
-import { motion } from 'motion/react';
 import type { CalculatorInputs, SimulationResult } from '@/engine';
-import { RangeInput } from '../components';
+import { RangeInput, StepWrapper } from '../components';
 
 interface Props {
   inputs: CalculatorInputs;
@@ -23,20 +22,10 @@ export function StepFinancials({ inputs, patch, sim }: Props) {
   const actualMonthly = monthlyGap * inputs.savingsDisciplinePct;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -6 }}
-      transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-      className="flex flex-col"
+    <StepWrapper
+      heading="Your tax rate and discipline."
+      description="The most load-bearing assumptions. Adjust them — the chart updates live."
     >
-      <h2 className="mt-4 font-serif text-3xl leading-[1.15] tracking-[-0.02em] sm:text-4xl">
-        Your tax rate and discipline.
-      </h2>
-      <p className="mt-2 text-sm leading-relaxed text-muted">
-        The most load-bearing assumptions. Adjust them — the chart updates live.
-      </p>
-
       {/* Marginal tax rate */}
       <div className="mt-8">
         <RangeInput
@@ -83,6 +72,6 @@ export function StepFinancials({ inputs, patch, sim }: Props) {
         )}
       </div>
 
-    </motion.div>
+    </StepWrapper>
   );
 }

@@ -1,18 +1,19 @@
 import type { Metadata } from 'next';
-import { Inter, Fraunces } from 'next/font/google';
+import { Playfair_Display, Inter } from 'next/font/google';
 import './globals.css';
+import { cn } from "@/lib/utils";
+
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  variable: '--font-serif',
+  weight: ['400', '500', '700', '900'],
+  style: ['normal', 'italic'],
+});
 
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-sans',
-  display: 'swap',
-});
-
-const fraunces = Fraunces({
-  subsets: ['latin'],
-  variable: '--font-serif',
-  axes: ['opsz'],
-  display: 'swap',
+  weight: ['400', '500', '600', '700', '900'],
 });
 
 const SITE_NAME = 'Rent vs Buy — Canadian Calculator';
@@ -20,7 +21,7 @@ const DESCRIPTION =
   'A Canada-only rent vs buy decision tool, inspired by Ben Felix\'s framework. The 5% Rule, year-by-year wealth comparison, full Canadian tax model. Every assumption editable. Every source linked.';
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://rent-vs-buy.example.com'),
+  metadataBase: new URL('https://longrun.ca'),
   title: {
     default: SITE_NAME,
     template: `%s — ${SITE_NAME}`,
@@ -62,7 +63,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
-  themeColor: '#F5F3EF',
+  themeColor: '#FAF9F7',
   width: 'device-width',
   initialScale: 1,
 };
@@ -73,7 +74,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en-CA" className={`${inter.variable} ${fraunces.variable}`}>
+    <html lang="en-CA" className={cn("font-sans", inter.variable, playfair.variable)}>
       <body>
         {children}
         <a

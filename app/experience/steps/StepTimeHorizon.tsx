@@ -1,7 +1,7 @@
 ﻿'use client';
 
-import { motion } from 'motion/react';
 import type { CalculatorInputs } from '@/engine';
+import { StepWrapper } from '../components';
 
 interface Props {
   inputs: CalculatorInputs;
@@ -12,20 +12,9 @@ export function StepTimeHorizon({ inputs, patch }: Props) {
   const years = inputs.holdingPeriodYears;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -6 }}
-      transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-      className="flex flex-col"
-    >
-
-      <h2 className="mt-4 font-serif text-3xl leading-[1.15] tracking-[-0.02em] sm:text-4xl">
-        How long are you thinking about?
-      </h2>
-
-      <div className="mt-8 flex items-baseline gap-3">
-        <span className="font-serif text-6xl tabular-nums">{years}</span>
+    <StepWrapper heading="How long are you thinking about?">
+      <div className="mt-4 flex items-baseline gap-3">
+        <span className="font-sans text-6xl tabular font-semibold" style={{ letterSpacing: '-0.04em', fontVariantNumeric: 'tabular-nums' }}>{years}</span>
         <span className="text-lg text-muted">years</span>
       </div>
 
@@ -54,6 +43,6 @@ export function StepTimeHorizon({ inputs, patch }: Props) {
           : 'Long horizon. Post-payoff investing eventually tilts toward the owner.'}
       </p>
 
-    </motion.div>
+    </StepWrapper>
   );
 }

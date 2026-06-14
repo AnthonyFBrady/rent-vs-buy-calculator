@@ -1,53 +1,192 @@
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ── Brand color tokens — editorial NYT Upshot palette ──────────────────── */
 :root {
-  --color-bg:                #F5F3EF;
-  --color-surface:           #FCFCFC;
-  --color-hover:             #ECEAE6;
-  --color-text:              #32302F;
-  --color-text-muted:        #686664;
-  --color-outline:           #E4E2E1;
-  --color-outline-active:    #AFAAA7;
-  --color-btn-primary-bg:    #32302F;
+  /* Backgrounds */
+  --color-bg:              #FAF9F7;
+  --color-bg-subtle:       #F3F2EF;
+  --color-bg-elevated:     #FFFFFF;
+  --color-hover:           #EEECEA;
+  --color-surface:         var(--color-bg-subtle);
+  --color-surface-raised:  var(--color-bg-elevated);
+
+  /* Text */
+  --color-text:            #1A1A1A;
+  --color-text-muted:      #5C5C5C;
+  --color-text-faint:      #9C9C9C;
+
+  /* Borders */
+  --color-outline:         #E3E1DC;
+  --color-outline-active:  #A09C96;
+
+  /* Semantic */
+  --color-positive:        #1E6B3F;
+  --color-negative:        #B91C1C;
+
+  /* Chart — amber (owner) + emerald (renter) */
+  --color-owner:           #B45309;
+  --color-renter:          #047857;
+  --color-cross:           #7C3AED;
+  --color-owner-band:      rgba(180, 83, 9, 0.10);
+  --color-renter-band:     rgba(4, 120, 87, 0.10);
+
+  /* Buttons + inputs */
+  --color-btn-primary-bg:    #1A1A1A;
   --color-btn-primary-text:  #FFFFFF;
-  --color-btn-ghost-bg:      #FCFCFC;
-  --color-btn-ghost-text:    #32302F;
+  --color-btn-ghost-bg:      transparent;
+  --color-btn-ghost-text:    #5C5C5C;
   --color-input-bg:          #FFFFFF;
-  --color-input-text:        #32302F;
-  --color-input-placeholder: #686664;
-  --color-positive:          #486635;
-  --color-negative:          #A43D12;
-  --color-scrollbar:         #AFAAA7;
-  --color-owner:             #A86A00;
-  --color-renter:            #0B8278;
-  --color-accent-cta:        #EEE3B1;
-  --color-cross:             #A78BFA;
+  --color-input-text:        #1A1A1A;
+  --color-input-placeholder: #9C9C9C;
+  --color-accent-cta:        #1A1A1A;
+  --color-scrollbar:         #A09C96;
+
+  /* Chart specifics */
+  --color-chart-bg:             #FAF9F7;
+  --color-chart-grid:           #E8E4E0;
+  --color-chart-axis:           #9C9C9C;
+  --color-chart-owner-band:     rgba(180, 83, 9, 0.10);
+  --color-chart-renter-band:    rgba(4, 120, 87, 0.10);
+  --color-chart-tooltip-bg:     #FFFFFF;
+  --color-chart-tooltip-border: #E3E1DC;
+  --color-chart-crosshair:      #1A1A1A;
+
+  /* shadcn semantic bridge */
+  --background:         var(--color-bg);
+  --foreground:         var(--color-text);
+  --card:               var(--color-bg-subtle);
+  --card-foreground:    var(--color-text);
+  --popover:            var(--color-bg-elevated);
+  --popover-foreground: var(--color-text);
+  --primary:            var(--color-btn-primary-bg);
+  --primary-foreground: var(--color-btn-primary-text);
+  --muted:              var(--color-hover);
+  --muted-foreground:   var(--color-text-muted);
+  --border:             var(--color-outline);
+  --input:              var(--color-outline);
+  --ring:               var(--color-outline-active);
+  --radius:             8px;
 }
 
 .dark {
-  --color-bg:                #1C1B1B;
-  --color-surface:           #272523;
-  --color-hover:             #494645;
-  --color-text:              #FFFFFF;
-  --color-text-muted:        #C9C6C4;
-  --color-outline:           rgba(148,144,141,0.35);
-  --color-outline-active:    #1C1B1B;
-  --color-btn-primary-bg:    #FCFCFC;
-  --color-btn-primary-text:  #32302F;
-  --color-btn-ghost-bg:      #32302F;
-  --color-btn-ghost-text:    #FCFCFC;
-  --color-input-bg:          transparent;
-  --color-input-text:        #FFFFFF;
-  --color-input-placeholder: #C9C6C4;
-  --color-positive:          #99B56E;
-  --color-negative:          #FF8A71;
-  --color-scrollbar:         #FAF8F5;
-  --color-owner:             #E8C87A;
-  --color-renter:            #6CBFB8;
-  --color-accent-cta:        #EEE3B1;
-  --color-cross:             #A78BFA;
+  --color-bg:             #0F0F11;
+  --color-bg-subtle:      #18181B;
+  --color-bg-elevated:    #27272A;
+  --color-hover:          #27272A;
+  --color-surface:        var(--color-bg-subtle);
+  --color-surface-raised: var(--color-bg-elevated);
+  --color-text:           #FAFAFA;
+  --color-text-muted:     #A1A1AA;
+  --color-text-faint:     #52525B;
+  --color-outline:        rgba(255,255,255,0.08);
+  --color-outline-active: rgba(255,255,255,0.20);
+  --color-positive:       #4ADE80;
+  --color-negative:       #F87171;
+  --color-owner:          #F59E0B;
+  --color-renter:         #10B981;
+  --color-cross:          #A78BFA;
+  --color-owner-band:     rgba(245, 158, 11, 0.13);
+  --color-renter-band:    rgba(16, 185, 129, 0.13);
+  --color-btn-primary-bg:    #FAFAFA;
+  --color-btn-primary-text:  #0F0F11;
+  --color-btn-ghost-bg:      transparent;
+  --color-btn-ghost-text:    #A1A1AA;
+  --color-input-bg:          #27272A;
+  --color-input-text:        #FAFAFA;
+  --color-input-placeholder: #52525B;
+  --color-accent-cta:        #FAFAFA;
+  --color-scrollbar:         #FAFAFA;
+  --color-chart-bg:             #0F0F11;
+  --color-chart-grid:           #27272A;
+  --color-chart-axis:           #52525B;
+  --color-chart-owner-band:     rgba(245, 158, 11, 0.13);
+  --color-chart-renter-band:    rgba(16, 185, 129, 0.13);
+  --color-chart-tooltip-bg:     #18181B;
+  --color-chart-tooltip-border: #27272A;
+  --color-chart-crosshair:      #FAFAFA;
+  --background:         var(--color-bg);
+  --foreground:         var(--color-text);
+  --card:               var(--color-bg-subtle);
+  --card-foreground:    var(--color-text);
+  --popover:            var(--color-bg-elevated);
+  --popover-foreground: var(--color-text);
+  --primary:            var(--color-btn-primary-bg);
+  --primary-foreground: var(--color-btn-primary-text);
+  --muted:              var(--color-hover);
+  --muted-foreground:   var(--color-text-muted);
+  --border:             var(--color-outline);
+  --input:              var(--color-outline);
+  --ring:               var(--color-outline-active);
+}
+
+/* ── Design tokens ──────────────────────────────────────────────────────── */
+:root {
+  /* Radius */
+  --radius-xs:   4px;
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   14px;
+  --radius-xl:   20px;
+  --radius-full: 9999px;
+
+  /* Motion durations */
+  --duration-instant:    50ms;
+  --duration-fast:      150ms;
+  --duration-base:      250ms;
+  --duration-slow:      400ms;
+  --duration-deliberate:600ms;
+  --duration-cinematic: 900ms;
+  /* Legacy aliases kept for backward compat */
+  --duration-medium: 0.22s;
+  --duration-panel:  0.24s;
+  --duration-chart:  0.70s;
+
+  /* Type scale */
+  --text-xs:   0.75rem;
+  --text-sm:   0.875rem;
+  --text-base: 1rem;
+  --text-lg:   1.25rem;
+  --text-xl:   1.5rem;
+  --text-2xl:  2rem;
+  --text-3xl:  2.5rem;
+  --text-4xl:  3.25rem;
+  --text-5xl:  4rem;
+
+  --tracking-tight:  -0.04em;
+  --tracking-snug:   -0.02em;
+  --tracking-normal: 0em;
+  --tracking-wide:   0.05em;
+  --tracking-wider:  0.10em;
+
+  --leading-tight:   1.1;
+  --leading-snug:    1.25;
+  --leading-normal:  1.5;
+  --leading-relaxed: 1.65;
+
+  /* Legacy type tokens */
+  --type-h3-size:      18px;
+  --type-h3-weight:    600;
+  --type-h3-ls:        -0.015em;
+  --type-body-size:    15px;
+  --type-label-size:   11px;
+  --type-label-weight: 500;
+  --type-label-ls:     0.08em;
+  --type-caption-size: 11px;
+  --type-caption-ls:   0.04em;
+}
+
+@keyframes cursor-blink {
+  0%, 49.9% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.cursor-blink {
+  animation: cursor-blink 0.75s linear infinite;
+  margin-left: 1px;
 }
 
 @layer base {
@@ -61,18 +200,17 @@
     color: var(--color-text);
   }
 
-  /* Optical sizing for all serif contexts — lets Fraunces choose the right design at any size */
   .font-serif,
   [class*="font-serif"] {
     font-optical-sizing: auto;
   }
 
-  /* Custom range slider — cross-browser, filled track via --slider-fill set in RangeInput.tsx */
+  /* Custom range slider — cross-browser, filled track via --slider-fill in RangeInput.tsx */
   input[type="range"] {
     -webkit-appearance: none;
     appearance: none;
-    height: 2px;
-    border-radius: 2px;
+    height: 4px;
+    border-radius: 4px;
     outline: none;
     cursor: pointer;
     background: linear-gradient(
@@ -87,27 +225,27 @@
   input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
     background: var(--slider-color, var(--color-owner));
-    border: 2.5px solid var(--color-bg);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+    border: 3px solid var(--color-bg);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
     transition: transform 0.12s ease, box-shadow 0.12s ease;
   }
 
   input[type="range"]::-webkit-slider-thumb:hover {
-    transform: scale(1.15);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+    transform: scale(1.12);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.22);
   }
 
   input[type="range"]::-moz-range-thumb {
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
     background: var(--slider-color, var(--color-owner));
-    border: 2.5px solid var(--color-bg);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+    border: 3px solid var(--color-bg);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
     cursor: pointer;
   }
 
@@ -121,10 +259,46 @@
   .container-narrow {
     @apply mx-auto max-w-3xl px-4 sm:px-6;
   }
+
+  .step-heading {
+    @apply font-serif text-2xl font-bold sm:text-3xl;
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+  }
+
+  .step-heading-cinematic {
+    @apply font-serif text-2xl font-bold sm:text-4xl;
+    line-height: 1.1;
+    letter-spacing: -0.04em;
+  }
+
+  .step-desc {
+    @apply mt-2 text-sm leading-relaxed;
+    color: var(--color-text-muted);
+  }
+
+  .step-label {
+    @apply mb-3 text-xs font-medium;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-text-muted);
+  }
 }
 
 @layer utilities {
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }

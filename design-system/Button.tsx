@@ -2,7 +2,7 @@
 
 import { CSSProperties, MouseEvent, ReactNode } from 'react';
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'cta' | 'destructive';
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface ButtonProps {
@@ -18,9 +18,9 @@ interface ButtonProps {
 }
 
 const SIZE: Record<ButtonSize, CSSProperties> = {
-  sm: { height: '36px', padding: '0 14px', fontSize: '13px', borderRadius: '8px' },
-  md: { height: '48px', padding: '0 20px', fontSize: '14px', borderRadius: '10px' },
-  lg: { height: '56px', padding: '0 28px', fontSize: '15px', borderRadius: '12px' },
+  sm: { height: '36px', padding: '0 14px', fontSize: '13px', borderRadius: '9999px' },
+  md: { height: '52px', padding: '0 20px', fontSize: '14px', borderRadius: '9999px' },
+  lg: { height: '56px', padding: '0 28px', fontSize: '15px', borderRadius: '9999px' },
 };
 
 const VARIANT: Record<ButtonVariant, CSSProperties> = {
@@ -32,22 +32,17 @@ const VARIANT: Record<ButtonVariant, CSSProperties> = {
   secondary: {
     backgroundColor: 'transparent',
     color: 'var(--color-text)',
-    border: '1.5px solid var(--color-outline-active)',
+    border: '1px solid var(--color-outline-active)',
   },
   ghost: {
     backgroundColor: 'transparent',
     color: 'var(--color-text-muted)',
-    border: 'none',
-  },
-  cta: {
-    backgroundColor: 'var(--color-accent-cta)',
-    color: 'var(--color-text)',
-    border: 'none',
+    border: '1px solid var(--color-outline)',
   },
   destructive: {
     backgroundColor: 'transparent',
     color: 'var(--color-negative)',
-    border: '1.5px solid var(--color-negative)',
+    border: '1px solid var(--color-negative)',
   },
 };
 

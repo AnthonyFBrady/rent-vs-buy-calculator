@@ -4,29 +4,32 @@
 
 export const colors = {
   // Chart lines
-  ownerGold: '#E8C87A',
-  renterTeal: '#6CBFB8',
-  crossoverPurple: '#A78BFA',
-  positiveGreen: '#4CAF85',
-  negativeRed: '#E05C5C',
+  ownerGold: '#F59E0B',
+  ownerGoldDark: '#F2C94C',
+  renterTeal: '#14B8A6',
+  renterTealDark: '#4ECDC4',
+  crossoverPurple: '#8B5CF6',
+  crossoverPurpleDark: '#A78BFA',
+  positiveGreen: '#16A34A',
+  negativeRed: '#DC2626',
 
   // Dark mode surfaces
   dark: {
-    bg: '#0C0C0E',
-    surface: '#141416',
+    bg: '#0F0F11',
+    surface: '#18181B',
     border: 'rgba(255,255,255,0.08)',
-    text: '#F2F2F0',
-    muted: 'rgba(242,242,240,0.45)',
-    grid: 'rgba(255,255,255,0.04)',
+    text: '#FAFAFA',
+    muted: '#A1A1AA',
+    grid: 'rgba(255,255,255,0.05)',
   },
 
   // Light mode surfaces
   light: {
-    bg: '#FAF8F5',
-    surface: '#FFFFFF',
-    border: 'rgba(0,0,0,0.1)',
-    text: '#1A1A1A',
-    muted: 'rgba(26,26,26,0.4)',
+    bg: '#FFFFFF',
+    surface: '#F7F7F8',
+    border: '#E4E4E7',
+    text: '#0F0F11',
+    muted: '#52525B',
     grid: 'rgba(0,0,0,0.04)',
   },
 } as const;
@@ -45,8 +48,8 @@ export function surfaceTokens(isDark: boolean) {
 }
 
 export const typography = {
-  serif: 'var(--font-serif), Georgia, serif',
   sans: 'var(--font-sans), system-ui, sans-serif',
+  mono: 'var(--font-mono, ui-monospace), monospace',
 } as const;
 
 export const radius = {

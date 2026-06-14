@@ -17,21 +17,23 @@ export function ProgressBar({ phase, total }: Props) {
       aria-valuemax={total}
       aria-label={`Step ${phase} of ${total}`}
       style={{
-        height: '2px',
+        position: 'fixed',
+        top: '40px',
+        left: 0,
+        right: 0,
+        height: '1px',
         backgroundColor: 'var(--color-outline)',
-        borderRadius: '2px',
-        overflow: 'hidden',
+        zIndex: 50,
       }}
     >
       <motion.div
         style={{
           height: '100%',
           backgroundColor: 'var(--color-owner)',
-          borderRadius: '2px',
           originX: 0,
         }}
         animate={{ width: `${pct}%` }}
-        transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+        transition={{ duration: 0.24, ease: [0.0, 0, 0.2, 1] }}
       />
     </div>
   );

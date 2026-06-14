@@ -1,539 +1,426 @@
 'use client';
 
-import { useReducer, useMemo, useEffect, useCallback, useState } from 'react';
-import { AnimatePresence, motion, MotionConfig } from 'motion/react';
-import { simulate, simulateSensitivity, defaultInputsFor, inputsToSearchParams } from '@/engine';
+import { useReducer, useMemo, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { AnimatePresence, motion } from 'motion/react';
+import { simulate, simulateSensitivity, defaultInputsFor } from '@/engine';
 import type { CalculatorInputs } from '@/engine';
-import { ExperienceChart } from './ExperienceChart';
-import { LeverPanel } from './LeverPanel';
-import { SummaryPanel } from './SummaryPanel';
-import { ProgressBar, ChalkPanel } from './components';
-import { STEP, OWNER_STEPS, RENTER_STEPS, TOTAL_STEPS } from './config/steps';
-import { StepIntro } from './steps/StepIntro';
-import { StepAbout } from './steps/StepAbout';
-import { StepTimeHorizon } from './steps/StepTimeHorizon';
-import { StepProvince } from './steps/StepProvince';
+import { useCalculatorStore } from '@/lib/store';
+import type { SensitivityScenario } from '@/lib/store';
+import { WealthChart } from '@/components/chart/WealthChart';
+import {
+  STEP,
+  TOTAL_STEPS,
+  STEP_HEADINGS,
+  STEP_WHY,
+  CONTINUE_LABEL,
+} from './config/steps';
+import { StepProvince }    from './steps/StepProvince';
+import { StepHome }        from './steps/StepHome';
 import { StepDownPayment } from './steps/StepDownPayment';
-import { StepAccounts } from './steps/StepAccounts';
-import { StepHomePrice } from './steps/StepHomePrice';
-import { StepHomeType } from './steps/StepHomeType';
-import { StepMortgageRate } from './steps/StepMortgageRate';
-import { StepAmortization } from './steps/StepAmortization';
-import { StepRentAmount } from './steps/StepRentAmount';
-import { StepRentGrowth } from './steps/StepRentGrowth';
-import { StepMobility } from './steps/StepMobility';
-import { StepTaxShelters } from './steps/StepTaxShelters';
-import { StepFinancials } from './steps/StepFinancials';
+import { StepMortgage }    from './steps/StepMortgage';
+import { StepRentHorizon } from './steps/StepRentHorizon';
+import { StepMarket }      from './steps/StepMarket';
+import { StepSituation }   from './steps/StepSituation';
+import { StepMobility }    from './steps/StepMobility';
 
-type Phase = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15;
-const MAX_PHASE = TOTAL_STEPS;
+const SIDEBAR_CONTEXT: Record<number, string> = {
+  [STEP.PROVINCE]:     'Land transfer tax is largest at purchase. Toronto buyers pay an additional municipal layer.',
+  [STEP.HOME]:         'Home type sets maintenance rate and appreciation defaults. Condos carry strata fees.',
+  [STEP.DOWN_PAYMENT]: 'The renter invests your down payment from day 1. Larger down payment means a stronger renter start.',
+  [STEP.MORTGAGE]:     'Year-1 mortgage interest is unrecoverable. It does not build equity.',
+  [STEP.RENT_HORIZON]: 'Time horizon is the most load-bearing variable. Under 5 years, renting almost always wins.',
+  [STEP.MARKET]:       'Investment return is the highest-leverage assumption for the renter. Discipline to actually invest the gap matters as much as the return.',
+  [STEP.SITUATION]:    'Tax shelters can shift the outcome by $50k or more over a 10-year horizon.',
+  [STEP.MOBILITY]:     'Owner moves cost 8-9% of the home price in friction. Watch the owner line dip each time.',
+};
+
+type Phase = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 interface State {
   phase: Phase;
-  name: string;
   inputs: CalculatorInputs;
-  isDark: boolean;
-  leverOpen: boolean;
-  summaryOpen: boolean;
-  activeEvent: string | null;
+  direction: 1 | -1;
 }
 
 type Action =
   | { type: 'ADVANCE' }
   | { type: 'BACK' }
-  | { type: 'SKIP' }
-  | { type: 'PATCH'; payload: Partial<CalculatorInputs> }
-  | { type: 'SET_NAME'; name: string }
-  | { type: 'TOGGLE_THEME' }
-  | { type: 'TOGGLE_LEVER' }
-  | { type: 'TOGGLE_SUMMARY' }
-  | { type: 'SET_EVENT'; id: string | null };
+  | { type: 'PATCH'; payload: Partial<CalculatorInputs> };
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'ADVANCE':
-      return { ...state, phase: Math.min(MAX_PHASE, state.phase + 1) as Phase };
+      return {
+        ...state,
+        direction: 1,
+        phase: Math.min(TOTAL_STEPS - 1, state.phase + 1) as Phase,
+      };
     case 'BACK':
-      return { ...state, phase: Math.max(0, state.phase - 1) as Phase };
-    case 'SKIP':
-      return { ...state, phase: MAX_PHASE };
-    case 'PATCH': {
-      const next = { ...state.inputs, ...action.payload };
-      return { ...state, inputs: next };
-    }
-    case 'SET_NAME':
-      return { ...state, name: action.name };
-    case 'TOGGLE_THEME':
-      return { ...state, isDark: !state.isDark };
-    case 'TOGGLE_LEVER':
-      return { ...state, leverOpen: !state.leverOpen, summaryOpen: false };
-    case 'TOGGLE_SUMMARY':
-      return { ...state, summaryOpen: !state.summaryOpen, leverOpen: false };
-    case 'SET_EVENT':
-      return { ...state, activeEvent: action.id };
+      return {
+        ...state,
+        direction: -1,
+        phase: Math.max(0, state.phase - 1) as Phase,
+      };
+    case 'PATCH':
+      return { ...state, inputs: { ...state.inputs, ...action.payload } };
     default:
       return state;
   }
 }
 
-function fmtWealth(n: number): string {
-  const abs = Math.abs(n);
-  const sign = n < 0 ? '−' : '';
-  if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(2)}M`;
-  if (abs >= 1_000) return `${sign}$${Math.round(abs / 1_000)}k`;
-  return `${sign}$${Math.round(abs)}`;
-}
-
 export default function ExperiencePage() {
+  const router = useRouter();
+  const { setResult } = useCalculatorStore();
+
   const [state, dispatch] = useReducer(reducer, {
     phase: 0,
-    name: '',
     inputs: defaultInputsFor('ON'),
-    isDark: true,
-    leverOpen: false,
-    summaryOpen: false,
-    activeEvent: null,
+    direction: 1,
   });
 
-  const { phase, name, inputs, isDark, leverOpen, summaryOpen, activeEvent } = state;
-  const [copied, setCopied] = useState(false);
-
-  const sim = useMemo(() => simulate(inputs), [inputs]);
-  const inResultPhase = phase >= MAX_PHASE;
-  const sensitivity = useMemo(
-    () => (inResultPhase ? simulateSensitivity(inputs) : null),
-    [inResultPhase, inputs],
-  );
-
-  // Sync isDark → <html> class so CSS variables + Tailwind dark: variants work
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', isDark);
-  }, [isDark]);
-
-  // Auto-advance from phase 0 intro
-  useEffect(() => {
-    if (phase !== 0) return;
-    const t = setTimeout(() => dispatch({ type: 'ADVANCE' }), 3200);
-    return () => clearTimeout(t);
-  }, [phase]);
+  const { phase, inputs, direction } = state;
 
   const advance = useCallback(() => dispatch({ type: 'ADVANCE' }), []);
-  const back = useCallback(() => dispatch({ type: 'BACK' }), []);
-  const patch = useCallback(
+  const back    = useCallback(() => dispatch({ type: 'BACK' }), []);
+  const patch   = useCallback(
     (payload: Partial<CalculatorInputs>) => dispatch({ type: 'PATCH', payload }),
     [],
   );
-  const setName = useCallback((n: string) => dispatch({ type: 'SET_NAME', name: n }), []);
 
-  async function handleShare() {
-    if (typeof window === 'undefined') return;
-    const params = inputsToSearchParams(inputs);
-    const url = `${window.location.origin}/experience?${params.toString()}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    } catch {
-      window.prompt('Copy this link', url);
+  // Live simulation — updates on every input change
+  const liveSim = useMemo(() => simulate(inputs), [inputs]);
+
+  const liveOwnerData = useMemo(() => {
+    const marginalRate = inputs.marginalTaxRatePct ?? 0.4;
+    let cumMoveCost = 0;
+    return [
+      { year: 0, value: inputs.homePrice * inputs.downPaymentPct },
+      ...liveSim.yearByYear.map((y) => {
+        cumMoveCost += y.ownerMoveTransactionCost;
+        const rrspNet = y.ownerSurplusRrspBalance * (1 - marginalRate);
+        return { year: y.year, value: y.ownerEquity + y.ownerPortfolioEnd + rrspNet - cumMoveCost };
+      }),
+    ];
+  }, [liveSim, inputs.homePrice, inputs.downPaymentPct, inputs.marginalTaxRatePct]);
+
+  const liveRenterData = useMemo(() => [
+    { year: 0, value: liveSim.yearByYear[0]?.renterPortfolioStart ?? 0 },
+    ...liveSim.yearByYear.map(y => ({ year: y.year, value: y.renterPortfolioEnd + y.renterRrspBalance })),
+  ], [liveSim]);
+
+  const ownerMoveYears = useMemo(() => {
+    const n = inputs.ownerMoves ?? 0;
+    const h = inputs.holdingPeriodYears;
+    return Array.from({ length: n }, (_, i) => Math.round((i + 1) * h / (n + 1)));
+  }, [inputs.ownerMoves, inputs.holdingPeriodYears]);
+
+  const renterMoveYears = useMemo(() => {
+    const n = inputs.renterMoves ?? 0;
+    const h = inputs.holdingPeriodYears;
+    return Array.from({ length: n }, (_, i) => Math.round((i + 1) * h / (n + 1)));
+  }, [inputs.renterMoves, inputs.holdingPeriodYears]);
+
+  const chartRenterData = liveRenterData;
+  const chartRenterMoveYears = renterMoveYears;
+
+  function handleContinue() {
+    if (phase < TOTAL_STEPS - 1) {
+      advance();
+      return;
     }
+
+    // Last step: reuse liveSim, run sensitivity, navigate to result page.
+    const sim         = liveSim;
+    const sensitivity = simulateSensitivity(inputs);
+
+    const toPoints = (r: typeof sim) => {
+      let cumMoveCost = 0;
+      return [
+        {
+          year: 0,
+          ownerValue: r.inputs.homePrice * r.inputs.downPaymentPct,
+          renterValue: r.yearByYear[0]?.renterPortfolioStart ?? 0,
+        },
+        ...r.yearByYear.map((y) => {
+          cumMoveCost += y.ownerMoveTransactionCost;
+          return {
+            year: y.year,
+            ownerValue:  y.ownerEquity + y.ownerPortfolioEnd - cumMoveCost,
+            renterValue: y.renterPortfolioEnd + y.renterRrspBalance,
+          };
+        }),
+      ];
+    };
+
+    const scenarios: SensitivityScenario[] = [
+      { id: 'base',     label: 'Base case',          ownerData: toPoints(sensitivity.base).map(p => ({ year: p.year, value: p.ownerValue })),      renterData: toPoints(sensitivity.base).map(p => ({ year: p.year, value: p.renterValue })) },
+      { id: 'growth+2', label: 'Home prices +2%/yr', ownerData: toPoints(sensitivity.ownerHigh).map(p => ({ year: p.year, value: p.ownerValue })), renterData: toPoints(sensitivity.ownerHigh).map(p => ({ year: p.year, value: p.renterValue })) },
+      { id: 'growth-2', label: 'Home prices -2%/yr', ownerData: toPoints(sensitivity.ownerLow).map(p => ({ year: p.year, value: p.ownerValue })),  renterData: toPoints(sensitivity.ownerLow).map(p => ({ year: p.year, value: p.renterValue })) },
+      { id: 'rate+1',   label: 'Returns +2%/yr',     ownerData: toPoints(sensitivity.renterHigh).map(p => ({ year: p.year, value: p.ownerValue })), renterData: toPoints(sensitivity.renterHigh).map(p => ({ year: p.year, value: p.renterValue })) },
+      { id: 'rate-1',   label: 'Returns -2%/yr',     ownerData: toPoints(sensitivity.renterLow).map(p => ({ year: p.year, value: p.ownerValue })),  renterData: toPoints(sensitivity.renterLow).map(p => ({ year: p.year, value: p.renterValue })) },
+    ];
+
+    setResult(inputs, sim, scenarios);
+    router.push('/result');
   }
 
-  const showOverlay = phase >= 0 && phase <= STEP.FINANCIALS;
-
-  // Line isolation: label which side is "active" so the chart can animate only that line
-  const activeSide: 'owner' | 'renter' | 'both' =
-    OWNER_STEPS.has(phase) ? 'owner'
-    : RENTER_STEPS.has(phase) ? 'renter'
-    : 'both';
-
-  const bgColor = 'var(--color-bg)';
-  const surfaceColor = 'var(--color-surface)';
-  const borderColor = 'var(--color-outline)';
-  const textColor = 'var(--color-text)';
-  const mutedColor = 'var(--color-text-muted)';
-
-  // Left nav lever panel width
-  const LEVER_WIDTH = 300;
-
-  const ownerLabel = name ? `${name} buys` : 'Owner';
-  const renterLabel = name ? `${name} rents` : 'Renter';
+  const stepLabel    = STEP_HEADINGS[phase] ?? '';
+  const whyCopy      = STEP_WHY[phase] ?? '';
+  const continueBtn  = CONTINUE_LABEL[phase] ?? 'Continue';
+  const isFirstStep  = phase === 0;
+  const progress     = (phase + 1) / TOTAL_STEPS;
 
   return (
-    <MotionConfig reducedMotion="user">
     <div
       style={{
-        backgroundColor: bgColor,
-        color: textColor,
-        height: '100dvh',
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden',
+        minHeight: '100dvh',
+        backgroundColor: 'var(--color-bg)',
+        color: 'var(--color-text)',
         fontFamily: 'var(--font-sans), system-ui, sans-serif',
       }}
     >
       {/* Nav */}
       <nav
         style={{
-          height: '48px',
+          height: '52px',
+          flexShrink: 0,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '0 20px',
-          borderBottom: `1px solid ${borderColor}`,
-          flexShrink: 0,
+          borderBottom: '1px solid var(--color-outline)',
+          backgroundColor: 'var(--color-bg)',
+          position: 'sticky',
+          top: 0,
           zIndex: 20,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <span style={{ fontFamily: 'var(--font-serif), Georgia, serif', fontSize: '15px', letterSpacing: '-0.02em', opacity: 0.9 }}>
-            Rent or Buy
-          </span>
-          {inResultPhase && (
-            <button
-              onClick={() => dispatch({ type: 'TOGGLE_LEVER' })}
-              style={{
-                fontSize: '12px',
-                color: leverOpen ? textColor : mutedColor,
-                cursor: 'pointer',
-                background: 'none',
-                border: 'none',
-                letterSpacing: '0.02em',
-                fontFamily: 'var(--font-sans), system-ui, sans-serif',
-              }}
-            >
-              {leverOpen ? '← Close' : '≡ Assumptions'}
-            </button>
-          )}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          {phase < MAX_PHASE && (
-            <button
-              onClick={() => dispatch({ type: 'SKIP' })}
-              style={{ fontSize: '12px', color: mutedColor, cursor: 'pointer', background: 'none', border: 'none', letterSpacing: '0.02em' }}
-            >
-              Skip →
-            </button>
-          )}
-          {phase === MAX_PHASE && (
-            <button
-              onClick={handleShare}
-              style={{
-                fontSize: '12px',
-                color: copied ? '#4CAF85' : mutedColor,
-                cursor: 'pointer',
-                background: 'none',
-                border: 'none',
-                letterSpacing: '0.02em',
-                transition: 'color 0.2s',
-              }}
-            >
-              {copied ? 'Copied ✓' : 'Share'}
-            </button>
-          )}
-          <button
-            onClick={() => dispatch({ type: 'TOGGLE_THEME' })}
-            aria-label="Toggle theme"
-            style={{ color: mutedColor, cursor: 'pointer', background: 'none', border: 'none', fontSize: '14px', lineHeight: 1 }}
-          >
-            {isDark ? '○' : '●'}
-          </button>
-        </div>
+        <a
+          href="/"
+          style={{
+            fontSize: '14px',
+            fontWeight: 500,
+            letterSpacing: '-0.02em',
+            color: 'var(--color-text)',
+            textDecoration: 'none',
+          }}
+        >
+          longrun.ca
+        </a>
+        <span
+          style={{
+            fontSize: '12px',
+            color: 'var(--color-text-faint)',
+            letterSpacing: '-0.01em',
+          }}
+        >
+          {phase + 1} of {TOTAL_STEPS}
+        </span>
       </nav>
 
-      {/* Main content: chart + optional left lever panel */}
-      <div style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden', position: 'relative' }}>
-        {/* Left lever panel — results phase only */}
-        <AnimatePresence>
-          {leverOpen && inResultPhase && (
-            <motion.div
-              key="lever-sidebar"
-              initial={{ x: -LEVER_WIDTH }}
-              animate={{ x: 0 }}
-              exit={{ x: -LEVER_WIDTH }}
-              transition={{ type: 'spring', stiffness: 340, damping: 38 }}
-              style={{
-                width: LEVER_WIDTH,
-                flexShrink: 0,
-                height: '100%',
-                borderRight: `1px solid ${borderColor}`,
-                overflowY: 'auto',
-                zIndex: 10,
-              }}
-            >
-              <LeverPanel
-                inputs={inputs}
-                patch={patch}
-                onClose={() => dispatch({ type: 'TOGGLE_LEVER' })}
-                sim={sim}
-                isDark={isDark}
-                sidebar
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Chart area */}
-        <motion.div layout style={{ flex: 1, minWidth: 0, padding: '0 20px', position: 'relative', display: 'flex', flexDirection: 'column' }}>
-          {/* Outcome hero — results phase only */}
-          <AnimatePresence>
-            {inResultPhase && (
-              <motion.div
-                key="outcome-hero"
-                initial={{ opacity: 0, y: -6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1], delay: 0.15 }}
-                style={{ borderBottom: `1px solid ${borderColor}`, flexShrink: 0 }}
-              >
-                {/* Verdict row */}
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '16px', padding: '10px 4px 4px' }}>
-                  <span style={{
-                    fontSize: '11px',
-                    letterSpacing: '0.09em',
-                    textTransform: 'uppercase',
-                    color: mutedColor,
-                    fontFamily: 'var(--font-sans), system-ui, sans-serif',
-                  }}>
-                    {sim.exit.netAdvantageToOwner > 500
-                      ? 'Buying leads'
-                      : sim.exit.netAdvantageToOwner < -500
-                      ? 'Renting leads'
-                      : 'Roughly tied'}
-                  </span>
-                  <span style={{
-                    fontFamily: 'var(--font-serif), Georgia, serif',
-                    fontSize: 'clamp(24px, 3vw, 38px)',
-                    fontWeight: 700,
-                    letterSpacing: '-0.03em',
-                    lineHeight: 1,
-                    color: sim.exit.netAdvantageToOwner > 0 ? 'var(--color-owner)' : 'var(--color-renter)',
-                  }}>
-                    {fmtWealth(Math.abs(sim.exit.netAdvantageToOwner))}
-                  </span>
-                  {sim.breakEvenYear && (
-                    <span style={{ fontSize: '12px', color: mutedColor, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
-                      Crossover yr {sim.breakEvenYear}
-                    </span>
-                  )}
-                </div>
-                {/* After-cost detail row */}
-                <div style={{ display: 'flex', gap: '20px', padding: '0 4px 8px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '11px', color: 'var(--color-owner)', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
-                    Owner {fmtWealth(sim.exit.finalOwnerWealth)} <span style={{ opacity: 0.6 }}>after exit costs</span>
-                  </span>
-                  <span style={{ fontSize: '11px', color: 'var(--color-renter)', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
-                    Renter {fmtWealth(sim.exit.finalRenterWealth)} <span style={{ opacity: 0.6 }}>after tax</span>
-                  </span>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <div style={{ flex: 1, minHeight: 0, paddingBottom: inResultPhase ? '60px' : '0' }}>
-          <ExperienceChart
-            result={sim}
-            sensitivity={sensitivity}
-            phase={phase}
-            isDark={isDark}
-            activeEvent={activeEvent}
-            onEventClick={(id) => dispatch({ type: 'SET_EVENT', id })}
-            inputs={inputs}
-            activeSide={activeSide}
-            ownerLabel={ownerLabel}
-            renterLabel={renterLabel}
-          />
-          </div>
-        </motion.div>
+      {/* Progress bar */}
+      <div
+        style={{
+          height: '3px',
+          flexShrink: 0,
+          backgroundColor: 'var(--color-outline)',
+          position: 'relative',
+        }}
+      >
+        <motion.div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundColor: 'var(--color-owner)',
+            transformOrigin: 'left',
+          }}
+          animate={{ scaleX: progress }}
+          transition={{ duration: 0.4, ease: [0.0, 0.0, 0.2, 1] }}
+        />
       </div>
 
-      {/* Question panel — real flex child, never overlaps the chart */}
-      <AnimatePresence>
-        {showOverlay && (
-          <motion.div
-            key="overlay"
-            initial={{ height: 0 }}
-            animate={{ height: 'auto' }}
-            exit={{ height: 0 }}
-            transition={{ type: 'spring', stiffness: 380, damping: 40 }}
+      {/* Content area: form left + chart right */}
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+
+        {/* Left: scrollable form column */}
+        <div
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            minWidth: 0,
+          }}
+        >
+          <div
             style={{
-              flexShrink: 0,
-              overflow: 'hidden',
-              backgroundColor: surfaceColor,
-              borderRadius: '16px 16px 0 0',
-              borderTop: `1px solid ${borderColor}`,
-              boxShadow: isDark
-                ? '0 -4px 24px rgba(0,0,0,0.30)'
-                : '0 -4px 24px rgba(0,0,0,0.06)',
-              zIndex: 10,
+              maxWidth: '520px',
+              margin: '0 auto',
+              padding: '36px 24px 24px',
             }}
           >
-            <div style={{ width: '100%', display: 'flex', height: '52vh', overflow: 'hidden' }}>
-              {/* Left column — questions and controls */}
-              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                {/* Progress bar — sits at top of panel, no padding */}
-                {phase >= 1 && phase <= STEP.FINANCIALS && (
-                  <ProgressBar phase={phase} total={MAX_PHASE - 1} />
+            {/* Step heading */}
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={`heading-${phase}`}
+                initial={{ opacity: 0, y: direction * 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: direction * -8 }}
+                transition={{ duration: 0.28, ease: [0.0, 0.0, 0.2, 1] }}
+              >
+                <h1
+                  style={{
+                    fontFamily: 'var(--font-serif), Georgia, serif',
+                    fontSize: 'clamp(22px, 4vw, 30px)',
+                    fontWeight: 700,
+                    letterSpacing: '-0.03em',
+                    lineHeight: 1.15,
+                    color: 'var(--color-text)',
+                    marginBottom: '8px',
+                  }}
+                >
+                  {stepLabel}
+                </h1>
+                {whyCopy && (
+                  <p
+                    style={{
+                      fontSize: '14px',
+                      color: 'var(--color-text-muted)',
+                      lineHeight: 1.5,
+                      marginBottom: '28px',
+                    }}
+                  >
+                    {whyCopy}
+                  </p>
                 )}
+              </motion.div>
+            </AnimatePresence>
 
-                {/* Content — no scroll, phases are sized to fit */}
-                <div style={{ flex: 1, overflow: 'hidden', padding: `${phase > 1 ? '36px' : '20px'} 22px 10px`, position: 'relative' }}>
-                  {phase > 1 && (
-                    <button
-                      onClick={back}
-                      style={{
-                        position: 'absolute',
-                        top: '14px',
-                        left: '28px',
-                        color: mutedColor,
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        fontSize: '13px',
-                      }}
-                    >
-                      ←
-                    </button>
-                  )}
+            {/* Step content */}
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={`content-${phase}`}
+                initial={{ opacity: 0, y: direction * 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: direction * -12 }}
+                transition={{ duration: 0.3, ease: [0.0, 0.0, 0.2, 1], delay: 0.04 }}
+              >
+                {phase === STEP.PROVINCE     && <StepProvince    inputs={inputs} patch={patch} />}
+                {phase === STEP.HOME         && <StepHome        inputs={inputs} patch={patch} />}
+                {phase === STEP.DOWN_PAYMENT && <StepDownPayment inputs={inputs} patch={patch} />}
+                {phase === STEP.MORTGAGE     && <StepMortgage    inputs={inputs} patch={patch} />}
+                {phase === STEP.RENT_HORIZON && <StepRentHorizon inputs={inputs} patch={patch} />}
+                {phase === STEP.MARKET       && <StepMarket      inputs={inputs} patch={patch} />}
+                {phase === STEP.SITUATION    && <StepSituation   inputs={inputs} patch={patch} />}
+                {phase === STEP.MOBILITY     && <StepMobility    inputs={inputs} patch={patch} />}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
 
-                  {/* Phase content */}
-                  <AnimatePresence mode="wait">
-                    {phase === STEP.INTRO && <StepIntro key="intro" />}
-                    {phase === STEP.ABOUT && (
-                      <StepAbout key="about" name={name} onName={setName} inputs={inputs} patch={patch} />
-                    )}
-                    {phase === STEP.TIME_HORIZON && (
-                      <StepTimeHorizon key="time-horizon" inputs={inputs} patch={patch} />
-                    )}
-                    {phase === STEP.PROVINCE && (
-                      <StepProvince key="province" inputs={inputs} patch={patch} />
-                    )}
-                    {phase === STEP.DOWN_PAYMENT && (
-                      <StepDownPayment key="down-payment" inputs={inputs} patch={patch} name={name} city={inputs.province === 'ON' ? 'Ontario' : inputs.province} />
-                    )}
-                    {phase === STEP.ACCOUNTS && (
-                      <StepAccounts key="accounts" inputs={inputs} patch={patch} />
-                    )}
-                    {phase === STEP.HOME_PRICE && (
-                      <StepHomePrice key="home-price" inputs={inputs} patch={patch} />
-                    )}
-                    {phase === STEP.HOME_TYPE && (
-                      <StepHomeType key="home-type" inputs={inputs} patch={patch} />
-                    )}
-                    {phase === STEP.MORTGAGE_RATE && (
-                      <StepMortgageRate key="mortgage-rate" inputs={inputs} patch={patch} />
-                    )}
-                    {phase === STEP.AMORTIZATION && (
-                      <StepAmortization key="amortization" inputs={inputs} patch={patch} />
-                    )}
-                    {phase === STEP.RENT_AMOUNT && (
-                      <StepRentAmount key="rent-amount" inputs={inputs} patch={patch} />
-                    )}
-                    {phase === STEP.RENT_GROWTH && (
-                      <StepRentGrowth key="rent-growth" inputs={inputs} patch={patch} />
-                    )}
-                    {phase === STEP.MOBILITY && (
-                      <StepMobility key="mobility" inputs={inputs} patch={patch} />
-                    )}
-                    {phase === STEP.TAX_SHELTERS && (
-                      <StepTaxShelters key="tax-shelters" inputs={inputs} patch={patch} sim={sim} />
-                    )}
-                    {phase === STEP.FINANCIALS && (
-                      <StepFinancials key="financials" inputs={inputs} patch={patch} sim={sim} />
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {/* Footer button */}
-                {phase > 0 && phase <= STEP.FINANCIALS && (
-                  <div style={{ padding: '8px 28px 24px', flexShrink: 0, paddingBottom: 'max(24px, env(safe-area-inset-bottom, 0px))' }}>
-                    <button
-                      onClick={advance}
-                      style={{
-                        width: '100%', borderRadius: '8px', height: '56px',
-                        fontSize: '14px', fontWeight: 500, cursor: 'pointer',
-                        border: 'none', letterSpacing: '-0.01em',
-                        backgroundColor: phase === STEP.FINANCIALS ? 'var(--color-accent-cta)' : 'var(--color-btn-primary-bg)',
-                        color: phase === STEP.FINANCIALS ? '#1C1B1B' : 'var(--color-btn-primary-text)',
-                        transition: 'opacity 0.15s',
-                      }}
-                      onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
-                      onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-                    >
-                      {phase === STEP.FINANCIALS ? 'See your result →' : 'Continue →'}
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Right column — chalkboard context panel (hidden below md breakpoint) */}
-              {phase >= 1 && phase <= STEP.FINANCIALS && (
-                <ChalkPanel phase={phase} inputs={inputs} sim={sim} />
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Summary panel */}
-      <AnimatePresence>
-        {summaryOpen && (
-          <SummaryPanel
-            key="summary"
-            sim={sim}
-            isDark={isDark}
-            onClose={() => dispatch({ type: 'TOGGLE_SUMMARY' })}
+        {/* Right: live chart column (desktop only) */}
+        <div
+          className="hidden lg:flex"
+          style={{
+            width: '420px',
+            flexShrink: 0,
+            flexDirection: 'column',
+            justifyContent: 'center',
+            padding: '24px 20px',
+            borderLeft: '1px solid var(--color-outline)',
+            backgroundColor: 'var(--color-chart-bg)',
+            overflowY: 'auto',
+          }}
+        >
+          <WealthChart
+            ownerData={liveOwnerData}
+            renterData={chartRenterData}
+            holdingPeriodYears={inputs.holdingPeriodYears}
+            breakEvenYear={liveSim.breakEvenYear}
+            ownerMoveYears={ownerMoveYears}
+            renterMoveYears={chartRenterMoveYears}
+            height={340}
+            animateOnMount={false}
           />
-        )}
-      </AnimatePresence>
-
-      {/* Breakdown tab — results phase, hidden when summary is open */}
-      <AnimatePresence>
-        {inResultPhase && !summaryOpen && (
-          <motion.div
-            key="breakdown-tab"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
+          <p
             style={{
-              position: 'fixed',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              zIndex: 20,
-              display: 'flex',
-              justifyContent: 'center',
-              paddingBottom: 'max(20px, env(safe-area-inset-bottom, 0px))',
-              paddingTop: '32px',
-              background: `linear-gradient(to top, ${bgColor}d8 0%, transparent 100%)`,
-              pointerEvents: 'none',
+              fontSize: '11px',
+              color: 'var(--color-text-faint)',
+              marginTop: '14px',
+              lineHeight: 1.65,
             }}
           >
-            <button
-              onClick={() => dispatch({ type: 'TOGGLE_SUMMARY' })}
-              style={{
-                pointerEvents: 'auto',
-                background: 'transparent',
-                color: mutedColor,
-                border: `1px solid ${borderColor}`,
-                borderRadius: '100px',
-                padding: '7px 22px',
-                fontSize: '12px',
-                letterSpacing: '0.03em',
-                cursor: 'pointer',
-                fontFamily: 'var(--font-sans), system-ui, sans-serif',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
-            >
-              <span style={{ opacity: 0.55, fontSize: '10px' }}>↑</span>
-              See breakdown
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            {SIDEBAR_CONTEXT[phase] ?? ''}
+          </p>
+        </div>
+
+      </div>
+
+      {/* Bottom button bar */}
+      <div
+        style={{
+          flexShrink: 0,
+          borderTop: '1px solid var(--color-outline)',
+          backgroundColor: 'var(--color-bg)',
+          padding: '12px 20px calc(12px + env(safe-area-inset-bottom))',
+          position: 'sticky',
+          bottom: 0,
+          zIndex: 10,
+        }}
+      >
+        <div
+          style={{
+            maxWidth: '520px',
+            margin: '0 auto',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+          }}
+        >
+          <button
+            onClick={back}
+            disabled={isFirstStep}
+            style={{
+              height: '48px',
+              padding: '0 16px',
+              fontSize: '14px',
+              color: isFirstStep ? 'var(--color-outline)' : 'var(--color-text-muted)',
+              background: 'none',
+              border: 'none',
+              cursor: isFirstStep ? 'default' : 'pointer',
+              fontFamily: 'var(--font-sans), system-ui, sans-serif',
+              transition: 'color 0.15s',
+              flexShrink: 0,
+            }}
+          >
+            ← Back
+          </button>
+
+          <button
+            onClick={handleContinue}
+            style={{
+              flex: 1,
+              height: '52px',
+              borderRadius: '9999px',
+              backgroundColor: 'var(--color-btn-primary-bg)',
+              color: 'var(--color-btn-primary-text)',
+              border: 'none',
+              fontSize: '15px',
+              fontWeight: 500,
+              cursor: 'pointer',
+              fontFamily: 'var(--font-sans), system-ui, sans-serif',
+              letterSpacing: '-0.01em',
+              transition: 'opacity 0.15s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.88'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
+          >
+            {continueBtn} →
+          </button>
+        </div>
+      </div>
     </div>
-    </MotionConfig>
   );
 }

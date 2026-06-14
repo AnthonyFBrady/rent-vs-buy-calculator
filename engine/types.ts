@@ -70,6 +70,22 @@ export interface CalculatorInputs {
   // not taxed at exit. Assumes contributions stay within TFSA room.
   renterUsesTFSA: boolean;
 
+  /**
+   * Whether the renter's starting lump sum is allocated to TFSA at year 0.
+   * Controls year-0 portfolio split only. Separate from renterUsesTFSA which
+   * controls ongoing annual contributions. Defaults to renterUsesTFSA when absent.
+   */
+  renterStartingUsesTFSA?: boolean;
+
+  /** Existing TFSA balance at simulation start. When set, this portion of the renter's year-0 lump sum is placed in the tax-free portfolio directly, bypassing room-based inference. */
+  renterTfsaStartingBalance?: number;
+
+  /** Existing FHSA balance at simulation start. Pools with TFSA for tax-free exit treatment. No refund generated (prior-year contributions). */
+  renterFhsaStartingBalance?: number;
+
+  /** Existing RRSP balance at simulation start. Taxed as income at rrspWithdrawalTaxRatePct at exit. */
+  renterRrspStartingBalance?: number;
+
   // ─── v2 extensions ────────────────────────────────────────────────────
   // All optional. Engine treats missing/undefined as the documented default.
 
@@ -193,6 +209,9 @@ export interface CalculatorInputs {
    */
   ownerPriorEquity?: number;
 
+  /** Whether the owner's surplus cash (prior equity above year-0 cash out) is held in a TFSA. When true, owner portfolio exits tax-free. Default false (taxable). */
+  ownerSurplusUsesTFSA?: boolean;
+
   /**
    * Explicit TFSA room available at the start of the simulation. When set,
    * overrides the birth-year-derived TFSA room calculation. Useful when the
@@ -215,6 +234,31 @@ export interface CalculatorInputs {
    * Default 0 (no prior room assumed).
    */
   renterRrspCarryforward?: number;
+
+  // ─── v4 extensions ────────────────────────────────────────────────────
+
+  /**
+   * Monthly NET rental income from a secondary suite (basement apartment,
+   * laneway house, etc.). The user enters net of their own vacancy/expense
+   * estimate. Reduces the owner's effective annual housing cost, shifting the
+   * invest-the-difference amount in the renter's favour. Default 0 (no suite).
+   */
+  monthlyRentalIncome?: number;
+
+  /**
+   * Whether the owner's surplus cash (prior equity above year-0 cash-out) is
+   * held in an RRSP. When true, a marginalTaxRate refund is reinvested in
+   * the taxable portfolio at year 0. The RRSP balance grows at
+   * investmentReturnPct and is taxed at marginalTaxRatePct on full withdrawal
+   * at exit. Mutually exclusive with ownerSurplusUsesTFSA. Default false.
+   */
+  ownerSurplusUsesRRSP?: boolean;
+
+  /**
+   * Annual growth rate for the suite's rental income. Defaults to
+   * rentEscalationPct (market rent growth). Set lower if rent control applies.
+   */
+  rentalIncomeGrowthPct?: number;
 }
 
 export interface YearSnapshot {
@@ -248,6 +292,8 @@ export interface YearSnapshot {
   ownerPortfolioGrowth: number;
   ownerPortfolioEnd: number;
   ownerPortfolioCostBasis: number;
+  /** Raw (pre-tax) RRSP balance from owner surplus this year. 0 if ownerSurplusUsesRRSP is false. */
+  ownerSurplusRrspBalance: number;
 
   // Renter side
   renterAnnualRent: number;

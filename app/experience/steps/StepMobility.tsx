@@ -1,6 +1,5 @@
 ﻿'use client';
 
-import { motion } from 'motion/react';
 import type { CalculatorInputs } from '@/engine';
 import { StepCounter } from '../components';
 
@@ -22,21 +21,8 @@ export function StepMobility({ inputs, patch }: Props) {
   const hasRentControl = inputs.rentControlCapPct != null && inputs.rentControlCapPct > 0;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -6 }}
-      transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-      className="flex flex-col"
-    >
-      <h2 className="mt-4 font-serif text-3xl leading-[1.15] tracking-[-0.02em] sm:text-4xl">
-        How often will you move?
-      </h2>
-      <p className="mt-2 text-sm leading-relaxed text-muted">
-        These are not symmetric. Owner moves cost roughly 8–9% of the home value. Renter moves are cheap physically but reset any rent-control advantage permanently.
-      </p>
-
-      <div className="mt-8 grid grid-cols-2 gap-6">
+    <div>
+      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-6">
         {/* Owner moves */}
         <div className="flex flex-col gap-3">
           <div>
@@ -87,8 +73,6 @@ export function StepMobility({ inputs, patch }: Props) {
           )}
         </div>
       </div>
-
-
-    </motion.div>
+    </div>
   );
 }

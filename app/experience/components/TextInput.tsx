@@ -1,5 +1,7 @@
 'use client';
 
+import { useId } from 'react';
+
 interface Props {
   value: string | number;
   onChange: (v: string) => void;
@@ -11,7 +13,6 @@ interface Props {
   min?: number;
   max?: number;
   step?: number;
-  focusColor?: string;
 }
 
 export function TextInput({
@@ -25,14 +26,18 @@ export function TextInput({
   min,
   max,
   step,
-  focusColor = 'var(--color-owner)',
 }: Props) {
+  const inputId = useId();
   return (
     <div>
       {label && (
-        <p className="mb-2 text-xs uppercase tracking-[0.1em] font-medium" style={{ color: 'var(--color-text-muted)' }}>
+        <label
+          htmlFor={inputId}
+          className="mb-2 text-xs font-medium block"
+          style={{ color: 'var(--color-text-muted)' }}
+        >
           {label}
-        </p>
+        </label>
       )}
       <div className="relative">
         {prefix && (
@@ -44,23 +49,34 @@ export function TextInput({
           </span>
         )}
         <input
+          id={inputId}
           type={type}
+          inputMode={type === 'number' ? 'decimal' : undefined}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           min={min}
           max={max}
           step={step}
-          className="w-full rounded-sm py-3.5 text-sm"
+          className="w-full tabular"
           style={{
+            height: '52px',
             paddingLeft: prefix ? '2rem' : '1rem',
             paddingRight: '1rem',
-            backgroundColor: 'var(--color-input-bg)',
+            borderRadius: '10px',
+            fontSize: '24px',
+            fontWeight: 600,
+            letterSpacing: '-0.02em',
+            fontFamily: 'var(--font-sans), system-ui, sans-serif',
+            backgroundColor: 'var(--color-surface-raised)',
             color: 'var(--color-input-text)',
             border: '1px solid var(--color-outline)',
             outline: 'none',
           }}
-          onFocus={(e) => { e.currentTarget.style.borderColor = focusColor; }}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = 'var(--color-outline-active)';
+            e.currentTarget.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          }}
           onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-outline)'; }}
         />
       </div>

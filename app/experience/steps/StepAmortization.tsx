@@ -1,8 +1,7 @@
 ﻿'use client';
 
-import { motion } from 'motion/react';
 import type { CalculatorInputs } from '@/engine';
-import { RangeInput } from '../components';
+import { RangeInput, StepWrapper } from '../components';
 
 interface Props {
   inputs: CalculatorInputs;
@@ -16,17 +15,7 @@ export function StepAmortization({ inputs, patch }: Props) {
   const renewalDelta = parseFloat(renewalRatePct) - parseFloat(ratePct);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -6 }}
-      transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-      className="flex flex-col"
-    >
-      <h2 className="mt-4 font-serif text-3xl leading-[1.15] tracking-[-0.02em] sm:text-4xl">
-        Amortization and renewal.
-      </h2>
-
+    <StepWrapper heading="Amortization and renewal.">
       {/* Amortization — single row of 4 buttons */}
       <div className="mt-6">
         <p className="mb-3 text-xs uppercase tracking-[0.1em] font-medium text-muted">Amortization</p>
@@ -74,6 +63,6 @@ export function StepAmortization({ inputs, patch }: Props) {
           }
         />
       </div>
-    </motion.div>
+    </StepWrapper>
   );
 }
