@@ -28,6 +28,8 @@ export interface WealthChartProps {
   animateOnMount?: boolean;
   ownerMoveYears?: number[];
   renterMoveYears?: number[];
+  ownerSubLabel?: string;
+  renterSubLabel?: string;
 }
 
 function computeMoveMarkers(
@@ -67,15 +69,18 @@ function ChartInner({
   animateOnMount = true,
   ownerMoveYears,
   renterMoveYears,
+  ownerSubLabel,
+  renterSubLabel,
 }: ChartInnerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoverYear, setHoverYear] = useState<number | null>(null);
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
 
   const isNarrow = width < 480;
+  const hasSubLabels = !!ownerSubLabel || !!renterSubLabel;
   const MARGIN = {
     top: 28,
-    right: isNarrow ? 66 : 92,
+    right: isNarrow ? 70 : (hasSubLabels ? 130 : 92),
     bottom: 36,
     left: isNarrow ? 44 : 64,
   };
@@ -389,7 +394,8 @@ function ChartInner({
           >
             <line x1={4} y1={0} x2={10} y2={0}
               stroke="var(--color-owner)" strokeWidth={1.5} strokeOpacity={0.5} />
-            <rect x={innerWidth + 12} y={-14} width={74} height={28} rx={4}
+            <rect x={innerWidth + 12} y={hasSubLabels ? -21 : -14}
+              width={hasSubLabels ? 110 : 74} height={hasSubLabels ? 42 : 28} rx={4}
               fill="var(--color-bg-elevated)" stroke="var(--color-outline)" strokeWidth={1} />
             <text x={innerWidth + 18} y={-4} dy="0.32em" fontSize={9}
               fill="var(--color-owner)" fontFamily="var(--font-sans), system-ui, sans-serif">
@@ -400,6 +406,13 @@ function ChartInner({
               style={{ fontVariantNumeric: 'tabular-nums' }}>
               {fmt(ownerEndValue)}
             </text>
+            {ownerSubLabel && (
+              <text x={innerWidth + 18} y={24} dy="0.32em" fontSize={8}
+                fill="var(--color-text-faint)" fontFamily="var(--font-sans), system-ui, sans-serif"
+                style={{ fontVariantNumeric: 'tabular-nums' }}>
+                {ownerSubLabel}
+              </text>
+            )}
           </motion.g>
 
           {hasRenter && (
@@ -411,7 +424,8 @@ function ChartInner({
             >
               <line x1={4} y1={0} x2={10} y2={0}
                 stroke="var(--color-renter)" strokeWidth={1.5} strokeOpacity={0.5} />
-              <rect x={innerWidth + 12} y={-14} width={74} height={28} rx={4}
+              <rect x={innerWidth + 12} y={hasSubLabels ? -21 : -14}
+                width={hasSubLabels ? 110 : 74} height={hasSubLabels ? 42 : 28} rx={4}
                 fill="var(--color-bg-elevated)" stroke="var(--color-outline)" strokeWidth={1} />
               <text x={innerWidth + 18} y={-4} dy="0.32em" fontSize={9}
                 fill="var(--color-renter)" fontFamily="var(--font-sans), system-ui, sans-serif">
@@ -422,6 +436,13 @@ function ChartInner({
                 style={{ fontVariantNumeric: 'tabular-nums' }}>
                 {fmt(renterEndValue)}
               </text>
+              {renterSubLabel && (
+                <text x={innerWidth + 18} y={24} dy="0.32em" fontSize={8}
+                  fill="var(--color-text-faint)" fontFamily="var(--font-sans), system-ui, sans-serif"
+                  style={{ fontVariantNumeric: 'tabular-nums' }}>
+                  {renterSubLabel}
+                </text>
+              )}
             </motion.g>
           )}
 

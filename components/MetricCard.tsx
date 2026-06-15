@@ -14,7 +14,7 @@ export function MetricCard({ label, value, subvalue, accentColor }: Props) {
         backgroundColor: 'var(--color-bg-subtle)',
         border: '1px solid var(--color-outline)',
         borderRadius: '12px',
-        padding: '20px 24px',
+        padding: '14px 18px',
       }}
     >
       <p
@@ -31,7 +31,7 @@ export function MetricCard({ label, value, subvalue, accentColor }: Props) {
       </p>
       <p
         style={{
-          fontSize: 'clamp(22px, 3.5vw, 32px)',
+          fontSize: 'clamp(16px, 2.2vw, 22px)',
           fontWeight: 700,
           letterSpacing: '-0.03em',
           lineHeight: 1,

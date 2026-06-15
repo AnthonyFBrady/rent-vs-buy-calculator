@@ -324,11 +324,10 @@ export default function ExperiencePage() {
         <div
           className="hidden lg:flex"
           style={{
-            width: '420px',
-            flexShrink: 0,
+            flex: 1,
             flexDirection: 'column',
             justifyContent: 'center',
-            padding: '24px 20px',
+            padding: '16px',
             borderLeft: '1px solid var(--color-outline)',
             backgroundColor: 'var(--color-chart-bg)',
             overflowY: 'auto',
@@ -341,19 +340,9 @@ export default function ExperiencePage() {
             breakEvenYear={liveSim.breakEvenYear}
             ownerMoveYears={ownerMoveYears}
             renterMoveYears={chartRenterMoveYears}
-            height={340}
+            height={480}
             animateOnMount={false}
           />
-          <p
-            style={{
-              fontSize: '11px',
-              color: 'var(--color-text-faint)',
-              marginTop: '14px',
-              lineHeight: 1.65,
-            }}
-          >
-            {SIDEBAR_CONTEXT[phase] ?? ''}
-          </p>
         </div>
 
       </div>

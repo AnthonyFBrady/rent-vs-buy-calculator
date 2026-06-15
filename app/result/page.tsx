@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
 import { useCalculatorStore } from '@/lib/store';
-import type { SensitivityScenario } from '@/lib/store';
 import { encodeShare } from '@/lib/share';
 import { WealthChart } from '@/components/chart/WealthChart';
 import { MetricCard } from '@/components/MetricCard';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 function fmtWealth(n: number): string {
   const abs = Math.abs(n);
@@ -17,18 +17,55 @@ function fmtWealth(n: number): string {
   return `${sign}$${Math.round(abs)}`;
 }
 
-const SCENARIO_ORDER: SensitivityScenario['id'][] = ['base', 'growth+2', 'growth-2', 'rate+1', 'rate-1'];
-
 const PROVINCE_NAMES: Record<string, string> = {
   ON: 'Ontario', BC: 'British Columbia', AB: 'Alberta', QC: 'Quebec',
   MB: 'Manitoba', SK: 'Saskatchewan', NS: 'Nova Scotia', NB: 'New Brunswick',
   NL: 'Newfoundland', PE: 'Prince Edward Island',
 };
 
+const HOME_TYPE_LABELS: Record<string, string> = {
+  'condo-apt': 'Condo',
+  'condo-townhouse': 'Condo TH',
+  'freehold-townhouse': 'Freehold TH',
+  'semi-detached': 'Semi-detached',
+  'detached': 'Detached',
+};
+
+function DrawerSection({ title, items }: { title: string; items: { label: string; value: string }[] }) {
+  return (
+    <div style={{ marginBottom: '28px' }}>
+      <p style={{
+        fontSize: '11px', fontWeight: 500, textTransform: 'uppercase',
+        letterSpacing: '0.08em', color: 'var(--color-text-faint)',
+        marginBottom: '12px', fontFamily: 'var(--font-sans), system-ui, sans-serif',
+      }}>
+        {title}
+      </p>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+        gap: '10px 20px',
+      }}>
+        {items.map(a => (
+          <div key={a.label}>
+            <p style={{ fontSize: '11px', color: 'var(--color-text-faint)', marginBottom: '2px', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
+              {a.label}
+            </p>
+            <p style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
+              {a.value}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function ResultPage() {
   const router = useRouter();
-  const { result, inputs, sensitivity, activeSensitivity, setActiveSensitivity } = useCalculatorStore();
+  const { result, inputs, sensitivity } = useCalculatorStore();
   const [copied, setCopied] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     if (!result || !inputs) {
@@ -38,7 +75,7 @@ export default function ResultPage() {
 
   if (!result || !inputs || sensitivity.length === 0) return null;
 
-  const activeScenario = sensitivity.find(s => s.id === activeSensitivity) ?? sensitivity[0]!;
+  const baseScenario = sensitivity.find(s => s.id === 'base') ?? sensitivity[0]!;
   const advantage = result.exit.netAdvantageToOwner;
   const winner = advantage > 500 ? 'buy' : advantage < -500 ? 'rent' : 'tie';
   const winnerColor = winner === 'buy' ? 'var(--color-owner)' : winner === 'rent' ? 'var(--color-renter)' : 'var(--color-text-muted)';
@@ -70,18 +107,75 @@ export default function ResultPage() {
     }
   }
 
-  const keyAssumptions = [
-    { label: 'Home price',       value: `$${Math.round(inputs.homePrice / 1000)}k` },
-    { label: 'Down payment',     value: `${Math.round(inputs.downPaymentPct * 100)}%` },
-    { label: 'Mortgage rate',    value: `${(inputs.mortgageRatePct * 100).toFixed(2)}%` },
-    { label: 'Monthly rent',     value: `$${Math.round(inputs.monthlyRent / 100) * 100}/mo` },
-    { label: 'Home appreciation',value: `${(inputs.homeAppreciationPct * 100).toFixed(1)}%/yr` },
-    { label: 'Investment return',value: `${(inputs.investmentReturnPct * 100).toFixed(1)}%/yr` },
-    { label: 'Province',         value: PROVINCE_NAMES[inputs.province] ?? inputs.province },
-    { label: 'Time horizon',     value: `${inputs.holdingPeriodYears} years` },
-    ...(inputs.monthlyRentalIncome && inputs.monthlyRentalIncome > 0
-      ? [{ label: 'Suite income', value: `$${inputs.monthlyRentalIncome}/mo` }]
-      : []),
+  const ownerSubLabel = `Home ${fmtWealth(result.exit.ownerHomeNetProceeds)} + Inv ${fmtWealth(result.exit.ownerPortfolioNetProceeds)}`;
+  const renterSubLabel = `Portfolio ${fmtWealth(result.exit.finalRenterWealth)}`;
+
+  const fmtCAD = (n: number) => new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(n);
+  const fmtPct = (n: number, d = 1) => `${(n * 100).toFixed(d)}%`;
+
+  const drawerSections = [
+    {
+      title: 'Home & financing',
+      items: [
+        { label: 'Home price', value: fmtCAD(inputs.homePrice) },
+        ...(inputs.homeType ? [{ label: 'Home type', value: HOME_TYPE_LABELS[inputs.homeType] ?? inputs.homeType }] : []),
+        { label: 'Province', value: PROVINCE_NAMES[inputs.province] ?? inputs.province },
+        { label: 'Down payment', value: `${Math.round(inputs.downPaymentPct * 100)}% (${fmtCAD(inputs.homePrice * inputs.downPaymentPct)})` },
+        { label: 'Mortgage rate', value: fmtPct(inputs.mortgageRatePct, 2) },
+        { label: 'Amortization', value: `${inputs.amortizationYears} years` },
+      ],
+    },
+    {
+      title: 'Property costs',
+      items: [
+        { label: 'Maintenance', value: `${fmtPct(inputs.maintenancePct ?? 0.015)}/yr of value` },
+        ...(inputs.monthlyStrataFee && inputs.monthlyStrataFee > 0
+          ? [{ label: 'Strata fee', value: `${fmtCAD(inputs.monthlyStrataFee)}/mo` }]
+          : []),
+        { label: 'Property tax', value: `${fmtPct(inputs.propertyTaxPct ?? 0.01)}/yr` },
+        { label: 'Home appreciation', value: `${fmtPct(inputs.homeAppreciationPct ?? 0.035)}/yr` },
+        ...(inputs.monthlyRentalIncome && inputs.monthlyRentalIncome > 0
+          ? [{ label: 'Rental suite income', value: `${fmtCAD(inputs.monthlyRentalIncome)}/mo` }]
+          : []),
+      ],
+    },
+    {
+      title: 'Renter',
+      items: [
+        { label: 'Monthly rent', value: `${fmtCAD(inputs.monthlyRent)}/mo` },
+        { label: 'Rent growth', value: `${fmtPct(inputs.rentEscalationPct ?? 0.03)}/yr` },
+        { label: 'Renter insurance', value: `${fmtCAD(inputs.rentInsuranceMonthly ?? 40)}/mo` },
+        { label: 'Savings discipline', value: `${Math.round((inputs.savingsDisciplinePct ?? 1) * 100)}%` },
+      ],
+    },
+    {
+      title: 'Tax shelters',
+      items: [
+        { label: 'TFSA', value: inputs.renterUsesTFSA ? 'Yes' : 'No' },
+        { label: 'FHSA', value: inputs.useFHSA
+            ? `Yes — ${fmtCAD(inputs.renterFhsaRoomOverride ?? 40_000)} room`
+            : 'No' },
+        { label: 'RRSP', value: inputs.renterUsesRRSP
+            ? `Yes — ${fmtCAD(inputs.renterRrspCarryforward ?? 0)} carryforward`
+            : 'No' },
+      ],
+    },
+    {
+      title: 'Market',
+      items: [
+        { label: 'Investment return', value: `${fmtPct(inputs.investmentReturnPct ?? 0.07)}/yr` },
+        { label: 'Inflation', value: `${fmtPct(inputs.inflationPct ?? 0.025)}/yr` },
+        { label: 'Marginal tax rate', value: fmtPct(inputs.marginalTaxRatePct ?? 0.4) },
+        { label: 'Time horizon', value: `${inputs.holdingPeriodYears} years` },
+      ],
+    },
+    {
+      title: 'Mobility',
+      items: [
+        { label: 'Owner moves', value: `${inputs.ownerMoves ?? 0}` },
+        { label: 'Renter moves', value: `${inputs.renterMoves ?? 0}` },
+      ],
+    },
   ];
 
   return (
@@ -161,7 +255,7 @@ export default function ResultPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0, 0, 0.2, 1] }}
-          style={{ paddingTop: '52px', paddingBottom: '44px' }}
+          style={{ paddingTop: '44px', paddingBottom: '32px' }}
         >
           <p
             style={{
@@ -169,7 +263,7 @@ export default function ResultPage() {
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
               color: 'var(--color-text-faint)',
-              marginBottom: '16px',
+              marginBottom: '14px',
             }}
           >
             {inputs.holdingPeriodYears}-year outlook — {PROVINCE_NAMES[inputs.province] ?? inputs.province}
@@ -182,14 +276,14 @@ export default function ResultPage() {
               letterSpacing: '-0.03em',
               lineHeight: 1.05,
               color: winnerColor,
-              marginBottom: '14px',
+              marginBottom: '12px',
             }}
           >
             {verdictLine}
           </h1>
           <p
             style={{
-              fontSize: 'clamp(20px, 3.5vw, 34px)',
+              fontSize: 'clamp(18px, 3vw, 28px)',
               fontWeight: 600,
               letterSpacing: '-0.03em',
               lineHeight: 1.2,
@@ -200,7 +294,7 @@ export default function ResultPage() {
             {deltaLine}
           </p>
           {result.breakEvenYear !== null && (
-            <p style={{ fontSize: '14px', color: 'var(--color-text-muted)', marginTop: '10px' }}>
+            <p style={{ fontSize: '14px', color: 'var(--color-text-muted)', marginTop: '8px' }}>
               Lines cross at year {result.breakEvenYear}
             </p>
           )}
@@ -213,73 +307,16 @@ export default function ResultPage() {
           transition={{ duration: 0.4, ease: [0, 0, 0.2, 1], delay: 0.12 }}
         >
           <WealthChart
-            key={activeSensitivity}
-            ownerData={activeScenario.ownerData}
-            renterData={activeScenario.renterData}
+            key="result"
+            ownerData={baseScenario.ownerData}
+            renterData={baseScenario.renterData}
             breakEvenYear={result.breakEvenYear}
             holdingPeriodYears={inputs.holdingPeriodYears}
-            height={typeof window !== 'undefined' && window.innerWidth < 480 ? 260 : 340}
+            height={typeof window !== 'undefined' && window.innerWidth < 480 ? 280 : 420}
+            ownerSubLabel={ownerSubLabel}
+            renterSubLabel={renterSubLabel}
           />
         </motion.div>
-
-        {/* Chart legend / context */}
-        <div
-          style={{
-            display: 'flex',
-            gap: '20px',
-            marginTop: '12px',
-            flexWrap: 'wrap',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <div style={{ width: '24px', height: '2px', backgroundColor: 'var(--color-owner)' }} />
-            <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
-              Owner — equity + portfolio
-            </span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <div style={{ width: '24px', height: '2px', backgroundColor: 'var(--color-renter)' }} />
-            <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
-              Renter — portfolio + RRSP
-            </span>
-          </div>
-        </div>
-
-        {/* Sensitivity pills */}
-        <div
-          style={{
-            display: 'flex',
-            gap: '8px',
-            flexWrap: 'wrap',
-            marginTop: '20px',
-          }}
-        >
-          {SCENARIO_ORDER.map(id => {
-            const scenario = sensitivity.find(s => s.id === id);
-            if (!scenario) return null;
-            const isActive = activeSensitivity === id;
-            return (
-              <button
-                key={id}
-                onClick={() => setActiveSensitivity(id)}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: '100px',
-                  fontSize: '12px',
-                  fontFamily: 'var(--font-sans), system-ui, sans-serif',
-                  border: `1px solid ${isActive ? 'var(--color-text)' : 'var(--color-outline)'}`,
-                  backgroundColor: isActive ? 'var(--color-text)' : 'transparent',
-                  color: isActive ? 'var(--color-bg)' : 'var(--color-text-muted)',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.15s, color 0.15s, border-color 0.15s',
-                  letterSpacing: '-0.01em',
-                }}
-              >
-                {scenario.label}
-              </button>
-            );
-          })}
-        </div>
 
         {/* Metric cards */}
         <motion.div
@@ -288,9 +325,9 @@ export default function ResultPage() {
           transition={{ duration: 0.4, ease: [0, 0, 0.2, 1], delay: 0.22 }}
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(172px, 1fr))',
-            gap: '10px',
-            marginTop: '36px',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(148px, 1fr))',
+            gap: '8px',
+            marginTop: '24px',
           }}
         >
           <MetricCard
@@ -300,26 +337,46 @@ export default function ResultPage() {
             accentColor={winnerColor}
           />
           <MetricCard
-            label="Break-even year"
+            label="Break-even"
             value={result.breakEvenYear !== null ? `Yr ${result.breakEvenYear}` : 'Never'}
             subvalue={result.breakEvenYear !== null ? 'Owner catches up' : 'Renter stays ahead'}
           />
           <MetricCard
-            label="Final owner wealth"
+            label="Owner wealth"
             value={fmtWealth(result.exit.finalOwnerWealth)}
             subvalue="After exit costs"
             accentColor="var(--color-owner)"
           />
           <MetricCard
-            label="Final renter wealth"
+            label="Renter wealth"
             value={fmtWealth(result.exit.finalRenterWealth)}
-            subvalue="After capital gains tax"
+            subvalue="After tax"
             accentColor="var(--color-renter)"
           />
         </motion.div>
 
-        {/* Assumptions accordion */}
-        <AssumptionsAccordion assumptions={keyAssumptions} />
+        {/* Assumptions drawer trigger */}
+        <div style={{ marginTop: '32px' }}>
+          <button
+            onClick={() => setDrawerOpen(true)}
+            style={{
+              width: '100%',
+              padding: '14px 20px',
+              borderRadius: '12px',
+              border: '1px solid var(--color-outline)',
+              backgroundColor: 'var(--color-bg-elevated)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-sans), system-ui, sans-serif',
+              color: 'var(--color-text)',
+            }}
+          >
+            <span style={{ fontSize: '13px', fontWeight: 500 }}>View all assumptions</span>
+            <span style={{ fontSize: '16px', color: 'var(--color-text-muted)' }}>↑</span>
+          </button>
+        </div>
 
         {/* Footer CTA */}
         <div
@@ -327,8 +384,8 @@ export default function ResultPage() {
             display: 'flex',
             gap: '12px',
             flexWrap: 'wrap',
-            marginTop: '48px',
-            paddingTop: '32px',
+            marginTop: '40px',
+            paddingTop: '28px',
             borderTop: '1px solid var(--color-outline)',
           }}
         >
@@ -393,72 +450,30 @@ export default function ResultPage() {
           </a>
         </p>
       </div>
-    </div>
-  );
-}
 
-function AssumptionsAccordion({ assumptions }: { assumptions: { label: string; value: string }[] }) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <div
-      style={{
-        marginTop: '36px',
-        border: '1px solid var(--color-outline)',
-        borderRadius: '12px',
-        overflow: 'hidden',
-      }}
-    >
-      <button
-        onClick={() => setOpen(o => !o)}
-        style={{
-          width: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '16px 20px',
-          backgroundColor: 'transparent',
-          border: 'none',
-          cursor: 'pointer',
-          color: 'var(--color-text)',
-          fontFamily: 'var(--font-sans), system-ui, sans-serif',
-        }}
-      >
-        <span style={{ fontSize: '13px', fontWeight: 500 }}>Key assumptions</span>
-        <span
+      {/* Slide-up assumptions drawer */}
+      <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
+        <SheetContent
+          side="bottom"
           style={{
-            fontSize: '12px',
-            color: 'var(--color-text-muted)',
-            transition: 'transform 0.2s',
-            display: 'inline-block',
-            transform: open ? 'rotate(180deg)' : 'none',
+            maxHeight: '75vh',
+            overflowY: 'auto',
+            padding: '24px 24px 40px',
+            borderRadius: '20px 20px 0 0',
           }}
         >
-          ↓
-        </span>
-      </button>
-      {open && (
-        <div
-          style={{
-            borderTop: '1px solid var(--color-outline)',
-            padding: '16px 20px',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))',
-            gap: '12px 24px',
-          }}
-        >
-          {assumptions.map(a => (
-            <div key={a.label}>
-              <p style={{ fontSize: '11px', color: 'var(--color-text-faint)', marginBottom: '2px' }}>
-                {a.label}
-              </p>
-              <p style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums' }}>
-                {a.value}
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
+          <SheetHeader style={{ marginBottom: '24px' }}>
+            <SheetTitle style={{ fontFamily: 'var(--font-sans), system-ui, sans-serif', fontSize: '16px', fontWeight: 600 }}>
+              All assumptions
+            </SheetTitle>
+          </SheetHeader>
+          <div style={{ maxWidth: '680px' }}>
+            {drawerSections.map(section => (
+              <DrawerSection key={section.title} title={section.title} items={section.items} />
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
