@@ -572,6 +572,7 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
       ownerPortfolioCostBasis,
       ownerSurplusRrspBalance: ownerSurplusRrspBal,
       ownerSurplusTfsaBalance: ownerSurplusTfsaBal,
+      ownerHbpRrspBalance: ownerHbpRrspBal,
       renterAnnualRent,
       renterAnnualInsurance,
       renterAnnualCashOut,

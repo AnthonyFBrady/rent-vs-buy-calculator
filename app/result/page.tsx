@@ -7,6 +7,7 @@ import { useCalculatorStore } from '@/lib/store';
 import { encodeShare } from '@/lib/share';
 import { WealthChart } from '@/components/chart/WealthChart';
 import { MetricCard } from '@/components/MetricCard';
+import { MethodologyContent } from '@/components/MethodologyContent';
 
 function fmtWealth(n: number): string {
   const abs = Math.abs(n);
@@ -65,6 +66,7 @@ export default function ResultPage() {
   const { result, inputs, sensitivity } = useCalculatorStore();
   const [copied, setCopied] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [methodologyOpen, setMethodologyOpen] = useState(false);
 
   useEffect(() => {
     if (!result || !inputs) router.replace('/experience');
@@ -72,13 +74,9 @@ export default function ResultPage() {
 
   // Lock scroll when drawer is open
   useEffect(() => {
-    if (drawerOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
+    document.body.style.overflow = (drawerOpen || methodologyOpen) ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
-  }, [drawerOpen]);
+  }, [drawerOpen, methodologyOpen]);
 
   const ownerMoveYears = useMemo(() => {
     if (!inputs) return [];
@@ -374,9 +372,12 @@ export default function ResultPage() {
 
         <p style={{ marginTop: '20px', fontSize: '11px', color: 'var(--color-text-faint)', lineHeight: 1.55 }}>
           Not financial advice. Every assumption is editable.{' '}
-          <a href="/methodology" style={{ color: 'var(--color-text-muted)', textDecoration: 'underline', textUnderlineOffset: '2px' }}>
+          <button
+            onClick={() => setMethodologyOpen(true)}
+            style={{ color: 'var(--color-text-muted)', textDecoration: 'underline', textUnderlineOffset: '2px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', padding: 0, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}
+          >
             Read methodology
-          </a>
+          </button>
         </p>
       </div>
 
@@ -444,6 +445,54 @@ export default function ResultPage() {
                     <DrawerSection key={section.title} title={section.title} items={section.items} />
                   ))}
                 </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Methodology drawer */}
+      <AnimatePresence>
+        {methodologyOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setMethodologyOpen(false)}
+              style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', zIndex: 40 }}
+            />
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.9 }}
+              style={{
+                position: 'fixed', bottom: 0, left: 0, right: 0,
+                maxHeight: '82vh', backgroundColor: 'var(--color-bg)',
+                borderRadius: '16px 16px 0 0', zIndex: 50,
+                display: 'flex', flexDirection: 'column',
+                boxShadow: '0 -8px 48px rgba(0,0,0,0.18)',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '12px', paddingBottom: '4px', flexShrink: 0 }}>
+                <div style={{ width: '36px', height: '4px', borderRadius: '9999px', backgroundColor: 'var(--color-outline-active)' }} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px 12px', borderBottom: '1px solid var(--color-outline)', flexShrink: 0 }}>
+                <div>
+                  <p style={{ fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-text-faint)', marginBottom: '2px' }}>Methodology</p>
+                  <p style={{ fontSize: '16px', fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--color-text)', fontFamily: 'var(--font-serif), Georgia, serif' }}>How this calculator thinks</p>
+                </div>
+                <button
+                  onClick={() => setMethodologyOpen(false)}
+                  style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-outline)', background: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  ✕
+                </button>
+              </div>
+              <div style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: 1, padding: '0 20px 40px' }}>
+                <MethodologyContent />
               </div>
             </motion.div>
           </>

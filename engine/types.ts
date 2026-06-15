@@ -328,6 +328,8 @@ export interface YearSnapshot {
   ownerSurplusRrspBalance: number;
   /** TFSA balance from owner surplus this year. Tax-free at exit. 0 if no TFSA surplus. */
   ownerSurplusTfsaBalance: number;
+  /** RRSP balance rebuilt via HBP repayments this year. Taxed at marginal rate on exit. 0 if no HBP. */
+  ownerHbpRrspBalance: number;
 
   // Renter side
   renterAnnualRent: number;
