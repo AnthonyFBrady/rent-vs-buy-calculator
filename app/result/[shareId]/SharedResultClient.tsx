@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -8,11 +8,11 @@ import type { SensitivityScenario } from '@/lib/store';
 import { WealthChart } from '@/components/chart/WealthChart';
 import { ReckonSignature } from '@/components/ReckonSignature';
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
+// ??? Helpers ????????????????????????????????????????????????????????????????
 
 function fmtWealth(n: number): string {
   const abs = Math.abs(n);
-  const sign = n < 0 ? '−' : '';
+  const sign = n < 0 ? '?' : '';
   if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(2)}M`;
   if (abs >= 1_000) return `${sign}$${Math.round(abs / 1_000)}k`;
   return `${sign}$${Math.round(abs)}`;
@@ -53,7 +53,7 @@ interface Props {
   shareId: string;
 }
 
-// ─── Component ───────────────────────────────────────────────────────────────
+// ??? Component ???????????????????????????????????????????????????????????????
 
 export function SharedResultClient({ inputs, result, scenarios, shareId }: Props) {
   const router = useRouter();
@@ -113,7 +113,7 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
   return (
     <div style={{ minHeight: '100dvh', backgroundColor: '#0F0F11', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
 
-      {/* ─── Single header — grey, sticky ─────────────────────────────── */}
+      {/* ??? Single header � grey, sticky ??????????????????????????????? */}
       <div style={{
         backgroundColor: '#17171B',
         borderBottom: '1px solid rgba(255,255,255,0.06)',
@@ -134,7 +134,7 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           padding: '0 8px',
         }}>
-          Shared result — run your own to see your number
+          Shared result � run your own to see your number
         </p>
         <button
           onClick={() => router.push('/experience')}
@@ -147,11 +147,11 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
             letterSpacing: '-0.01em', flexShrink: 0, whiteSpace: 'nowrap',
           }}
         >
-          Try with my numbers →
+          Try with my numbers ?
         </button>
       </div>
 
-      {/* ─── Dark hero ────────────────────────────────────────────────── */}
+      {/* ??? Dark hero ?????????????????????????????????????????????????? */}
       <div style={{
         minHeight: 'calc(100dvh - 52px)',
         display: 'flex',
@@ -169,7 +169,7 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
           transition={{ duration: 0.5, delay: 0.3, ease }}
           style={{ fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#52525B', marginBottom: '28px', fontWeight: 500 }}
         >
-          {inputs.holdingPeriodYears}-year outlook — {PROVINCE_NAMES[inputs.province] ?? inputs.province}
+          {inputs.holdingPeriodYears}-year outlook � {PROVINCE_NAMES[inputs.province] ?? inputs.province}
         </motion.p>
 
         {/* Verdict badge */}
@@ -257,7 +257,7 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
           </motion.p>
         )}
 
-        {/* ─── Owner vs Renter final wealth split ─────────────────────── */}
+        {/* ??? Owner vs Renter final wealth split ??????????????????????? */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -342,7 +342,7 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
         </motion.div>
       </div>
 
-      {/* ─── Light detail section ─────────────────────────────────────── */}
+      {/* ??? Light detail section ??????????????????????????????????????? */}
       <div style={{
         backgroundColor: 'var(--color-bg)',
         borderTop: '1px solid var(--color-outline)',
@@ -454,7 +454,7 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
                 boxShadow: '0 2px 16px rgba(0,0,0,0.1)',
               }}
             >
-              Try with my numbers →
+              Try with my numbers ?
             </button>
             <p style={{ marginTop: '12px', fontSize: '12px', color: 'var(--color-text-faint)' }}>
               Free. No account. 3 minutes.

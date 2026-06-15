@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -12,11 +12,11 @@ import { MethodologyContent } from '@/components/MethodologyContent';
 import { FaqContent } from '@/components/FaqContent';
 import { ReckonSignature } from '@/components/ReckonSignature';
 
-// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
 function fmtWealth(n: number): string {
   const abs = Math.abs(n);
-  const sign = n < 0 ? 'âˆ’' : '';
+  const sign = n < 0 ? '−' : '';
   if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(2)}M`;
   if (abs >= 1_000) return `${sign}$${Math.round(abs / 1_000)}k`;
   return `${sign}$${Math.round(abs)}`;
@@ -55,7 +55,7 @@ const SCENARIO_ORDER: SensitivityScenario['id'][] = ['base', 'growth+2', 'growth
 
 const ease = [0.0, 0.0, 0.2, 1] as [number, number, number, number];
 
-// â”€â”€â”€ Assumptions drawer section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Assumptions drawer section ──────────────────────────────────────────────
 
 function DrawerSection({ title, items }: { title: string; items: { label: string; value: string }[] }) {
   return (
@@ -75,7 +75,7 @@ function DrawerSection({ title, items }: { title: string; items: { label: string
   );
 }
 
-// â”€â”€â”€ Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function ResultPage() {
   const router = useRouter();
@@ -194,8 +194,8 @@ export default function ResultPage() {
       title: 'Tax shelters',
       items: [
         { label: 'TFSA', value: inputs.renterUsesTFSA ? 'Yes' : 'No' },
-        { label: 'FHSA', value: inputs.useFHSA ? `Yes â€” ${fmtCAD(inputs.renterFhsaRoomOverride ?? 40_000)} room` : 'No' },
-        { label: 'RRSP', value: inputs.renterUsesRRSP ? `Yes â€” ${fmtCAD(inputs.renterRrspCarryforward ?? 0)} carryforward` : 'No' },
+        { label: 'FHSA', value: inputs.useFHSA ? `Yes — ${fmtCAD(inputs.renterFhsaRoomOverride ?? 40_000)} room` : 'No' },
+        { label: 'RRSP', value: inputs.renterUsesRRSP ? `Yes — ${fmtCAD(inputs.renterRrspCarryforward ?? 0)} carryforward` : 'No' },
       ],
     },
     {
@@ -224,7 +224,7 @@ export default function ResultPage() {
       style={{ minHeight: '100dvh', backgroundColor: '#0F0F11', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}
     >
 
-      {/* â”€â”€â”€ Dark nav â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ─── Dark nav ──────────────────────────────────────────────────── */}
       <nav style={{
         height: '52px',
         display: 'flex',
@@ -252,12 +252,12 @@ export default function ResultPage() {
             {copied ? 'Copied' : 'Share'}
           </button>
           <button onClick={() => router.push('/experience')} style={{ height: '34px', padding: '0 16px', borderRadius: '9999px', border: 'none', backgroundColor: '#FAFAFA', color: '#0F0F11', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.01em' }}>
-            Recalculate â†’
+            Recalculate →
           </button>
         </div>
       </nav>
 
-      {/* â”€â”€â”€ Dark cinematic hero â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ─── Dark cinematic hero ───────────────────────────────────────── */}
       <div style={{
         minHeight: 'calc(100dvh - 52px)',
         display: 'flex',
@@ -275,7 +275,7 @@ export default function ResultPage() {
           transition={{ duration: 0.5, delay: 0.3, ease }}
           style={{ fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#52525B', marginBottom: '28px', fontWeight: 500 }}
         >
-          {inputs.holdingPeriodYears}-year outlook â€” {PROVINCE_NAMES[inputs.province] ?? inputs.province}
+          {inputs.holdingPeriodYears}-year outlook — {PROVINCE_NAMES[inputs.province] ?? inputs.province}
         </motion.p>
 
         {/* Verdict badge */}
@@ -375,11 +375,11 @@ export default function ResultPage() {
           transition={{ duration: 0.5, delay: 3.0, ease }}
           style={{ position: 'absolute', bottom: '24px', left: '50%', transform: 'translateX(-50%)' }}
         >
-          <p style={{ fontSize: '11px', color: '#52525B', letterSpacing: '0.04em' }}>Scroll for full analysis â†“</p>
+          <p style={{ fontSize: '11px', color: '#52525B', letterSpacing: '0.04em' }}>Scroll for full analysis ↓</p>
         </motion.div>
       </div>
 
-      {/* â”€â”€â”€ Light detail section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ─── Light detail section ──────────────────────────────────────── */}
       <div style={{ backgroundColor: 'var(--color-bg)', borderTop: '1px solid var(--color-outline)', color: 'var(--color-text)', padding: '48px 24px 80px' }}>
         <div style={{ maxWidth: '780px', margin: '0 auto' }}>
 
@@ -453,10 +453,10 @@ export default function ResultPage() {
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '1px' }}>
                 <span style={{ fontSize: '13px', fontWeight: 500 }}>View all assumptions</span>
                 <span style={{ fontSize: '11px', color: 'var(--color-text-faint)' }}>
-                  {inputs.holdingPeriodYears}yr horizon Â· {PROVINCE_NAMES[inputs.province] ?? inputs.province} Â· {fmtPct(inputs.mortgageRatePct, 2)} rate
+                  {inputs.holdingPeriodYears}yr horizon · {PROVINCE_NAMES[inputs.province] ?? inputs.province} · {fmtPct(inputs.mortgageRatePct, 2)} rate
                 </span>
               </div>
-              <span style={{ fontSize: '18px', color: 'var(--color-text-faint)', lineHeight: 1 }}>â†‘</span>
+              <span style={{ fontSize: '18px', color: 'var(--color-text-faint)', lineHeight: 1 }}>↑</span>
             </button>
           </div>
 
@@ -466,7 +466,7 @@ export default function ResultPage() {
               {copied ? 'Link copied' : 'Share result'}
             </button>
             <button onClick={() => router.push('/experience')} style={{ flex: 1, minWidth: '140px', height: '48px', borderRadius: '9999px', backgroundColor: 'transparent', color: 'var(--color-text)', border: '1px solid var(--color-outline-active)', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.01em' }}>
-              Recalculate â†’
+              Recalculate →
             </button>
           </div>
 
@@ -479,7 +479,7 @@ export default function ResultPage() {
         </div>
       </div>
 
-      {/* â”€â”€â”€ Assumptions drawer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ─── Assumptions drawer ────────────────────────────────────────── */}
       <AnimatePresence>
         {drawerOpen && (
           <>
@@ -490,7 +490,7 @@ export default function ResultPage() {
               </div>
               <div style={{ padding: '0 24px 14px', borderBottom: '1px solid var(--color-outline)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <p style={{ fontSize: '15px', fontWeight: 600, fontFamily: 'var(--font-sans), system-ui, sans-serif', color: 'var(--color-text)', letterSpacing: '-0.01em' }}>All assumptions</p>
-                <button onClick={() => setDrawerOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: 'var(--color-text-faint)', lineHeight: 1, padding: '4px' }}>âœ•</button>
+                <button onClick={() => setDrawerOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: 'var(--color-text-faint)', lineHeight: 1, padding: '4px' }}>✕</button>
               </div>
               <div style={{ overflowY: 'auto', flex: 1, padding: '20px 24px 48px', WebkitOverflowScrolling: 'touch' }}>
                 <div style={{ maxWidth: '680px' }}>
@@ -502,7 +502,7 @@ export default function ResultPage() {
         )}
       </AnimatePresence>
 
-      {/* â”€â”€â”€ Methodology drawer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ─── Methodology drawer ────────────────────────────────────────── */}
       <AnimatePresence>
         {methodologyOpen && (
           <>
@@ -516,7 +516,7 @@ export default function ResultPage() {
                   <p style={{ fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-text-faint)', marginBottom: '2px' }}>Methodology</p>
                   <p style={{ fontSize: '16px', fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--color-text)', fontFamily: 'var(--font-serif), Georgia, serif' }}>How this calculator thinks</p>
                 </div>
-                <button onClick={() => setMethodologyOpen(false)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-outline)', background: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>âœ•</button>
+                <button onClick={() => setMethodologyOpen(false)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-outline)', background: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
               </div>
               <div style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: 1, padding: '0 20px 40px' }}>
                 <MethodologyContent />
@@ -526,7 +526,7 @@ export default function ResultPage() {
         )}
       </AnimatePresence>
 
-      {/* â”€â”€â”€ FAQ drawer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ─── FAQ drawer ────────────────────────────────────────────────── */}
       <AnimatePresence>
         {faqOpen && (
           <>
@@ -540,7 +540,7 @@ export default function ResultPage() {
                   <p style={{ fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-text-faint)', marginBottom: '2px' }}>FAQ</p>
                   <p style={{ fontSize: '16px', fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--color-text)', fontFamily: 'var(--font-serif), Georgia, serif' }}>Frequently asked questions</p>
                 </div>
-                <button onClick={() => setFaqOpen(false)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-outline)', background: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>âœ•</button>
+                <button onClick={() => setFaqOpen(false)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-outline)', background: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
               </div>
               <div style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: 1, padding: '0 20px 40px' }}>
                 <FaqContent />

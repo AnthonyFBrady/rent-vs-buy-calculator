@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -8,7 +8,7 @@ import { FaqContent } from '@/components/FaqContent';
 import { HomeLoader } from './HomeLoader';
 import { ReckonSignature } from '@/components/ReckonSignature';
 
-// â”€â”€â”€ Count-up hook â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Count-up hook ────────────────────────────────────────────────────────────
 
 function useCountUp(target: number, durationMs: number, delayMs: number): number {
   const [val, setVal] = useState(0);
@@ -29,7 +29,7 @@ function useCountUp(target: number, durationMs: number, delayMs: number): number
   return val;
 }
 
-// â”€â”€â”€ City dot grid (beat 7) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── City dot grid (beat 7) ───────────────────────────────────────────────────
 
 function CityDotGrid({ visible }: { visible: boolean }) {
   const dots: ('renter' | 'owner')[] = [
@@ -55,7 +55,7 @@ function CityDotGrid({ visible }: { visible: boolean }) {
       </div>
       <p style={{ fontSize: '11px', color: '#A1A1AA', lineHeight: 1.5 }}>
         <span style={{ color: 'var(--color-renter)', fontWeight: 600 }}>7 cities</span>
-        {' renter ahead  Â·  '}
+        {' renter ahead  ·  '}
         <span style={{ color: 'var(--color-owner)', fontWeight: 600 }}>5 cities</span>
         {' owner ahead'}
       </p>
@@ -63,7 +63,7 @@ function CityDotGrid({ visible }: { visible: boolean }) {
   );
 }
 
-// â”€â”€â”€ Story beats â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Story beats ──────────────────────────────────────────────────────────────
 
 type StatType = { raw: number; label: string; fmt: 'dollars-k' | 'dollars-m' | 'dollars-k-yr' } | null;
 
@@ -82,7 +82,7 @@ const BEATS: Beat[] = [
   {
     eyebrow: 'The belief',
     headline: 'Most Canadians believe owning a home is the best financial decision they can make.',
-    body: 'It is handed down like received wisdom â€” from parents, from brokers, from headlines. It has rarely been seriously questioned.',
+    body: 'It is handed down like received wisdom — from parents, from brokers, from headlines. It has rarely been seriously questioned.',
     stat: null, visual: null, pauseMs: 2200,
   },
   {
@@ -109,7 +109,7 @@ const BEATS: Beat[] = [
   {
     eyebrow: 'The 5% rule',
     headline: "Ben Felix quantified it: 5% of the home's value, every year, gone.",
-    body: 'On a $1M home, that is $50,000 per year in unrecoverable costs. Property tax alone in Toronto runs $6,000â€“$9,000 annually.',
+    body: 'On a $1M home, that is $50,000 per year in unrecoverable costs. Property tax alone in Toronto runs $6,000–$9,000 annually.',
     source: 'PWL Capital, 2023',
     stat: { raw: 50000, label: 'Annual unrecoverable cost on a $1M home', fmt: 'dollars-k-yr' },
     statAccent: 'owner', visual: null, pauseMs: 2800,
@@ -124,7 +124,7 @@ const BEATS: Beat[] = [
     eyebrow: 'The number',
     headline: 'At the Canadian blended index return, it becomes over $1M in 25 years.',
     body: 'The 20-year nominal return on a blended Canadian index was 8.19%. The invested down payment compounds the entire time.',
-    source: 'Rational Reminder ep. 323, September 2024 â€” 8.19% nominal, 2005â€“2024',
+    source: 'Rational Reminder ep. 323, September 2024 — 8.19% nominal, 2005–2024',
     stat: { raw: 1_000_000, label: 'Invested down payment after 25 years', fmt: 'dollars-m' },
     statAccent: 'renter', visual: null, pauseMs: 2800,
   },
@@ -132,7 +132,7 @@ const BEATS: Beat[] = [
     eyebrow: 'The research',
     headline: 'Renters came out ahead in 7 of 12 Canadian cities over 20 years.',
     body: 'Owners won in 5. The margin was rarely large. Savings discipline, home type, mortgage rate, and tax shelters shifted the outcome more than expected.',
-    source: 'PWL Capital, 2024 â€” 12-city Canadian study, 20-year hold',
+    source: 'PWL Capital, 2024 — 12-city Canadian study, 20-year hold',
     stat: null, visual: 'cityGrid', pauseMs: 3200,
   },
   {
@@ -150,14 +150,14 @@ const BEATS: Beat[] = [
   {
     eyebrow: 'Why Reckon',
     headline: 'The explicit costs of renting are obvious. The implicit costs of owning are not.',
-    body: 'We built Reckon to make both visible. Every assumption editable. Every formula cited. Canadian tax code built in â€” LTT, CMHC, PRE, TFSA, FHSA, RRSP.',
+    body: 'We built Reckon to make both visible. Every assumption editable. Every formula cited. Canadian tax code built in — LTT, CMHC, PRE, TFSA, FHSA, RRSP.',
     stat: null, visual: null, pauseMs: 800,
   },
 ];
 
 const TOTAL_BEATS = BEATS.length;
 
-// â”€â”€â”€ Typewriter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Typewriter ───────────────────────────────────────────────────────────────
 
 function TypewriterText({ text, onComplete, speed = 38 }: { text: string; onComplete: () => void; speed?: number }) {
   const [idx, setIdx] = useState(0);
@@ -179,7 +179,7 @@ function TypewriterText({ text, onComplete, speed = 38 }: { text: string; onComp
   );
 }
 
-// â”€â”€â”€ Stat count-up â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Stat count-up ────────────────────────────────────────────────────────────
 
 function StatDisplay({ stat, accent, visible }: { stat: NonNullable<StatType>; accent: 'owner' | 'renter'; visible: boolean }) {
   const counted = useCountUp(visible ? stat.raw : 0, 1800, 300);
@@ -218,7 +218,7 @@ function StatDisplay({ stat, accent, visible }: { stat: NonNullable<StatType>; a
   );
 }
 
-// â”€â”€â”€ Bottom sheet â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Bottom sheet ─────────────────────────────────────────────────────────────
 
 function BottomSheet({ open, onClose, title, eyebrow, children }: {
   open: boolean; onClose: () => void; title: string; eyebrow: string; children: React.ReactNode;
@@ -257,7 +257,7 @@ function BottomSheet({ open, onClose, title, eyebrow, children }: {
                 <p style={{ fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-text-faint)', marginBottom: '2px' }}>{eyebrow}</p>
                 <p style={{ fontSize: '16px', fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--color-text)', fontFamily: 'var(--font-serif), Georgia, serif' }}>{title}</p>
               </div>
-              <button onClick={onClose} style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-outline)', background: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>âœ•</button>
+              <button onClick={onClose} style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-outline)', background: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
             </div>
             <div style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: 1, padding: '0 20px 40px' }}>
               {children}
@@ -269,7 +269,7 @@ function BottomSheet({ open, onClose, title, eyebrow, children }: {
   );
 }
 
-// â”€â”€â”€ Main component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export function HomeLanding() {
   const router = useRouter();
@@ -362,7 +362,7 @@ export function HomeLanding() {
                 FAQ
               </button>
               <button onClick={handleNavigate} style={{ height: '34px', padding: '0 16px', display: 'inline-flex', alignItems: 'center', backgroundColor: '#FAFAFA', color: '#0F0F11', borderRadius: '9999px', fontSize: '13px', fontWeight: 500, letterSpacing: '-0.01em', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
-                Calculator â†’
+                Calculator →
               </button>
             </div>
           </nav>
@@ -465,7 +465,7 @@ export function HomeLanding() {
                       boxShadow: '0 4px 24px rgba(255,255,255,0.08)',
                     }}
                   >
-                    Start the calculator â†’
+                    Start the calculator →
                   </button>
                   <p style={{ marginTop: '16px', fontSize: '12px', color: '#A1A1AA' }}>
                     Free. No account. 3 minutes.
@@ -474,7 +474,7 @@ export function HomeLanding() {
               )}
             </AnimatePresence>
 
-            {/* Skip â€” solid gold pill */}
+            {/* Skip — solid gold pill */}
             <AnimatePresence>
               {!isCta && !isLastBeat && (
                 <motion.div
@@ -498,7 +498,7 @@ export function HomeLanding() {
                       letterSpacing: '-0.01em', whiteSpace: 'nowrap',
                     }}
                   >
-                    Just show me my number â†’
+                    Just show me my number →
                   </button>
                 </motion.div>
               )}
