@@ -340,6 +340,7 @@ export default function ExperiencePage() {
             breakEvenYear={liveSim.breakEvenYear}
             ownerMoveYears={ownerMoveYears}
             renterMoveYears={chartRenterMoveYears}
+            yearlyBreakdown={liveSim.yearByYear}
             height={480}
             animateOnMount={false}
           />

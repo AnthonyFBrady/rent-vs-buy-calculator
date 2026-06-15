@@ -315,6 +315,7 @@ export default function ResultPage() {
             height={typeof window !== 'undefined' && window.innerWidth < 480 ? 280 : 420}
             ownerSubLabel={ownerSubLabel}
             renterSubLabel={renterSubLabel}
+            yearlyBreakdown={result.yearByYear}
           />
         </motion.div>
 

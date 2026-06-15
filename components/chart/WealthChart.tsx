@@ -1,10 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { scaleLinear } from '@visx/scale';
 import { ParentSize } from '@visx/responsive';
 import { line as d3Line, area as d3Area, curveCatmullRom } from 'd3-shape';
+import type { YearSnapshot } from '@/engine';
 
 export interface DataPoint {
   year: number;
@@ -30,6 +31,7 @@ export interface WealthChartProps {
   renterMoveYears?: number[];
   ownerSubLabel?: string;
   renterSubLabel?: string;
+  yearlyBreakdown?: YearSnapshot[];
 }
 
 function computeMoveMarkers(
@@ -48,10 +50,173 @@ function computeMoveMarkers(
 function fmt(n: number): string {
   const abs = Math.abs(n);
   const sign = n < 0 ? '−' : '';
+  if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(2)}M`;
+  if (abs >= 1_000) return `${sign}$${Math.round(abs / 1_000)}k`;
+  return `${sign}$${Math.round(abs)}`;
+}
+
+function fmtK(n: number): string {
+  const abs = Math.abs(n);
+  const sign = n < 0 ? '−' : '';
   if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(1)}M`;
   if (abs >= 1_000) return `${sign}$${Math.round(abs / 1_000)}k`;
   return `${sign}$${Math.round(abs)}`;
 }
+
+// ─── Tooltip ────────────────────────────────────────────────────────────────
+
+interface TooltipRow {
+  label: string;
+  value: string;
+  indent?: boolean;
+  dim?: boolean;
+  color?: string;
+}
+
+function TRow({ label, value, indent, dim, color }: TooltipRow) {
+  return (
+    <div style={{
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'baseline',
+      gap: 8,
+      paddingLeft: indent ? 10 : 0,
+    }}>
+      <span style={{
+        fontSize: 11,
+        color: dim ? 'var(--color-text-faint)' : 'var(--color-text-muted)',
+        fontFamily: 'var(--font-sans), system-ui, sans-serif',
+        whiteSpace: 'nowrap',
+      }}>
+        {label}
+      </span>
+      <span style={{
+        fontSize: 11,
+        fontWeight: dim ? 400 : 500,
+        fontVariantNumeric: 'tabular-nums',
+        fontFamily: 'var(--font-sans), system-ui, sans-serif',
+        color: color ?? (dim ? 'var(--color-text-faint)' : 'var(--color-text)'),
+        whiteSpace: 'nowrap',
+      }}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function Divider() {
+  return <div style={{ height: 1, backgroundColor: 'var(--color-chart-tooltip-border)', margin: '6px 0' }} />;
+}
+
+interface DetailedTooltipProps {
+  year: number;
+  ownerWealth: number;
+  renterWealth: number | null;
+  snapshot: YearSnapshot | null;
+  hasRenter: boolean;
+}
+
+function DetailedTooltip({ year, ownerWealth, renterWealth, snapshot, hasRenter }: DetailedTooltipProps) {
+  const advantage = renterWealth != null ? ownerWealth - renterWealth : null;
+
+  return (
+    <div style={{
+      backgroundColor: 'var(--color-chart-tooltip-bg)',
+      border: '1px solid var(--color-chart-tooltip-border)',
+      borderRadius: 10,
+      padding: '12px 14px',
+      color: 'var(--color-text)',
+      width: 220,
+    }}>
+      {/* Year header */}
+      <p style={{
+        fontSize: 13,
+        fontWeight: 600,
+        letterSpacing: '-0.02em',
+        marginBottom: 8,
+        fontFamily: 'var(--font-sans), system-ui, sans-serif',
+        color: 'var(--color-text)',
+      }}>
+        {year === 0 ? 'Today' : `Year ${year}`}
+      </p>
+
+      {/* Owner section */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5 }}>
+        <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--color-owner)', flexShrink: 0, display: 'inline-block' }} />
+        <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-owner)', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
+          Owner — {fmt(ownerWealth)}
+        </span>
+      </div>
+
+      {snapshot && (
+        <>
+          <TRow label="Home value" value={fmtK(snapshot.ownerHomeValue)} indent />
+          <TRow label="Mortgage" value={`−${fmtK(snapshot.ownerMortgageBalance)}`} indent dim />
+          <TRow label="Equity" value={fmtK(snapshot.ownerEquity)} indent />
+          {snapshot.ownerPortfolioEnd > 100 && (
+            <TRow label="Portfolio" value={fmtK(snapshot.ownerPortfolioEnd)} indent />
+          )}
+          <Divider />
+          <TRow label="Costs this year" value={fmtK(snapshot.ownerAnnualCashOut)} indent />
+          <TRow label="  Mortgage P+I" value={fmtK(snapshot.ownerAnnualMortgagePayment)} indent dim />
+          <TRow label="  Tax" value={fmtK(snapshot.ownerAnnualPropertyTax)} indent dim />
+          <TRow label="  Maintenance" value={fmtK(snapshot.ownerAnnualMaintenance)} indent dim />
+          {snapshot.ownerAnnualStrata > 0 && (
+            <TRow label="  Strata" value={fmtK(snapshot.ownerAnnualStrata)} indent dim />
+          )}
+        </>
+      )}
+
+      {hasRenter && renterWealth != null && (
+        <>
+          <div style={{ height: 8 }} />
+
+          {/* Renter section */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--color-renter)', flexShrink: 0, display: 'inline-block' }} />
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-renter)', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
+              Renter — {fmt(renterWealth)}
+            </span>
+          </div>
+
+          {snapshot && (
+            <>
+              <TRow label="Portfolio" value={fmtK(snapshot.renterPortfolioEnd)} indent />
+              {snapshot.renterRrspBalance > 100 && (
+                <TRow label="RRSP" value={fmtK(snapshot.renterRrspBalance)} indent dim />
+              )}
+              <Divider />
+              <TRow label="Rent this year" value={fmtK(snapshot.renterAnnualRent)} indent />
+              <TRow label="Invested this year" value={fmtK(snapshot.renterPortfolioContribution)} indent dim />
+            </>
+          )}
+
+          {/* Advantage */}
+          {advantage != null && (
+            <>
+              <Divider />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <span style={{ fontSize: 11, color: 'var(--color-text-faint)', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
+                  {advantage > 0 ? 'Buy leads' : 'Rent leads'}
+                </span>
+                <span style={{
+                  fontSize: 12, fontWeight: 700,
+                  fontVariantNumeric: 'tabular-nums',
+                  fontFamily: 'var(--font-sans), system-ui, sans-serif',
+                  color: advantage > 0 ? 'var(--color-owner)' : 'var(--color-renter)',
+                }}>
+                  +{fmt(Math.abs(advantage))}
+                </span>
+              </div>
+            </>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── Chart inner ─────────────────────────────────────────────────────────────
 
 interface ChartInnerProps extends WealthChartProps {
   width: number;
@@ -71,6 +236,7 @@ function ChartInner({
   renterMoveYears,
   ownerSubLabel,
   renterSubLabel,
+  yearlyBreakdown,
 }: ChartInnerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoverYear, setHoverYear] = useState<number | null>(null);
@@ -134,8 +300,8 @@ function ChartInner({
       .curve(curveCatmullRom.alpha(0.5)),
     [xScale, yScale, innerHeight]);
 
-  const ownerPath   = lineGen(ownerData)  ?? '';
-  const renterPath  = lineGen(renterData) ?? '';
+  const ownerPath      = lineGen(ownerData)  ?? '';
+  const renterPath     = lineGen(renterData) ?? '';
   const ownerFillPath  = fillGen(ownerData)  ?? '';
   const renterFillPath = hasRenter ? (fillGen(renterData) ?? '') : '';
   const ownerBandPath  = ownerBand  ? (bandGen(ownerBand)  ?? '') : '';
@@ -182,13 +348,15 @@ function ChartInner({
     const o = ownerData.find(d => d.year === hoverYear);
     if (!o) return null;
     const r = hasRenter ? renterData.find(d => d.year === hoverYear) : undefined;
-    return { year: hoverYear, owner: o.value, renter: r?.value ?? null };
-  }, [hoverYear, ownerData, renterData, hasRenter]);
+    const snap = yearlyBreakdown?.find(y => y.year === hoverYear) ?? null;
+    return { year: hoverYear, owner: o.value, renter: r?.value ?? null, snap };
+  }, [hoverYear, ownerData, renterData, hasRenter, yearlyBreakdown]);
 
+  const TOOLTIP_W = 220;
   const ttLeft = cursor
-    ? cursor.x > width * 0.55 ? cursor.x - 170 : cursor.x + 14
+    ? cursor.x > width * 0.55 ? cursor.x - TOOLTIP_W - 8 : cursor.x + 14
     : 0;
-  const ttTop = cursor ? Math.max(8, cursor.y - 56) : 0;
+  const ttTop = cursor ? Math.max(8, cursor.y - 60) : 0;
 
   // Breakeven
   const bx = breakEvenYear != null ? xScale(breakEvenYear) : null;
@@ -225,7 +393,7 @@ function ChartInner({
         </defs>
         <g transform={`translate(${MARGIN.left},${MARGIN.top})`}>
 
-          {/* Grid — warm editorial horizontal lines */}
+          {/* Grid */}
           {yTicks.map(t => (
             <g key={t} transform={`translate(0,${yScale(t)})`}>
               <line x1={0} x2={innerWidth} stroke="var(--color-chart-grid)" strokeWidth={1} strokeDasharray="2 4" />
@@ -283,7 +451,7 @@ function ChartInner({
             />
           )}
 
-          {/* Area fills — gradient under each line */}
+          {/* Area fills */}
           {ownerFillPath && (
             <motion.path
               d={ownerFillPath}
@@ -463,7 +631,7 @@ function ChartInner({
             </g>
           )}
 
-          {/* Mouse capture */}
+          {/* Mouse capture overlay */}
           <rect
             x={0} y={0} width={innerWidth} height={innerHeight}
             fill="transparent"
@@ -478,9 +646,9 @@ function ChartInner({
         {hoverData && cursor && (
           <motion.div
             key="wc-tooltip"
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
+            exit={{ opacity: 0, scale: 0.97 }}
             transition={{ duration: 0.08 }}
             style={{
               position: 'absolute',
@@ -488,67 +656,15 @@ function ChartInner({
               top: ttTop,
               pointerEvents: 'none',
               zIndex: 20,
-              width: 170,
-              backgroundColor: 'var(--color-chart-tooltip-bg)',
-              border: '1px solid var(--color-chart-tooltip-border)',
-              borderRadius: 10,
-              padding: '12px 14px',
-              color: 'var(--color-text)',
             }}
           >
-            <p style={{
-              fontSize: 16, fontWeight: 600, letterSpacing: '-0.02em',
-              marginBottom: 8, fontVariantNumeric: 'tabular-nums',
-              fontFamily: 'var(--font-sans), system-ui, sans-serif',
-            }}>
-              Yr {hoverData.year}
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--color-text-muted)' }}>
-                  <span style={{
-                    display: 'inline-block', width: 6, height: 6, borderRadius: '50%',
-                    backgroundColor: 'var(--color-owner)', flexShrink: 0,
-                  }} />
-                  Owner
-                </span>
-                <span style={{ fontSize: 13, fontWeight: 500, fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-sans)' }}>
-                  {fmt(hoverData.owner)}
-                </span>
-              </div>
-              {hasRenter && hoverData.renter != null && (
-                <>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--color-text-muted)' }}>
-                      <span style={{
-                        display: 'inline-block', width: 6, height: 6, borderRadius: '50%',
-                        backgroundColor: 'var(--color-renter)', flexShrink: 0,
-                      }} />
-                      Renter
-                    </span>
-                    <span style={{ fontSize: 13, fontWeight: 500, fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-sans)' }}>
-                      {fmt(hoverData.renter)}
-                    </span>
-                  </div>
-                  <div style={{
-                    marginTop: 4, paddingTop: 6,
-                    borderTop: '1px solid var(--color-chart-tooltip-border)',
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
-                  }}>
-                    <span style={{ fontSize: 10, color: 'var(--color-text-faint)' }}>
-                      {hoverData.owner > hoverData.renter ? 'Buy leads' : 'Rent leads'}
-                    </span>
-                    <span style={{
-                      fontSize: 12, fontWeight: 600,
-                      color: hoverData.owner > hoverData.renter ? 'var(--color-owner)' : 'var(--color-renter)',
-                      fontVariantNumeric: 'tabular-nums',
-                    }}>
-                      +{fmt(Math.abs(hoverData.owner - hoverData.renter))}
-                    </span>
-                  </div>
-                </>
-              )}
-            </div>
+            <DetailedTooltip
+              year={hoverData.year}
+              ownerWealth={hoverData.owner}
+              renterWealth={hoverData.renter}
+              snapshot={hoverData.snap}
+              hasRenter={hasRenter}
+            />
           </motion.div>
         )}
       </AnimatePresence>
