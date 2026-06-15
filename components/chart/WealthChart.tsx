@@ -570,20 +570,20 @@ function ChartInner({
           >
             <line x1={4} y1={0} x2={10} y2={0}
               stroke="var(--color-owner)" strokeWidth={1.5} strokeOpacity={0.5} />
-            <rect x={innerWidth + 12} y={hasSubLabels ? -21 : -14}
-              width={hasSubLabels ? 110 : 74} height={hasSubLabels ? 42 : 28} rx={4}
+            <rect x={innerWidth + 12} y={hasSubLabels ? -24 : -14}
+              width={hasSubLabels ? 110 : 74} height={hasSubLabels ? 52 : 28} rx={4}
               fill="var(--color-bg-elevated)" stroke="var(--color-outline)" strokeWidth={1} />
-            <text x={innerWidth + 18} y={-4} dy="0.32em" fontSize={9}
+            <text x={innerWidth + 18} y={-10} dy="0.32em" fontSize={9}
               fill="var(--color-owner)" fontFamily="var(--font-sans), system-ui, sans-serif">
               Owner
             </text>
-            <text x={innerWidth + 18} y={10} dy="0.32em" fontSize={11} fontWeight={600}
+            <text x={innerWidth + 18} y={5} dy="0.32em" fontSize={11} fontWeight={600}
               fill="var(--color-owner)" fontFamily="var(--font-sans), system-ui, sans-serif"
               style={{ fontVariantNumeric: 'tabular-nums' }}>
               {fmt(ownerEndValue)}
             </text>
             {ownerSubLabel && (
-              <text x={innerWidth + 18} y={24} dy="0.32em" fontSize={8}
+              <text x={innerWidth + 18} y={20} dy="0.32em" fontSize={8}
                 fill="var(--color-text-faint)" fontFamily="var(--font-sans), system-ui, sans-serif"
                 style={{ fontVariantNumeric: 'tabular-nums' }}>
                 {ownerSubLabel}
@@ -600,20 +600,20 @@ function ChartInner({
             >
               <line x1={4} y1={0} x2={10} y2={0}
                 stroke="var(--color-renter)" strokeWidth={1.5} strokeOpacity={0.5} />
-              <rect x={innerWidth + 12} y={hasSubLabels ? -21 : -14}
-                width={hasSubLabels ? 110 : 74} height={hasSubLabels ? 42 : 28} rx={4}
+              <rect x={innerWidth + 12} y={hasSubLabels ? -24 : -14}
+                width={hasSubLabels ? 110 : 74} height={hasSubLabels ? 52 : 28} rx={4}
                 fill="var(--color-bg-elevated)" stroke="var(--color-outline)" strokeWidth={1} />
-              <text x={innerWidth + 18} y={-4} dy="0.32em" fontSize={9}
+              <text x={innerWidth + 18} y={-10} dy="0.32em" fontSize={9}
                 fill="var(--color-renter)" fontFamily="var(--font-sans), system-ui, sans-serif">
                 Renter
               </text>
-              <text x={innerWidth + 18} y={10} dy="0.32em" fontSize={11} fontWeight={600}
+              <text x={innerWidth + 18} y={5} dy="0.32em" fontSize={11} fontWeight={600}
                 fill="var(--color-renter)" fontFamily="var(--font-sans), system-ui, sans-serif"
                 style={{ fontVariantNumeric: 'tabular-nums' }}>
                 {fmt(renterEndValue)}
               </text>
               {renterSubLabel && (
-                <text x={innerWidth + 18} y={24} dy="0.32em" fontSize={8}
+                <text x={innerWidth + 18} y={20} dy="0.32em" fontSize={8}
                   fill="var(--color-text-faint)" fontFamily="var(--font-sans), system-ui, sans-serif"
                   style={{ fontVariantNumeric: 'tabular-nums' }}>
                   {renterSubLabel}

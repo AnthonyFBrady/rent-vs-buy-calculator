@@ -1,13 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useCalculatorStore } from '@/lib/store';
 import { encodeShare } from '@/lib/share';
 import { WealthChart } from '@/components/chart/WealthChart';
 import { MetricCard } from '@/components/MetricCard';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 function fmtWealth(n: number): string {
   const abs = Math.abs(n);
@@ -35,20 +34,20 @@ function DrawerSection({ title, items }: { title: string; items: { label: string
   return (
     <div style={{ marginBottom: '28px' }}>
       <p style={{
-        fontSize: '11px', fontWeight: 500, textTransform: 'uppercase',
-        letterSpacing: '0.08em', color: 'var(--color-text-faint)',
-        marginBottom: '12px', fontFamily: 'var(--font-sans), system-ui, sans-serif',
+        fontSize: '10px', fontWeight: 600, textTransform: 'uppercase',
+        letterSpacing: '0.1em', color: 'var(--color-text-faint)',
+        marginBottom: '10px', fontFamily: 'var(--font-sans), system-ui, sans-serif',
       }}>
         {title}
       </p>
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
-        gap: '10px 20px',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+        gap: '12px 24px',
       }}>
         {items.map(a => (
           <div key={a.label}>
-            <p style={{ fontSize: '11px', color: 'var(--color-text-faint)', marginBottom: '2px', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
+            <p style={{ fontSize: '11px', color: 'var(--color-text-faint)', marginBottom: '1px', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
               {a.label}
             </p>
             <p style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
@@ -68,10 +67,32 @@ export default function ResultPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
-    if (!result || !inputs) {
-      router.replace('/experience');
-    }
+    if (!result || !inputs) router.replace('/experience');
   }, [result, inputs, router]);
+
+  // Lock scroll when drawer is open
+  useEffect(() => {
+    if (drawerOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [drawerOpen]);
+
+  const ownerMoveYears = useMemo(() => {
+    if (!inputs) return [];
+    const n = inputs.ownerMoves ?? 0;
+    const h = inputs.holdingPeriodYears;
+    return Array.from({ length: n }, (_, i) => Math.round((i + 1) * h / (n + 1)));
+  }, [inputs]);
+
+  const renterMoveYears = useMemo(() => {
+    if (!inputs) return [];
+    const n = inputs.renterMoves ?? 0;
+    const h = inputs.holdingPeriodYears;
+    return Array.from({ length: n }, (_, i) => Math.round((i + 1) * h / (n + 1)));
+  }, [inputs]);
 
   if (!result || !inputs || sensitivity.length === 0) return null;
 
@@ -128,14 +149,14 @@ export default function ResultPage() {
     {
       title: 'Property costs',
       items: [
-        { label: 'Maintenance', value: `${fmtPct(inputs.maintenancePct ?? 0.015)}/yr of value` },
+        { label: 'Maintenance', value: `${fmtPct(inputs.maintenancePct)}/yr of value` },
         ...(inputs.monthlyStrataFee && inputs.monthlyStrataFee > 0
           ? [{ label: 'Strata fee', value: `${fmtCAD(inputs.monthlyStrataFee)}/mo` }]
           : []),
-        { label: 'Property tax', value: `${fmtPct(inputs.propertyTaxPct ?? 0.01)}/yr` },
-        { label: 'Home appreciation', value: `${fmtPct(inputs.homeAppreciationPct ?? 0.035)}/yr` },
+        { label: 'Property tax', value: `${fmtPct(inputs.propertyTaxPct)}/yr` },
+        { label: 'Home appreciation', value: `${fmtPct(inputs.homeAppreciationPct)}/yr` },
         ...(inputs.monthlyRentalIncome && inputs.monthlyRentalIncome > 0
-          ? [{ label: 'Rental suite income', value: `${fmtCAD(inputs.monthlyRentalIncome)}/mo` }]
+          ? [{ label: 'Rental income', value: `${fmtCAD(inputs.monthlyRentalIncome)}/mo` }]
           : []),
       ],
     },
@@ -143,29 +164,25 @@ export default function ResultPage() {
       title: 'Renter',
       items: [
         { label: 'Monthly rent', value: `${fmtCAD(inputs.monthlyRent)}/mo` },
-        { label: 'Rent growth', value: `${fmtPct(inputs.rentEscalationPct ?? 0.03)}/yr` },
-        { label: 'Renter insurance', value: `${fmtCAD(inputs.rentInsuranceMonthly ?? 40)}/mo` },
-        { label: 'Savings discipline', value: `${Math.round((inputs.savingsDisciplinePct ?? 1) * 100)}%` },
+        { label: 'Rent growth', value: `${fmtPct(inputs.rentEscalationPct)}/yr` },
+        { label: 'Renter insurance', value: `${fmtCAD(inputs.rentInsuranceMonthly)}/mo` },
+        { label: 'Savings discipline', value: `${Math.round(inputs.savingsDisciplinePct * 100)}%` },
       ],
     },
     {
       title: 'Tax shelters',
       items: [
         { label: 'TFSA', value: inputs.renterUsesTFSA ? 'Yes' : 'No' },
-        { label: 'FHSA', value: inputs.useFHSA
-            ? `Yes — ${fmtCAD(inputs.renterFhsaRoomOverride ?? 40_000)} room`
-            : 'No' },
-        { label: 'RRSP', value: inputs.renterUsesRRSP
-            ? `Yes — ${fmtCAD(inputs.renterRrspCarryforward ?? 0)} carryforward`
-            : 'No' },
+        { label: 'FHSA', value: inputs.useFHSA ? `Yes — ${fmtCAD(inputs.renterFhsaRoomOverride ?? 40_000)} room` : 'No' },
+        { label: 'RRSP', value: inputs.renterUsesRRSP ? `Yes — ${fmtCAD(inputs.renterRrspCarryforward ?? 0)} carryforward` : 'No' },
       ],
     },
     {
       title: 'Market',
       items: [
-        { label: 'Investment return', value: `${fmtPct(inputs.investmentReturnPct ?? 0.07)}/yr` },
-        { label: 'Inflation', value: `${fmtPct(inputs.inflationPct ?? 0.025)}/yr` },
-        { label: 'Marginal tax rate', value: fmtPct(inputs.marginalTaxRatePct ?? 0.4) },
+        { label: 'Investment return', value: `${fmtPct(inputs.investmentReturnPct)}/yr` },
+        { label: 'Inflation', value: `${fmtPct(inputs.inflationPct)}/yr` },
+        { label: 'Marginal tax rate', value: fmtPct(inputs.marginalTaxRatePct) },
         { label: 'Time horizon', value: `${inputs.holdingPeriodYears} years` },
       ],
     },
@@ -179,122 +196,72 @@ export default function ResultPage() {
   ];
 
   return (
-    <div
-      style={{
-        minHeight: '100dvh',
-        backgroundColor: 'var(--color-bg)',
-        color: 'var(--color-text)',
-        fontFamily: 'var(--font-sans), system-ui, sans-serif',
-      }}
-    >
+    <div style={{
+      minHeight: '100dvh',
+      backgroundColor: 'var(--color-bg)',
+      color: 'var(--color-text)',
+      fontFamily: 'var(--font-sans), system-ui, sans-serif',
+    }}>
       {/* Nav */}
-      <nav
-        style={{
-          height: '52px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 24px',
-          borderBottom: '1px solid var(--color-outline)',
-          position: 'sticky',
-          top: 0,
-          backgroundColor: 'var(--color-bg)',
-          zIndex: 20,
-        }}
-      >
-        <a
-          href="/"
-          style={{
-            fontSize: '14px',
-            fontWeight: 500,
-            letterSpacing: '-0.02em',
-            color: 'var(--color-text)',
-            textDecoration: 'none',
-          }}
-        >
+      <nav style={{
+        height: '52px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 24px',
+        borderBottom: '1px solid var(--color-outline)',
+        position: 'sticky',
+        top: 0,
+        backgroundColor: 'var(--color-bg)',
+        zIndex: 20,
+      }}>
+        <a href="/" style={{ fontSize: '14px', fontWeight: 500, letterSpacing: '-0.02em', color: 'var(--color-text)', textDecoration: 'none' }}>
           longrun.ca
         </a>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button
             onClick={handleShare}
-            style={{
-              fontSize: '13px',
-              color: copied ? 'var(--color-renter)' : 'var(--color-text-muted)',
-              background: 'none', border: 'none', cursor: 'pointer',
-              transition: 'color 0.2s',
-              fontFamily: 'var(--font-sans), system-ui, sans-serif',
-            }}
+            style={{ fontSize: '13px', color: copied ? 'var(--color-renter)' : 'var(--color-text-muted)', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 0.2s', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}
           >
             {copied ? 'Copied' : 'Share'}
           </button>
           <button
             onClick={() => router.push('/experience')}
-            style={{
-              height: '34px',
-              padding: '0 16px',
-              borderRadius: '9999px',
-              border: '1px solid var(--color-outline-active)',
-              backgroundColor: 'transparent',
-              color: 'var(--color-text)',
-              fontSize: '13px',
-              fontWeight: 500,
-              cursor: 'pointer',
-              fontFamily: 'var(--font-sans), system-ui, sans-serif',
-              letterSpacing: '-0.01em',
-            }}
+            style={{ height: '34px', padding: '0 16px', borderRadius: '9999px', border: '1px solid var(--color-outline-active)', backgroundColor: 'transparent', color: 'var(--color-text)', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.01em' }}
           >
             Recalculate →
           </button>
         </div>
       </nav>
 
-      <div style={{ maxWidth: '760px', margin: '0 auto', padding: '0 24px 80px' }}>
+      <div style={{ maxWidth: '780px', margin: '0 auto', padding: '0 24px 80px' }}>
 
         {/* Verdict hero */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0, 0, 0.2, 1] }}
-          style={{ paddingTop: '44px', paddingBottom: '32px' }}
+          style={{ paddingTop: '40px', paddingBottom: '28px' }}
         >
-          <p
-            style={{
-              fontSize: '12px',
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: 'var(--color-text-faint)',
-              marginBottom: '14px',
-            }}
-          >
+          <p style={{ fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-text-faint)', marginBottom: '12px' }}>
             {inputs.holdingPeriodYears}-year outlook — {PROVINCE_NAMES[inputs.province] ?? inputs.province}
           </p>
-          <h1
-            style={{
-              fontFamily: 'var(--font-serif), Georgia, serif',
-              fontSize: 'clamp(30px, 5vw, 52px)',
-              fontWeight: 700,
-              letterSpacing: '-0.03em',
-              lineHeight: 1.05,
-              color: winnerColor,
-              marginBottom: '12px',
-            }}
-          >
+          <h1 style={{
+            fontFamily: 'var(--font-serif), Georgia, serif',
+            fontSize: 'clamp(28px, 5vw, 48px)',
+            fontWeight: 700,
+            letterSpacing: '-0.03em',
+            lineHeight: 1.05,
+            color: winnerColor,
+            marginBottom: '10px',
+          }}>
             {verdictLine}
           </h1>
-          <p
-            style={{
-              fontSize: 'clamp(18px, 3vw, 28px)',
-              fontWeight: 600,
-              letterSpacing: '-0.03em',
-              lineHeight: 1.2,
-              color: 'var(--color-text)',
-              fontVariantNumeric: 'tabular-nums',
-            }}
-          >
+          <p style={{ fontSize: 'clamp(17px, 2.8vw, 26px)', fontWeight: 600, letterSpacing: '-0.025em', lineHeight: 1.2, color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums' }}>
             {deltaLine}
           </p>
           {result.breakEvenYear !== null && (
-            <p style={{ fontSize: '14px', color: 'var(--color-text-muted)', marginTop: '8px' }}>
+            <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '6px' }}>
               Lines cross at year {result.breakEvenYear}
             </p>
           )}
@@ -304,7 +271,7 @@ export default function ResultPage() {
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: [0, 0, 0.2, 1], delay: 0.12 }}
+          transition={{ duration: 0.45, ease: [0, 0, 0.2, 1], delay: 0.1 }}
         >
           <WealthChart
             key="result"
@@ -316,6 +283,8 @@ export default function ResultPage() {
             ownerSubLabel={ownerSubLabel}
             renterSubLabel={renterSubLabel}
             yearlyBreakdown={result.yearByYear}
+            ownerMoveYears={ownerMoveYears}
+            renterMoveYears={renterMoveYears}
           />
         </motion.div>
 
@@ -323,13 +292,8 @@ export default function ResultPage() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: [0, 0, 0.2, 1], delay: 0.22 }}
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(148px, 1fr))',
-            gap: '8px',
-            marginTop: '24px',
-          }}
+          transition={{ duration: 0.4, ease: [0, 0, 0.2, 1], delay: 0.2 }}
+          style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(148px, 1fr))', gap: '8px', marginTop: '20px' }}
         >
           <MetricCard
             label="Net advantage"
@@ -356,125 +320,135 @@ export default function ResultPage() {
           />
         </motion.div>
 
-        {/* Assumptions drawer trigger */}
-        <div style={{ marginTop: '32px' }}>
+        {/* Assumptions trigger */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.3 }}
+          style={{ marginTop: '20px' }}
+        >
           <button
             onClick={() => setDrawerOpen(true)}
             style={{
               width: '100%',
-              padding: '14px 20px',
-              borderRadius: '12px',
+              padding: '13px 20px',
+              borderRadius: '10px',
               border: '1px solid var(--color-outline)',
-              backgroundColor: 'var(--color-bg-elevated)',
+              backgroundColor: 'var(--color-bg-subtle)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               cursor: 'pointer',
               fontFamily: 'var(--font-sans), system-ui, sans-serif',
               color: 'var(--color-text)',
+              transition: 'background-color 0.15s',
             }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--color-bg-elevated)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--color-bg-subtle)'; }}
           >
-            <span style={{ fontSize: '13px', fontWeight: 500 }}>View all assumptions</span>
-            <span style={{ fontSize: '16px', color: 'var(--color-text-muted)' }}>↑</span>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '1px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 500 }}>View all assumptions</span>
+              <span style={{ fontSize: '11px', color: 'var(--color-text-faint)' }}>
+                {inputs.holdingPeriodYears}yr horizon · {PROVINCE_NAMES[inputs.province] ?? inputs.province} · {fmtPct(inputs.mortgageRatePct, 2)} rate
+              </span>
+            </div>
+            <span style={{ fontSize: '18px', color: 'var(--color-text-faint)', lineHeight: 1 }}>↑</span>
           </button>
-        </div>
+        </motion.div>
 
-        {/* Footer CTA */}
-        <div
-          style={{
-            display: 'flex',
-            gap: '12px',
-            flexWrap: 'wrap',
-            marginTop: '40px',
-            paddingTop: '28px',
-            borderTop: '1px solid var(--color-outline)',
-          }}
-        >
+        {/* Footer CTAs */}
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '32px', paddingTop: '24px', borderTop: '1px solid var(--color-outline)' }}>
           <button
             onClick={handleShare}
-            style={{
-              flex: 1,
-              minWidth: '160px',
-              height: '52px',
-              borderRadius: '9999px',
-              backgroundColor: 'var(--color-btn-primary-bg)',
-              color: 'var(--color-btn-primary-text)',
-              border: 'none',
-              fontSize: '14px',
-              fontWeight: 500,
-              cursor: 'pointer',
-              fontFamily: 'var(--font-sans), system-ui, sans-serif',
-              letterSpacing: '-0.01em',
-            }}
+            style={{ flex: 1, minWidth: '140px', height: '48px', borderRadius: '9999px', backgroundColor: 'var(--color-btn-primary-bg)', color: 'var(--color-btn-primary-text)', border: 'none', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.01em' }}
           >
             {copied ? 'Link copied' : 'Share result'}
           </button>
           <button
             onClick={() => router.push('/experience')}
-            style={{
-              flex: 1,
-              minWidth: '160px',
-              height: '52px',
-              borderRadius: '9999px',
-              backgroundColor: 'transparent',
-              color: 'var(--color-text)',
-              border: '1px solid var(--color-outline-active)',
-              fontSize: '14px',
-              fontWeight: 500,
-              cursor: 'pointer',
-              fontFamily: 'var(--font-sans), system-ui, sans-serif',
-              letterSpacing: '-0.01em',
-            }}
+            style={{ flex: 1, minWidth: '140px', height: '48px', borderRadius: '9999px', backgroundColor: 'transparent', color: 'var(--color-text)', border: '1px solid var(--color-outline-active)', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.01em' }}
           >
             Recalculate →
           </button>
         </div>
 
-        <p
-          style={{
-            marginTop: '24px',
-            fontSize: '11px',
-            color: 'var(--color-text-faint)',
-            lineHeight: 1.55,
-          }}
-        >
+        <p style={{ marginTop: '20px', fontSize: '11px', color: 'var(--color-text-faint)', lineHeight: 1.55 }}>
           Not financial advice. Every assumption is editable.{' '}
-          <a
-            href="/methodology"
-            style={{
-              color: 'var(--color-text-muted)',
-              textDecoration: 'underline',
-              textUnderlineOffset: '2px',
-            }}
-          >
+          <a href="/methodology" style={{ color: 'var(--color-text-muted)', textDecoration: 'underline', textUnderlineOffset: '2px' }}>
             Read methodology
           </a>
         </p>
       </div>
 
-      {/* Slide-up assumptions drawer */}
-      <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
-        <SheetContent
-          side="bottom"
-          style={{
-            maxHeight: '75vh',
-            overflowY: 'auto',
-            padding: '24px 24px 40px',
-            borderRadius: '20px 20px 0 0',
-          }}
-        >
-          <SheetHeader style={{ marginBottom: '24px' }}>
-            <SheetTitle style={{ fontFamily: 'var(--font-sans), system-ui, sans-serif', fontSize: '16px', fontWeight: 600 }}>
-              All assumptions
-            </SheetTitle>
-          </SheetHeader>
-          <div style={{ maxWidth: '680px' }}>
-            {drawerSections.map(section => (
-              <DrawerSection key={section.title} title={section.title} items={section.items} />
-            ))}
-          </div>
-        </SheetContent>
-      </Sheet>
+      {/* Assumptions drawer — Motion-based slide-up */}
+      <AnimatePresence>
+        {drawerOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              key="drawer-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setDrawerOpen(false)}
+              style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', zIndex: 40 }}
+            />
+
+            {/* Panel */}
+            <motion.div
+              key="drawer-panel"
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.9 }}
+              style={{
+                position: 'fixed',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                maxHeight: '80vh',
+                backgroundColor: 'var(--color-bg)',
+                borderTop: '1px solid var(--color-outline)',
+                borderRadius: '20px 20px 0 0',
+                zIndex: 50,
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              {/* Drag handle */}
+              <div
+                style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 8px', cursor: 'pointer', flexShrink: 0 }}
+                onClick={() => setDrawerOpen(false)}
+              >
+                <div style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: 'var(--color-outline-active)' }} />
+              </div>
+
+              {/* Header */}
+              <div style={{ padding: '0 24px 14px', borderBottom: '1px solid var(--color-outline)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <p style={{ fontSize: '15px', fontWeight: 600, fontFamily: 'var(--font-sans), system-ui, sans-serif', color: 'var(--color-text)', letterSpacing: '-0.01em' }}>
+                  All assumptions
+                </p>
+                <button
+                  onClick={() => setDrawerOpen(false)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: 'var(--color-text-faint)', lineHeight: 1, padding: '4px', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Scrollable content */}
+              <div style={{ overflowY: 'auto', flex: 1, padding: '20px 24px 48px', WebkitOverflowScrolling: 'touch' }}>
+                <div style={{ maxWidth: '680px' }}>
+                  {drawerSections.map(section => (
+                    <DrawerSection key={section.title} title={section.title} items={section.items} />
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
