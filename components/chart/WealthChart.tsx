@@ -241,6 +241,7 @@ function ChartInner({
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoverYear, setHoverYear] = useState<number | null>(null);
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
+  const [vpCursor, setVpCursor] = useState<{ x: number; y: number } | null>(null);
 
   const isNarrow = width < 480;
   const hasSubLabels = !!ownerSubLabel || !!renterSubLabel;
@@ -339,9 +340,14 @@ function ChartInner({
     setHoverYear(yr);
     const cRect = containerRef.current?.getBoundingClientRect();
     if (cRect) setCursor({ x: e.clientX - cRect.left, y: e.clientY - cRect.top });
+    setVpCursor({ x: e.clientX, y: e.clientY });
   }, [xScale, holdingPeriodYears]);
 
-  const handleLeave = useCallback(() => { setHoverYear(null); setCursor(null); }, []);
+  const handleLeave = useCallback(() => {
+    setHoverYear(null);
+    setCursor(null);
+    setVpCursor(null);
+  }, []);
 
   const hoverData = useMemo(() => {
     if (hoverYear === null) return null;
@@ -353,10 +359,12 @@ function ChartInner({
   }, [hoverYear, ownerData, renterData, hasRenter, yearlyBreakdown]);
 
   const TOOLTIP_W = 220;
-  const ttLeft = cursor
-    ? cursor.x > width * 0.55 ? cursor.x - TOOLTIP_W - 8 : cursor.x + 14
+  const ttLeft = vpCursor
+    ? (typeof window !== 'undefined' && vpCursor.x > window.innerWidth * 0.6
+        ? vpCursor.x - TOOLTIP_W - 12
+        : vpCursor.x + 16)
     : 0;
-  const ttTop = cursor ? Math.max(8, cursor.y - 60) : 0;
+  const ttTop = vpCursor ? Math.max(8, vpCursor.y - 60) : 0;
 
   // Breakeven
   const bx = breakEvenYear != null ? xScale(breakEvenYear) : null;
@@ -643,7 +651,7 @@ function ChartInner({
 
       {/* Hover tooltip */}
       <AnimatePresence>
-        {hoverData && cursor && (
+        {hoverData && vpCursor && (
           <motion.div
             key="wc-tooltip"
             initial={{ opacity: 0, scale: 0.97 }}
@@ -651,11 +659,11 @@ function ChartInner({
             exit={{ opacity: 0, scale: 0.97 }}
             transition={{ duration: 0.08 }}
             style={{
-              position: 'absolute',
+              position: 'fixed',
               left: ttLeft,
               top: ttTop,
               pointerEvents: 'none',
-              zIndex: 20,
+              zIndex: 9999,
             }}
           >
             <DetailedTooltip

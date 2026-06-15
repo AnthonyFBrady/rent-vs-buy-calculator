@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+
 import type { CalculatorInputs, Province } from '@/engine';
 import { defaultInputsFor } from '@/engine';
 import { SelectionCard, RangeInput, StepAdvanced } from '../components';
@@ -25,26 +25,16 @@ const PROVINCES: { value: Province; label: string; note?: string }[] = [
 
 export function StepProvince({ inputs, patch }: Props) {
   const current = inputs.province;
-  const [taxOpen, setTaxOpen] = useState(false);
-  void taxOpen; void setTaxOpen;
 
   function selectProvince(p: Province) {
     const next = defaultInputsFor(p);
-    const prev = defaultInputsFor(current);
-
-    const updates: Partial<CalculatorInputs> = {
+    patch({
       province: p,
       propertyTaxPct: next.propertyTaxPct,
       rentControlCapPct: next.rentControlCapPct,
       marginalTaxRatePct: next.marginalTaxRatePct,
       isTorontoMunicipalLTT: false,
-    };
-
-    // Re-seed price/rent only if the user hasn't changed them from the previous province default
-    if (inputs.homePrice === prev.homePrice) updates.homePrice = next.homePrice;
-    if (inputs.monthlyRent === prev.monthlyRent) updates.monthlyRent = next.monthlyRent;
-
-    patch(updates);
+    });
   }
 
   const hasRentControl = inputs.rentControlCapPct != null;
