@@ -406,7 +406,7 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
           {/* Assumptions */}
           <div style={{ marginTop: '40px', border: '1px solid var(--color-outline)', borderRadius: '12px', overflow: 'hidden' }}>
             <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-outline)', backgroundColor: 'var(--color-bg-subtle)' }}>
-              <span style={{ fontSize: '12px', fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Key assumptions
               </span>
             </div>
