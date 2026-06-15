@@ -33,8 +33,6 @@ export function StepProvince({ inputs, patch }: Props) {
     patch({
       province: p,
       propertyTaxPct: d.propertyTaxPct,
-      homePrice: d.homePrice,
-      monthlyRent: d.monthlyRent,
       rentControlCapPct: d.rentControlCapPct,
       mortgageRatePct: d.mortgageRatePct,
       isTorontoMunicipalLTT: false,
