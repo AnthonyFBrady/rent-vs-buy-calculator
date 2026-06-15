@@ -9,6 +9,7 @@ import { WealthChart } from '@/components/chart/WealthChart';
 import { MetricCard } from '@/components/MetricCard';
 import { MethodologyContent } from '@/components/MethodologyContent';
 import { FaqContent } from '@/components/FaqContent';
+import { ReckonSignature } from '@/components/ReckonSignature';
 
 function fmtWealth(n: number): string {
   const abs = Math.abs(n);
@@ -195,12 +196,16 @@ export default function ResultPage() {
   ];
 
   return (
-    <div style={{
-      minHeight: '100dvh',
-      backgroundColor: 'var(--color-bg)',
-      color: 'var(--color-text)',
-      fontFamily: 'var(--font-sans), system-ui, sans-serif',
-    }}>
+    <motion.div
+      initial={{ x: 60, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      transition={{ duration: 0.45, ease: [0.0, 0.0, 0.2, 1] }}
+      style={{
+        minHeight: '100dvh',
+        backgroundColor: 'var(--color-bg)',
+        color: 'var(--color-text)',
+        fontFamily: 'var(--font-sans), system-ui, sans-serif',
+      }}>
       {/* Nav */}
       <nav style={{
         height: '52px',
@@ -214,8 +219,8 @@ export default function ResultPage() {
         backgroundColor: 'var(--color-bg)',
         zIndex: 20,
       }}>
-        <a href="/" style={{ fontSize: '14px', fontWeight: 500, letterSpacing: '-0.02em', color: 'var(--color-text)', textDecoration: 'none' }}>
-          Reckon
+        <a href="/" style={{ textDecoration: 'none' }}>
+          <ReckonSignature color="var(--color-text)" width={72} />
         </a>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button
@@ -511,6 +516,6 @@ export default function ResultPage() {
           </>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }

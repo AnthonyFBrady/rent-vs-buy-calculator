@@ -10,6 +10,7 @@ import type { SensitivityScenario } from '@/lib/store';
 import { WealthChart } from '@/components/chart/WealthChart';
 import { MethodologyContent } from '@/components/MethodologyContent';
 import { FaqContent } from '@/components/FaqContent';
+import { ReckonSignature } from '@/components/ReckonSignature';
 import {
   STEP,
   TOTAL_STEPS,
@@ -213,7 +214,10 @@ export default function ExperiencePage() {
   const accentColor  = ACCENT_COLOR[accent];
 
   return (
-    <div
+    <motion.div
+      initial={{ x: 60, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      transition={{ duration: 0.45, ease: [0.0, 0.0, 0.2, 1] }}
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -239,17 +243,8 @@ export default function ExperiencePage() {
           zIndex: 20,
         }}
       >
-        <a
-          href="/"
-          style={{
-            fontSize: '14px',
-            fontWeight: 500,
-            letterSpacing: '-0.02em',
-            color: 'var(--color-text)',
-            textDecoration: 'none',
-          }}
-        >
-          Reckon
+        <a href="/" style={{ textDecoration: 'none' }}>
+          <ReckonSignature color="var(--color-text)" width={72} />
         </a>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button
@@ -619,6 +614,6 @@ export default function ExperiencePage() {
           </>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }

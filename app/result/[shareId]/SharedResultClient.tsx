@@ -6,6 +6,7 @@ import { motion } from 'motion/react';
 import type { CalculatorInputs, SimulationResult } from '@/engine';
 import type { SensitivityScenario } from '@/lib/store';
 import { WealthChart } from '@/components/chart/WealthChart';
+import { ReckonSignature } from '@/components/ReckonSignature';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -127,9 +128,7 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
         zIndex: 20,
         flexShrink: 0,
       }}>
-        <span style={{ fontSize: '14px', fontWeight: 500, letterSpacing: '-0.02em', color: '#FAFAFA', flexShrink: 0 }}>
-          Reckon
-        </span>
+        <ReckonSignature color="#FAFAFA" width={72} />
         <p style={{
           fontSize: '12px', color: '#52525B', flex: 1, textAlign: 'center',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
