@@ -18,6 +18,12 @@ export interface ProvincialDefaults {
    * close behind. Other provinces have no statutory cap. Null means no cap.
    */
   defaultRentControlCapPct: number | null;
+  /**
+   * Combined federal + provincial marginal income tax rate at ~$120k employment
+   * income (2024/2025 rates). Used as the default for capital gains tax on the
+   * renter's portfolio exit and RRSP/FHSA refund calculations.
+   */
+  defaultMarginalTaxRatePct: number;
 }
 
 interface ProvincialDefaultsExtended extends ProvincialDefaults {
@@ -33,6 +39,7 @@ export const PROVINCIAL_DEFAULTS: Record<Province, ProvincialDefaultsExtended> =
     defaultPostalCode: 'M5V',
     notes: 'Toronto 0.7%, Ottawa 1.1%, Mississauga 0.8%. Defaults use Toronto-area benchmark.',
     defaultRentControlCapPct: 0.025,
+    defaultMarginalTaxRatePct: 0.433,  // federal 26% + ON 9.15% + surtax effect, ~$120k income
   },
   BC: {
     province: 'BC',
@@ -42,6 +49,7 @@ export const PROVINCIAL_DEFAULTS: Record<Province, ProvincialDefaultsExtended> =
     defaultPostalCode: 'V6B',
     notes: 'Vancouver ~0.27%, but municipal services are higher. Default uses Lower Mainland median.',
     defaultRentControlCapPct: 0.03,
+    defaultMarginalTaxRatePct: 0.438,  // federal 26% + BC 10.5% at $120k + levies
   },
   AB: {
     province: 'AB',
@@ -51,6 +59,7 @@ export const PROVINCIAL_DEFAULTS: Record<Province, ProvincialDefaultsExtended> =
     defaultPostalCode: 'T2P',
     notes: 'Calgary 0.74%, Edmonton 0.95%. Default uses Calgary benchmark.',
     defaultRentControlCapPct: null,
+    defaultMarginalTaxRatePct: 0.390,  // federal 26% + AB flat 10% — lowest in Canada at this income
   },
   QC: {
     province: 'QC',
@@ -60,6 +69,7 @@ export const PROVINCIAL_DEFAULTS: Record<Province, ProvincialDefaultsExtended> =
     defaultPostalCode: 'H3B',
     notes: 'Montreal ~0.95%, Quebec City ~1.1%. Default uses Montreal benchmark.',
     defaultRentControlCapPct: null,
+    defaultMarginalTaxRatePct: 0.453,  // federal 26% + QC 17.5% at $120k (highest provincial)
   },
   MB: {
     province: 'MB',
@@ -69,6 +79,7 @@ export const PROVINCIAL_DEFAULTS: Record<Province, ProvincialDefaultsExtended> =
     defaultPostalCode: 'R3C',
     notes: 'Winnipeg ~1.25%, the highest in Canada.',
     defaultRentControlCapPct: null,
+    defaultMarginalTaxRatePct: 0.434,  // federal 26% + MB 17.4% at $120k
   },
   SK: {
     province: 'SK',
@@ -78,6 +89,7 @@ export const PROVINCIAL_DEFAULTS: Record<Province, ProvincialDefaultsExtended> =
     defaultPostalCode: 'S7K',
     notes: 'Regina/Saskatoon ~1.1-1.2%.',
     defaultRentControlCapPct: null,
+    defaultMarginalTaxRatePct: 0.405,  // federal 26% + SK 14.5% at $120k
   },
   NS: {
     province: 'NS',
@@ -87,6 +99,7 @@ export const PROVINCIAL_DEFAULTS: Record<Province, ProvincialDefaultsExtended> =
     defaultPostalCode: 'B3J',
     notes: 'Halifax ~1.2-1.3%.',
     defaultRentControlCapPct: null,
+    defaultMarginalTaxRatePct: 0.445,  // federal 26% + NS 17.5% at $120k
   },
   NB: {
     province: 'NB',
@@ -96,6 +109,7 @@ export const PROVINCIAL_DEFAULTS: Record<Province, ProvincialDefaultsExtended> =
     defaultPostalCode: 'E1C',
     notes: 'Provincial + municipal combined ~1.4%.',
     defaultRentControlCapPct: null,
+    defaultMarginalTaxRatePct: 0.423,  // federal 26% + NB 16.3% at $120k
   },
   NL: {
     province: 'NL',
@@ -105,6 +119,7 @@ export const PROVINCIAL_DEFAULTS: Record<Province, ProvincialDefaultsExtended> =
     defaultPostalCode: 'A1C',
     notes: 'St. Johns ~0.95%.',
     defaultRentControlCapPct: null,
+    defaultMarginalTaxRatePct: 0.433,  // federal 26% + NL 17.8% at $120k
   },
   PE: {
     province: 'PE',
@@ -114,6 +129,7 @@ export const PROVINCIAL_DEFAULTS: Record<Province, ProvincialDefaultsExtended> =
     defaultPostalCode: 'C1A',
     notes: 'PEI provincial + municipal combined ~1.25%.',
     defaultRentControlCapPct: null,
+    defaultMarginalTaxRatePct: 0.420,  // federal 26% + PE 16% at $120k
   },
 };
 
@@ -163,7 +179,7 @@ export function defaultInputsFor(
     investmentFeePct: 0.006,       // Low-cost Canadian ETF MER
     savingsDisciplinePct: 1.0,     // Honest baseline: full discipline
 
-    marginalTaxRatePct: 0.43,      // Ontario top-marginal placeholder
+    marginalTaxRatePct: prov.defaultMarginalTaxRatePct,
 
     realtorCommissionPct: 0.05,
     legalFeesAtPurchase: 1500,
