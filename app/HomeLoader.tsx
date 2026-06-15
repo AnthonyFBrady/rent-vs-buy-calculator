@@ -81,7 +81,7 @@ export function HomeLoader({ onComplete }: Props) {
                   animate
                   color="#FAFAFA"
                   width={210}
-                  duration={1.0}
+                  duration={1.2}
                   delay={0}
                 />
               </div>
