@@ -407,7 +407,8 @@ function ChartInner({
               <line x1={0} x2={innerWidth} stroke="var(--color-chart-grid)" strokeWidth={1} strokeDasharray="2 4" />
               <text
                 x={-8} dy="0.32em" textAnchor="end"
-                fontSize={isNarrow ? 9 : 10}
+                fontSize={isNarrow ? 10 : 11}
+                fontWeight={500}
                 fill="var(--color-chart-axis)"
                 fontFamily="var(--font-sans), system-ui, sans-serif"
               >
@@ -426,7 +427,8 @@ function ChartInner({
             <g key={t} transform={`translate(${xScale(t)},${innerHeight})`}>
               <text
                 y={16} textAnchor="middle"
-                fontSize={isNarrow ? 9 : 10}
+                fontSize={isNarrow ? 10 : 11}
+                fontWeight={500}
                 fill="var(--color-chart-axis)"
                 fontFamily="var(--font-sans), system-ui, sans-serif"
               >

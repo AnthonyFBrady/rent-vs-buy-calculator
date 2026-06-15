@@ -21,17 +21,17 @@ export async function generateMetadata({ params }: Props) {
       : `$${Math.round(abs)}`;
 
     return {
-      title: `${winner === 'a near-tie' ? 'Tied' : winner.charAt(0).toUpperCase() + winner.slice(1) + ' ahead'} by ${delta} — Rent vs Buy`,
-      description: `Rent vs buy result for a ${snapshot.i.holdingPeriodYears}-year horizon. ${winner.charAt(0).toUpperCase() + winner.slice(1)} comes out ${delta} ahead after exit costs.`,
+      title: `${winner === 'a near-tie' ? 'Tied' : winner.charAt(0).toUpperCase() + winner.slice(1) + ' ahead'} by ${delta} — Reckon`,
+      description: `${snapshot.i.holdingPeriodYears}-year rent vs buy result. ${winner.charAt(0).toUpperCase() + winner.slice(1)} comes out ${delta} ahead after exit costs.`,
       openGraph: {
         title: `${winner === 'a near-tie' ? 'Tied' : winner.charAt(0).toUpperCase() + winner.slice(1) + ' ahead'} by ${delta}`,
-        description: `${snapshot.i.holdingPeriodYears}-year rent vs buy analysis`,
+        description: `${snapshot.i.holdingPeriodYears}-year analysis on Reckon`,
         images: [`/api/og?id=${params.shareId}`],
       },
     };
   } catch {
     return {
-      title: 'Shared result — Rent vs Buy',
+      title: 'Shared result — Reckon',
     };
   }
 }
@@ -49,12 +49,13 @@ export default function SharedResultPage({ params }: Props) {
 
   // Build scenario data matching the Zustand format
   const toPoints = (r: typeof result) => {
+    const closingCosts = r.commitment.ownerStartingCashOut - r.inputs.homePrice * r.inputs.downPaymentPct;
     let cum = 0;
     return [
-      { year: 0, ownerValue: r.inputs.homePrice * r.inputs.downPaymentPct, renterValue: r.yearByYear[0]?.renterPortfolioStart ?? 0 },
+      { year: 0, ownerValue: r.inputs.homePrice * r.inputs.downPaymentPct - closingCosts, renterValue: r.yearByYear[0]?.renterPortfolioStart ?? 0 },
       ...r.yearByYear.map((y) => {
         cum += y.ownerMoveTransactionCost;
-        return { year: y.year, ownerValue: y.ownerEquity + y.ownerPortfolioEnd - cum, renterValue: y.renterPortfolioEnd + y.renterRrspBalance };
+        return { year: y.year, ownerValue: y.ownerEquity + y.ownerPortfolioEnd - cum - y.ownerCumulativePropertyTax - closingCosts, renterValue: y.renterPortfolioEnd + y.renterRrspBalance };
       }),
     ];
   };

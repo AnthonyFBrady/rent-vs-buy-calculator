@@ -74,7 +74,7 @@ export function StepSituation({ inputs, patch }: Props) {
               checked={usesTFSA}
               onChange={(v) => patch({ renterUsesTFSA: v })}
               label="TFSA"
-              description="$7k/yr new room. Tax-free growth, no capital gains at exit."
+              description={`$7k/yr new room. Tax-free growth, no capital gains at exit. Est. lifetime room: ${fmtCAD.format(Math.min(95_000, Math.max(0, (2026 - Math.max((inputs.birthYear ?? 1990) + 18, 2009)) * 7_000)))}.`}
             />
           </div>
 

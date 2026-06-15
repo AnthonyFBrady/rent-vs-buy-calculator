@@ -330,6 +330,8 @@ export interface YearSnapshot {
   ownerSurplusTfsaBalance: number;
   /** RRSP balance rebuilt via HBP repayments this year. Taxed at marginal rate on exit. 0 if no HBP. */
   ownerHbpRrspBalance: number;
+  /** Running total of property tax paid by the owner to date. Subtracted from owner wealth and final result. */
+  ownerCumulativePropertyTax: number;
 
   // Renter side
   renterAnnualRent: number;

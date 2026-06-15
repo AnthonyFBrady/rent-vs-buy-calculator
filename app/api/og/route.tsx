@@ -16,8 +16,8 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id') ?? '';
 
-  let verdictText = 'Rent vs Buy';
-  let deltaText = 'Run your own calculation';
+  let verdictText = 'Reckon';
+  let deltaText = 'Run your own numbers';
   let winnerColor = '#A1A1AA';
   let horizonText = '';
 
@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
         {/* Top label */}
         <div style={{ display: 'flex', marginBottom: '32px' }}>
           <span style={{ fontSize: '16px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#52525B' }}>
-            {horizonText || 'Rent vs Buy Calculator'}
+            {horizonText || 'Reckon'}
           </span>
         </div>
 
@@ -102,7 +102,7 @@ export async function GET(req: NextRequest) {
           }}
         >
           <span style={{ fontSize: '18px', fontWeight: 500, color: '#52525B', letterSpacing: '-0.02em' }}>
-            longrun.ca
+            Reckon
           </span>
         </div>
 

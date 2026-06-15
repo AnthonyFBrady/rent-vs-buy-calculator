@@ -53,6 +53,10 @@ export function StepRentGrowth({ inputs, patch }: Props) {
           No rent control in {inputs.province}. Staying put gives no discount.
         </p>
       )}
+
+      <p className="mt-4 text-xs leading-relaxed" style={{ color: 'var(--color-text-faint)' }}>
+        This moves both lines. Higher rent growth hurts the renter directly (more cash out each year). It also gradually benefits the owner: their mortgage is fixed in nominal terms, so as market rent escalates past their housing costs, the owner invests that growing surplus. This is the inflation-hedge argument for owning — the model makes it visible.
+      </p>
     </StepWrapper>
   );
 }

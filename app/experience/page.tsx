@@ -9,6 +9,7 @@ import { useCalculatorStore } from '@/lib/store';
 import type { SensitivityScenario } from '@/lib/store';
 import { WealthChart } from '@/components/chart/WealthChart';
 import { MethodologyContent } from '@/components/MethodologyContent';
+import { FaqContent } from '@/components/FaqContent';
 import {
   STEP,
   TOTAL_STEPS,
@@ -88,6 +89,7 @@ export default function ExperiencePage() {
   });
 
   const [methodologyOpen, setMethodologyOpen] = useState(false);
+  const [faqOpen, setFaqOpen] = useState(false);
   const [kbHintSeen, setKbHintSeen] = useState(false);
 
   const { phase, inputs, direction } = state;
@@ -104,16 +106,17 @@ export default function ExperiencePage() {
 
   const liveOwnerData = useMemo(() => {
     const marginalRate = inputs.marginalTaxRatePct ?? 0.4;
+    const closingCosts = liveSim.commitment.ownerStartingCashOut - inputs.homePrice * inputs.downPaymentPct;
     let cumMoveCost = 0;
     return [
-      { year: 0, value: inputs.homePrice * inputs.downPaymentPct },
+      { year: 0, value: inputs.homePrice * inputs.downPaymentPct - closingCosts },
       ...liveSim.yearByYear.map((y) => {
         cumMoveCost += y.ownerMoveTransactionCost;
         const rrspNet    = y.ownerSurplusRrspBalance * (1 - marginalRate);
         const hbpRrspNet = y.ownerHbpRrspBalance * (1 - marginalRate);
         return {
           year: y.year,
-          value: y.ownerEquity + y.ownerPortfolioEnd + rrspNet + y.ownerSurplusTfsaBalance + hbpRrspNet - cumMoveCost,
+          value: y.ownerEquity + y.ownerPortfolioEnd + rrspNet + y.ownerSurplusTfsaBalance + hbpRrspNet - cumMoveCost - y.ownerCumulativePropertyTax - closingCosts,
         };
       }),
     ];
@@ -145,18 +148,19 @@ export default function ExperiencePage() {
     const sensitivity = simulateSensitivity(inputs);
 
     const toPoints = (r: typeof sim) => {
+      const closingCosts = r.commitment.ownerStartingCashOut - r.inputs.homePrice * r.inputs.downPaymentPct;
       let cumMoveCost = 0;
       return [
         {
           year: 0,
-          ownerValue: r.inputs.homePrice * r.inputs.downPaymentPct,
+          ownerValue: r.inputs.homePrice * r.inputs.downPaymentPct - closingCosts,
           renterValue: r.yearByYear[0]?.renterPortfolioStart ?? 0,
         },
         ...r.yearByYear.map((y) => {
           cumMoveCost += y.ownerMoveTransactionCost;
           return {
             year: y.year,
-            ownerValue:  y.ownerEquity + y.ownerPortfolioEnd - cumMoveCost,
+            ownerValue:  y.ownerEquity + y.ownerPortfolioEnd - cumMoveCost - y.ownerCumulativePropertyTax - closingCosts,
             renterValue: y.renterPortfolioEnd + y.renterRrspBalance,
           };
         }),
@@ -194,11 +198,11 @@ export default function ExperiencePage() {
     return () => window.removeEventListener('keydown', onKey);
   }, [phase, handleContinue, back]);
 
-  // Lock body scroll when methodology drawer is open
+  // Lock body scroll when any drawer is open
   useEffect(() => {
-    document.body.style.overflow = methodologyOpen ? 'hidden' : '';
+    document.body.style.overflow = (methodologyOpen || faqOpen) ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
-  }, [methodologyOpen]);
+  }, [methodologyOpen, faqOpen]);
 
   const stepLabel    = STEP_HEADINGS[phase] ?? '';
   const whyCopy      = STEP_WHY[phase] ?? '';
@@ -245,18 +249,18 @@ export default function ExperiencePage() {
             textDecoration: 'none',
           }}
         >
-          longrun.ca
+          Reckon
         </a>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button
             onClick={() => setMethodologyOpen(true)}
             style={{
-              fontSize: '12px',
-              color: 'var(--color-text-faint)',
+              fontSize: '13px',
+              color: 'var(--color-text-muted)',
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              padding: '4px 0',
+              padding: 0,
               fontFamily: 'var(--font-sans), system-ui, sans-serif',
               letterSpacing: '-0.01em',
               textDecoration: 'underline',
@@ -266,9 +270,27 @@ export default function ExperiencePage() {
           >
             How this works
           </button>
+          <button
+            onClick={() => setFaqOpen(true)}
+            style={{
+              fontSize: '13px',
+              color: 'var(--color-text-muted)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+              fontFamily: 'var(--font-sans), system-ui, sans-serif',
+              letterSpacing: '-0.01em',
+              textDecoration: 'underline',
+              textUnderlineOffset: '2px',
+              textDecorationColor: 'var(--color-outline)',
+            }}
+          >
+            FAQ
+          </button>
           <span
             style={{
-              fontSize: '12px',
+              fontSize: '13px',
               color: 'var(--color-text-faint)',
               letterSpacing: '-0.01em',
             }}
@@ -399,6 +421,17 @@ export default function ExperiencePage() {
           </div>
         </div>
 
+        {/* Gradient divider — owner gold fades to renter teal top-to-bottom */}
+        <div
+          className="hidden lg:block"
+          style={{
+            width: '2px',
+            flexShrink: 0,
+            background: 'linear-gradient(to bottom, var(--color-owner) 0%, transparent 40%, transparent 60%, var(--color-renter) 100%)',
+            opacity: 0.5,
+          }}
+        />
+
         {/* Right: live chart column — always dark */}
         <div
           className="dark-panel hidden lg:flex"
@@ -407,7 +440,6 @@ export default function ExperiencePage() {
             flexDirection: 'column',
             justifyContent: 'center',
             padding: '16px',
-            borderLeft: '1px solid var(--color-outline)',
             backgroundColor: 'var(--color-chart-bg)',
             overflowY: 'auto',
           }}
@@ -518,60 +550,70 @@ export default function ExperiencePage() {
       <AnimatePresence>
         {methodologyOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
               onClick={() => setMethodologyOpen(false)}
-              style={{
-                position: 'fixed',
-                inset: 0,
-                backgroundColor: 'rgba(0,0,0,0.45)',
-                zIndex: 50,
-              }}
+              style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', zIndex: 50 }}
             />
-            {/* Panel */}
             <motion.div
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.9 }}
-              style={{
-                position: 'fixed',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                maxHeight: '82vh',
-                backgroundColor: 'var(--color-bg)',
-                borderRadius: '16px 16px 0 0',
-                zIndex: 51,
-                display: 'flex',
-                flexDirection: 'column',
-                boxShadow: '0 -8px 48px rgba(0,0,0,0.18)',
-              }}
+              style={{ position: 'fixed', bottom: 0, left: 0, right: 0, maxHeight: '82vh', backgroundColor: 'var(--color-bg)', borderRadius: '16px 16px 0 0', zIndex: 51, display: 'flex', flexDirection: 'column', boxShadow: '0 -8px 48px rgba(0,0,0,0.18)' }}
             >
-              {/* Drag handle */}
               <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '12px', paddingBottom: '4px', flexShrink: 0 }}>
                 <div style={{ width: '36px', height: '4px', borderRadius: '9999px', backgroundColor: 'var(--color-outline-active)' }} />
               </div>
-              {/* Header */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px 12px', borderBottom: '1px solid var(--color-outline)', flexShrink: 0 }}>
                 <div>
                   <p style={{ fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-text-faint)', marginBottom: '2px' }}>Methodology</p>
                   <p style={{ fontSize: '16px', fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--color-text)', fontFamily: 'var(--font-serif), Georgia, serif' }}>How this calculator thinks</p>
                 </div>
-                <button
-                  onClick={() => setMethodologyOpen(false)}
-                  style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-outline)', background: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                >
-                  ✕
-                </button>
+                <button onClick={() => setMethodologyOpen(false)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-outline)', background: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
               </div>
-              {/* Scrollable content */}
               <div style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: 1, padding: '0 20px 40px' }}>
                 <MethodologyContent />
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* FAQ drawer */}
+      <AnimatePresence>
+        {faqOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setFaqOpen(false)}
+              style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', zIndex: 50 }}
+            />
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.9 }}
+              style={{ position: 'fixed', bottom: 0, left: 0, right: 0, maxHeight: '82vh', backgroundColor: 'var(--color-bg)', borderRadius: '16px 16px 0 0', zIndex: 51, display: 'flex', flexDirection: 'column', boxShadow: '0 -8px 48px rgba(0,0,0,0.18)' }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '12px', paddingBottom: '4px', flexShrink: 0 }}>
+                <div style={{ width: '36px', height: '4px', borderRadius: '9999px', backgroundColor: 'var(--color-outline-active)' }} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px 12px', borderBottom: '1px solid var(--color-outline)', flexShrink: 0 }}>
+                <div>
+                  <p style={{ fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-text-faint)', marginBottom: '2px' }}>FAQ</p>
+                  <p style={{ fontSize: '16px', fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--color-text)', fontFamily: 'var(--font-serif), Georgia, serif' }}>Frequently asked questions</p>
+                </div>
+                <button onClick={() => setFaqOpen(false)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-outline)', background: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+              </div>
+              <div style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: 1, padding: '0 20px 40px' }}>
+                <FaqContent />
               </div>
             </motion.div>
           </>

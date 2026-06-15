@@ -16,12 +16,12 @@ const inter = Inter({
   weight: ['400', '500', '600', '700', '900'],
 });
 
-const SITE_NAME = 'Rent vs Buy — Canadian Calculator';
+const SITE_NAME = 'Reckon';
 const DESCRIPTION =
-  'A Canada-only rent vs buy decision tool, inspired by Ben Felix\'s framework. The 5% Rule, year-by-year wealth comparison, full Canadian tax model. Every assumption editable. Every source linked.';
+  "Canada's rent vs buy calculator. The explicit costs of renting are obvious. The implicit costs of owning are not. Reckon with the real math. Every assumption editable. Every formula cited.";
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://longrun.ca'),
+  metadataBase: new URL('https://reckon.ca'),
   title: {
     default: SITE_NAME,
     template: `%s — ${SITE_NAME}`,

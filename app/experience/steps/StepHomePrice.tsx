@@ -45,6 +45,9 @@ export function StepHomePrice({ inputs, patch }: Props) {
         <p className="mt-2 text-xs leading-relaxed text-muted">
           ~{unrecoverablePct}% per year builds no equity ({fmt.format(Math.round(yr1Unrecoverable))}/yr in interest, tax, maintenance, and insurance{yr1Strata > 0 ? ', strata' : ''}).
         </p>
+        <p className="mt-4 text-xs leading-relaxed" style={{ color: 'var(--color-text-faint)' }}>
+          The renter is assumed to invest your down payment and closing costs from day 1, then invest whatever they save each year versus your housing costs. Rent amount and other assumptions use provincial defaults — you will set them next.
+        </p>
       </div>
     </StepWrapper>
   );

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { MethodologyContent } from '@/components/MethodologyContent';
 
 export const metadata = {
-  title: 'Methodology — longrun.ca',
+  title: 'Methodology — Reckon',
   description:
     "The framework, formulas, and academic citations behind this calculator. Built on Ben Felix's 5% rule with full Canadian tax model.",
 };
@@ -42,7 +42,7 @@ export default function MethodologyPage() {
             textDecoration: 'none',
           }}
         >
-          longrun.ca
+          Reckon
         </Link>
         <Link
           href="/experience"

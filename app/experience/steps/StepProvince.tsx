@@ -1,19 +1,18 @@
 'use client';
 
-
 import type { CalculatorInputs, Province } from '@/engine';
 import { defaultInputsFor } from '@/engine';
-import { SelectionCard, RangeInput, StepAdvanced } from '../components';
+import { RangeInput, StepAdvanced, Toggle } from '../components';
 
 interface Props {
   inputs: CalculatorInputs;
   patch: (p: Partial<CalculatorInputs>) => void;
 }
 
-const PROVINCES: { value: Province; label: string; note?: string }[] = [
-  { value: 'ON', label: 'Ontario',          note: '+Toronto LTT option' },
-  { value: 'BC', label: 'British Columbia', note: 'rent control' },
-  { value: 'AB', label: 'Alberta',          note: 'no LTT, no rent control' },
+const PROVINCES: { value: Province; label: string }[] = [
+  { value: 'ON', label: 'Ontario' },
+  { value: 'BC', label: 'British Columbia' },
+  { value: 'AB', label: 'Alberta' },
   { value: 'QC', label: 'Quebec' },
   { value: 'MB', label: 'Manitoba' },
   { value: 'SK', label: 'Saskatchewan' },
@@ -44,87 +43,74 @@ export function StepProvince({ inputs, patch }: Props) {
 
   return (
     <div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-        {PROVINCES.map((p) => (
-          <SelectionCard
-            key={p.value}
-            selected={current === p.value}
-            onClick={() => selectProvince(p.value)}
-            label={p.label}
-            sublabel={p.note}
-            compact
-          />
-        ))}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', marginBottom: '16px' }}>
+        {PROVINCES.map((p) => {
+          const isSelected = current === p.value;
+          return (
+            <button
+              key={p.value}
+              type="button"
+              onClick={() => selectProvince(p.value)}
+              style={{
+                height: '38px',
+                padding: '0 12px',
+                borderRadius: '8px',
+                border: `1px solid ${isSelected ? 'transparent' : 'var(--color-outline)'}`,
+                backgroundColor: isSelected ? 'var(--color-owner)' : 'var(--color-surface)',
+                color: isSelected ? '#fff' : 'var(--color-text-muted)',
+                fontSize: '13px',
+                fontWeight: isSelected ? 600 : 400,
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'background-color 0.15s, border-color 0.15s, color 0.15s',
+                fontFamily: 'var(--font-sans), system-ui, sans-serif',
+                letterSpacing: '-0.01em',
+              }}
+            >
+              {p.label}
+            </button>
+          );
+        })}
       </div>
 
       {current === 'ON' && (
-        <label
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            marginTop: '16px',
-            cursor: 'pointer',
-            fontSize: '13px',
-            color: 'var(--color-text-muted)',
-          }}
-        >
-          <input
-            type="checkbox"
+        <div style={{ marginTop: '8px' }}>
+          <Toggle
             checked={inputs.isTorontoMunicipalLTT ?? false}
-            onChange={(e) => patch({ isTorontoMunicipalLTT: e.target.checked })}
-            style={{ accentColor: 'var(--color-owner)', width: '15px', height: '15px' }}
+            onChange={(v) => patch({ isTorontoMunicipalLTT: v })}
+            label="Within the City of Toronto"
+            description="Adds the Toronto municipal LTT at closing. Moves the owner's wealth line down — renter unaffected."
+            accentColor="var(--color-owner)"
           />
-          Within the City of Toronto (adds municipal LTT)
-        </label>
+        </div>
       )}
 
-      <label
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          marginTop: '12px',
-          cursor: 'pointer',
-          fontSize: '13px',
-          color: 'var(--color-text-muted)',
-        }}
-      >
-        <input
-          type="checkbox"
+      <div style={{ marginTop: '8px' }}>
+        <Toggle
           checked={inputs.isFirstTimeBuyer ?? false}
-          onChange={(e) => patch({ isFirstTimeBuyer: e.target.checked })}
-          style={{ accentColor: 'var(--color-owner)', width: '15px', height: '15px' }}
+          onChange={(v) => patch({ isFirstTimeBuyer: v })}
+          label="First-time buyer"
+          description="Applies the LTT rebate at closing. Moves the owner's wealth line up — renter unaffected."
+          accentColor="var(--color-owner)"
         />
-        First-time buyer (LTT rebate applied at closing)
-      </label>
+      </div>
 
       <StepAdvanced label="Rent control">
-        <label
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            marginBottom: '16px',
-            cursor: 'pointer',
-            fontSize: '13px',
-            color: 'var(--color-text-muted)',
-          }}
-        >
-          <input
-            type="checkbox"
+        <div style={{ marginBottom: '16px' }}>
+          <Toggle
             checked={hasRentControl}
-            onChange={(e) =>
+            onChange={(v) =>
               patch({
-                rentControlCapPct: e.target.checked
+                rentControlCapPct: v
                   ? (defaultInputsFor(current).rentControlCapPct ?? 0.025)
                   : null,
               })
             }
-            style={{ accentColor: 'var(--color-owner)', width: '15px', height: '15px' }}
+            label="Rent control applies"
+            description="Caps annual in-place rent increases. On a renter move, rent resets to market (vacancy decontrol)."
+            accentColor="var(--color-renter)"
           />
-          Rent control applies (caps in-place rent increases)
-        </label>
+        </div>
 
         {hasRentControl && (
           <RangeInput
@@ -172,6 +158,9 @@ export function StepProvince({ inputs, patch }: Props) {
             maxLabel="2.50%"
             description="Province default applied on selection. ON Toronto ~0.65%, BC ~0.3%, MB/SK ~1.2%."
           />
+          <p style={{ marginTop: '6px', fontSize: '11px', color: 'var(--color-text-faint)', lineHeight: 1.5 }}>
+            Property tax is a direct, unrecoverable owner cost. Higher rates move the owner&apos;s wealth line down.
+          </p>
         </div>
       </StepAdvanced>
     </div>

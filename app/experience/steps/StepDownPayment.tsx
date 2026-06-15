@@ -37,6 +37,12 @@ export function StepDownPayment({ inputs, patch }: Props) {
   const surplusTfsa   = inputs.ownerSurplusTfsaAmt ?? 0;
   const surplusTaxable = Math.max(0, extraSavings - surplusRrsp - surplusTfsa);
 
+  const birthYear = inputs.birthYear ?? 1990;
+  const tfsaEligibleSince = Math.max(birthYear + 18, 2009);
+  const ownerTfsaRoom = Math.min(95_000, Math.max(0, (2026 - tfsaEligibleSince) * 7_000));
+  const rrspAnnualRoom = Math.min(Math.round((inputs.annualIncome ?? 120_000) * 0.18), 31_560);
+  const tfsaSliderMax = Math.min(Math.max(0, extraSavings - surplusRrsp), ownerTfsaRoom);
+
   return (
     <div>
       <RangeInput
@@ -226,7 +232,7 @@ export function StepDownPayment({ inputs, patch }: Props) {
                 color="var(--color-owner)"
                 minLabel="$0"
                 maxLabel={`$${Math.round(extraSavings / 1000)}k`}
-                description="Generates a tax refund at year 0; taxed at marginal rate on exit."
+                description={`Generates a tax refund at year 0. Annual room est. ${fmtCAD.format(rrspAnnualRoom)} — total may be higher from carryforward.`}
               />
 
               <div style={{ marginTop: '12px' }}>
@@ -234,10 +240,10 @@ export function StepDownPayment({ inputs, patch }: Props) {
                   label={`TFSA: ${fmtCAD.format(surplusTfsa)}`}
                   value={Math.round(surplusTfsa / 1000)}
                   min={0}
-                  max={Math.round(Math.max(0, extraSavings - surplusRrsp) / 1000)}
+                  max={Math.round(extraSavings / 1000)}
                   step={1}
                   onChange={(v) => {
-                    const tfsa = v * 1_000;
+                    const tfsa = Math.min(v * 1_000, Math.max(0, extraSavings - surplusRrsp), ownerTfsaRoom);
                     patch({
                       ownerSurplusTfsaAmt: tfsa,
                       ownerSurplusUsesTFSA: tfsa > 0,
@@ -246,8 +252,8 @@ export function StepDownPayment({ inputs, patch }: Props) {
                   formatValue={(v) => `$${v}k`}
                   color="var(--color-owner)"
                   minLabel="$0"
-                  maxLabel={`$${Math.round(Math.max(0, extraSavings - surplusRrsp) / 1000)}k`}
-                  description="Grows tax-free; exits with no capital gains tax."
+                  maxLabel={`$${Math.round(extraSavings / 1000)}k`}
+                  description={`Tax-free growth, no capital gains at exit. Est. lifetime TFSA room: ${fmtCAD.format(ownerTfsaRoom)}.`}
                 />
               </div>
 

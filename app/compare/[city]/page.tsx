@@ -87,8 +87,8 @@ export async function generateMetadata({ params }: { params: Promise<{ city: str
   if (!Object.hasOwn(CITIES, city)) return {};
   const cfg = CITIES[city as CityKey];
   return {
-    title: `${cfg.label} Rent vs Buy — longrun.ca`,
-    description: `Rent vs buy in ${cfg.label}, Canada. 25-year wealth comparison using current median home prices and rents.`,
+    title: `${cfg.label} Rent vs Buy — Reckon`,
+    description: `Rent vs buy in ${cfg.label}. 25-year wealth comparison using current median home prices and rents.`,
   };
 }
 
@@ -112,12 +112,13 @@ export default async function CityPage({ params }: { params: Promise<{ city: str
   const inputs: CalculatorInputs = { ...baseInputs, ...cfg.overrides };
   const result = simulate(inputs);
 
+  const closingCosts = result.commitment.ownerStartingCashOut - inputs.homePrice * inputs.downPaymentPct;
   let cumMoveCost = 0;
   const ownerData = [
-    { year: 0, value: inputs.homePrice * inputs.downPaymentPct },
+    { year: 0, value: inputs.homePrice * inputs.downPaymentPct - closingCosts },
     ...result.yearByYear.map(y => {
       cumMoveCost += y.ownerMoveTransactionCost;
-      return { year: y.year, value: y.ownerEquity + y.ownerPortfolioEnd - cumMoveCost };
+      return { year: y.year, value: y.ownerEquity + y.ownerPortfolioEnd - cumMoveCost - y.ownerCumulativePropertyTax - closingCosts };
     }),
   ];
   const renterData = [
@@ -163,7 +164,7 @@ export default async function CityPage({ params }: { params: Promise<{ city: str
           href="/"
           style={{ fontSize: '14px', fontWeight: 500, letterSpacing: '-0.02em', color: 'var(--color-text)', textDecoration: 'none' }}
         >
-          longrun.ca
+          Reckon
         </Link>
         <Link
           href="/experience"

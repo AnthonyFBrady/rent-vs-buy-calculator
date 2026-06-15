@@ -122,7 +122,7 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
             <Divider />
             {ltt.provincialLTT > 0 && <Row label="Provincial LTT" value={fmt.format(Math.round(ltt.provincialLTT))} />}
             {ltt.municipalLTT > 0 && <Row label="Toronto MLTT" value={fmt.format(Math.round(ltt.municipalLTT))} />}
-            {ltt.ftbRebate > 0 && <Row label="FTB rebate" value={`−${fmt.format(Math.round(ltt.ftbRebate))}`} color={CHALK_RENTER} />}
+            {ltt.ftbRebate > 0 && <Row label="FTB rebate" value={`−${fmt.format(Math.round(ltt.ftbRebate))}`} color={CHALK_OWNER} />}
             <Row label="LTT total" value={fmt.format(Math.round(ltt.total))} color={CHALK_OWNER} />
             <Divider />
             <Row label="All closing costs" value={fmt.format(Math.round(closingCosts))} />

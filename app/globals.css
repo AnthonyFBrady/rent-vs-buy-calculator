@@ -196,8 +196,8 @@
   --color-owner-band:     rgba(245,158,11,0.13);
   --color-renter-band:    rgba(16,185,129,0.13);
   --color-chart-bg:             #0F0F11;
-  --color-chart-grid:           #27272A;
-  --color-chart-axis:           #52525B;
+  --color-chart-grid:           #3F3F46;
+  --color-chart-axis:           #D4D4D8;
   --color-chart-owner-band:     rgba(245,158,11,0.13);
   --color-chart-renter-band:    rgba(16,185,129,0.13);
   --color-chart-tooltip-bg:     #18181B;

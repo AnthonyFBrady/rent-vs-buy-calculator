@@ -178,16 +178,23 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
   const ownerYear0CashOut =
     downPayment + ltt.total + legalFeesAtPurchase + cmhcPST + ownerMovingCostPerMove;
 
+  // Non-down-payment year-0 owner costs. These are sunk costs that permanently
+  // reduce the owner's net worth. Tracked separately so they move the owner line,
+  // not the renter line. Decoupled from renterYear0Investment below.
+  const ownerYear0ClosingCosts =
+    ltt.total + legalFeesAtPurchase + cmhcPST + ownerMovingCostPerMove;
+
   // First + last month deposit paid by renter at move-in.
   const firstLastDeposit = 2 * monthlyRent;
 
-  // The renter invests: owner's year-0 outlay − deposit − moving cost.
-  // If the owner is deploying prior equity, the renter comparison uses the full equity
-  // amount (they keep all of it invested instead of splitting it toward a down payment).
+  // The renter invests the down payment (same cash the owner put toward the home)
+  // minus their own deposit and moving costs. Owner closing costs (LTT, legal, CMHC PST,
+  // moving) are owner-specific — they are not available for the renter to invest and are
+  // instead deducted from the owner's wealth every year via ownerYear0ClosingCosts.
   const priorEquity = inputs.ownerPriorEquity ?? 0;
-  const equityBase = priorEquity > 0 ? priorEquity : ownerYear0CashOut;
+  const renterYear0InvestmentBase = priorEquity > 0 ? priorEquity : downPayment;
   const renterYear0Investment =
-    equityBase - firstLastDeposit - renterMovingCostPerMove;
+    renterYear0InvestmentBase - firstLastDeposit - renterMovingCostPerMove;
 
   // ─── Multi-term mortgage schedule ─────────────────────────────────────
   // Each 5-year renewal recalculates the monthly payment from the current
@@ -310,9 +317,11 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
       inputs.ownerSurplusRrspAmt ?? (ownerSurplusUsesRrsp ? ownerStartingEquity : 0),
       ownerStartingEquity,
     );
+    const ownerTfsaRoomAvailable = Math.min(TFSA_LIFETIME_CAP, Math.max(0, (2026 - tfsaEligibleSince) * TFSA_ANNUAL_ACCRUAL));
     const tfsaAmt = Math.min(
       inputs.ownerSurplusTfsaAmt ?? ((inputs.ownerSurplusUsesTFSA && !ownerSurplusUsesRrsp) ? ownerStartingEquity : 0),
       ownerStartingEquity - rrspAmt,
+      ownerTfsaRoomAvailable,
     );
     const taxableAmt = Math.max(0, ownerStartingEquity - rrspAmt - tfsaAmt);
 
@@ -354,6 +363,7 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
     inflationPct + INSURANCE_ESCALATION_OVER_INFLATION_PCT;
 
   let cumulativeOwnerMoveCosts = 0;
+  let cumulativeOwnerPropertyTax = 0;
 
   for (let y = 1; y <= holdingPeriodYears; y++) {
     // Past the amortization cliff the mortgage is fully paid; use a zero-out row.
@@ -426,6 +436,7 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
     // gap into the SAME portfolio as the other side would have.
     // Track cumulative mid-hold move costs — deducted from finalOwnerWealth at exit.
     cumulativeOwnerMoveCosts += ownerMoveTransactionCost;
+    cumulativeOwnerPropertyTax += ownerAnnualPropertyTax;
 
     // Annual suite income grows each year and reduces the owner's effective cost.
     const annualRentalIncome = currentMonthlyRentalIncome * 12;
@@ -433,8 +444,10 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
     // Owner move transaction costs are friction losses, not investable savings for the renter.
     // Excluding them keeps the renter line flat when only the owner's move frequency changes.
     // Suite income is also excluded from the baseline so it only benefits the invest-the-difference calc.
+    // Property tax is excluded from annualDifference because it is modeled as a direct owner wealth
+    // reduction (cumulativeOwnerPropertyTax) rather than an investable gap for the renter.
     const ownerBaselineCashOut = ownerAnnualCashOut - ownerMoveTransactionCost - annualRentalIncome;
-    const annualDifference = ownerBaselineCashOut - renterAnnualCashOut;
+    const annualDifference = ownerBaselineCashOut - ownerAnnualPropertyTax - renterAnnualCashOut;
     const renterContribution =
       annualDifference > 0
         ? annualDifference * renterDiscipline
@@ -539,9 +552,10 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
     const ownerEquity = currentHomeValue - ownerMortgageBalance;
 
     // Wealth comparison: owner equity + portfolio + RRSP surplus net + TFSA surplus + HBP RRSP net
+    // minus cumulative property tax (a direct, non-recoverable owner cost).
     const ownerRrspNetThisYear = ownerSurplusRrspBal * (1 - marginalTaxRatePct);
     const ownerHbpRrspNetThisYear = ownerHbpRrspBal * (1 - marginalTaxRatePct);
-    const ownerWealthThisYear = ownerEquity + ownerPortfolioEnd + ownerRrspNetThisYear + ownerSurplusTfsaBal + ownerHbpRrspNetThisYear;
+    const ownerWealthThisYear = ownerEquity + ownerPortfolioEnd + ownerRrspNetThisYear + ownerSurplusTfsaBal + ownerHbpRrspNetThisYear - cumulativeOwnerPropertyTax - ownerYear0ClosingCosts;
     const renterWealthThisYear = renterPortfolioEnd + renterRrspBalance + currentDeposit;
     const wealthDelta = ownerWealthThisYear - renterWealthThisYear;
     if (breakEvenYear === null && wealthDelta >= 0 && y > 0) {
@@ -573,6 +587,7 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
       ownerSurplusRrspBalance: ownerSurplusRrspBal,
       ownerSurplusTfsaBalance: ownerSurplusTfsaBal,
       ownerHbpRrspBalance: ownerHbpRrspBal,
+      ownerCumulativePropertyTax: cumulativeOwnerPropertyTax,
       renterAnnualRent,
       renterAnnualInsurance,
       renterAnnualCashOut,
@@ -655,7 +670,7 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
   const renterNetProceeds =
     renterPortfolioValue - renterCapGainsTax + renterDepositReturned + renterRrspNetProceeds;
 
-  const finalOwnerWealth = ownerHomeNetProceeds + ownerPortfolioNetProceeds + ownerSurplusRrspNet + ownerSurplusTfsaNet + ownerHbpRrspNet - cumulativeOwnerMoveCosts;
+  const finalOwnerWealth = ownerHomeNetProceeds + ownerPortfolioNetProceeds + ownerSurplusRrspNet + ownerSurplusTfsaNet + ownerHbpRrspNet - cumulativeOwnerMoveCosts - cumulativeOwnerPropertyTax - ownerYear0ClosingCosts;
   const finalRenterWealth = renterNetProceeds;
   const netAdvantageToOwner = finalOwnerWealth - finalRenterWealth;
 

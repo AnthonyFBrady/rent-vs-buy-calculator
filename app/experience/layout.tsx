@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
 
 export const metadata = {
-  title: 'Rent or Buy — Build Your Financial Future',
+  title: 'Reckon — Run the numbers',
   description:
-    'An interactive, graph-first rent vs buy calculator for Canada. See the real cost of each choice, built on evidence-based math.',
+    'The real cost of owning versus renting in Canada. Evidence-based math, every assumption editable.',
 };
 
 export default function ExperienceLayout({ children }: { children: ReactNode }) {
