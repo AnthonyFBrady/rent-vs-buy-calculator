@@ -235,6 +235,23 @@ export interface CalculatorInputs {
    */
   renterRrspCarryforward?: number;
 
+  // ─── v5 extensions ────────────────────────────────────────────────────
+
+  /**
+   * Amount of FHSA the owner withdrew for the down payment (0–$40,000).
+   * Generates a year-0 credit of fhsaDown × marginalTaxRate representing
+   * the income-tax refunds received in prior years on FHSA contributions.
+   * Modeled as additional owner investable cash at year 0.
+   */
+  ownerFhsaDown?: number;
+
+  /**
+   * Amount withdrawn under the RRSP Home Buyers' Plan for the down payment (0–$60,000).
+   * Adds hbpDown / 15 to owner annual cash out for each year of the holding period,
+   * up to 15 years (mandatory repayment window). We model full repayment each year.
+   */
+  ownerRrspHbpDown?: number;
+
   // ─── v4 extensions ────────────────────────────────────────────────────
 
   /**

@@ -2,7 +2,7 @@
 
 import { motion } from 'motion/react';
 import type { CalculatorInputs } from '@/engine';
-import { RangeInput, Toggle } from '../components';
+import { RangeInput, Toggle, StepAdvanced } from '../components';
 
 interface Props {
   inputs: CalculatorInputs;
@@ -13,6 +13,9 @@ const fmtCAD = new Intl.NumberFormat('en-CA', {
   style: 'currency', currency: 'CAD', maximumFractionDigits: 0,
 });
 
+const FHSA_MAX = 40_000;
+const HBP_MAX  = 60_000;
+
 export function StepDownPayment({ inputs, patch }: Props) {
   const downPct    = Math.round(inputs.downPaymentPct * 100);
   const downAmount = inputs.homePrice * inputs.downPaymentPct;
@@ -22,9 +25,17 @@ export function StepDownPayment({ inputs, patch }: Props) {
   const hasEquity     = priorEquity > 0;
   const extraSavings  = Math.max(0, priorEquity - downAmount - closingApprox);
 
+  const fhsaDown   = inputs.ownerFhsaDown   ?? 0;
+  const hbpDown    = inputs.ownerRrspHbpDown ?? 0;
+  const hasFhsa    = fhsaDown > 0;
+  const hasHbp     = hbpDown  > 0;
+
+  const fhsaCredit = fhsaDown * (inputs.marginalTaxRatePct ?? 0.43);
+  const hbpAnnual  = hasHbp ? hbpDown / 15 : 0;
+
   const selectedAlloc =
-    (inputs.ownerSurplusUsesRRSP ?? false)  ? 'rrsp'    :
-    (inputs.ownerSurplusUsesTFSA ?? false)  ? 'tfsa'    :
+    (inputs.ownerSurplusUsesRRSP ?? false) ? 'rrsp'    :
+    (inputs.ownerSurplusUsesTFSA ?? false) ? 'tfsa'    :
     'taxable';
 
   return (
@@ -41,6 +52,9 @@ export function StepDownPayment({ inputs, patch }: Props) {
           patch({
             downPaymentPct: v / 100,
             ownerPriorEquity: hasEquity ? newDown + newClosing + extraSavings : 0,
+            // Clamp account amounts to new down payment
+            ownerFhsaDown:   Math.min(fhsaDown, Math.min(FHSA_MAX, newDown)),
+            ownerRrspHbpDown: Math.min(hbpDown, Math.min(HBP_MAX, newDown)),
           });
         }}
         formatValue={(v) => `${v}%`}
@@ -51,18 +65,98 @@ export function StepDownPayment({ inputs, patch }: Props) {
       />
 
       {isCMHC && (
-        <p
-          style={{
-            marginTop: '8px',
-            fontSize: '12px',
-            color: 'var(--color-negative)',
-            fontFamily: 'var(--font-sans), system-ui, sans-serif',
-          }}
-        >
+        <p style={{ marginTop: '8px', fontSize: '12px', color: 'var(--color-negative)', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
           Under 20% — CMHC insurance premium added to mortgage balance (2.8–4.0%).
         </p>
       )}
 
+      {/* Down payment sources */}
+      <StepAdvanced label="Down payment sources">
+        <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '16px', fontFamily: 'var(--font-sans), system-ui, sans-serif', lineHeight: 1.5 }}>
+          Tax-advantaged accounts affect the true cost of buying. FHSA contributions generate a refund; RRSP HBP withdrawals require repayment over 15 years.
+        </p>
+
+        {/* FHSA */}
+        <div style={{ marginBottom: '20px' }}>
+          <Toggle
+            checked={hasFhsa}
+            onChange={(v) => patch({ ownerFhsaDown: v ? Math.min(FHSA_MAX, downAmount) : 0 })}
+            label="Used FHSA toward down payment"
+            description={hasFhsa
+              ? `Adds ${fmtCAD.format(fhsaCredit)} to your starting portfolio (prior-year tax refunds).`
+              : 'First Home Savings Account — up to $40,000 lifetime, tax-deductible + tax-free withdrawal.'}
+          />
+          {hasFhsa && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} transition={{ duration: 0.2 }} style={{ marginTop: '12px' }}>
+              <RangeInput
+                label={`FHSA amount: ${fmtCAD.format(fhsaDown)}`}
+                value={Math.round(fhsaDown / 1000)}
+                min={1}
+                max={Math.round(Math.min(FHSA_MAX, downAmount) / 1000)}
+                step={1}
+                onChange={(v) => patch({ ownerFhsaDown: v * 1_000 })}
+                formatValue={(v) => `$${v}k`}
+                color="var(--color-owner)"
+                minLabel="$1k"
+                maxLabel={`$${Math.round(Math.min(FHSA_MAX, downAmount) / 1000)}k`}
+                description={`Tax refund credit: +${fmtCAD.format(fhsaCredit)} added to your portfolio at year 0.`}
+              />
+            </motion.div>
+          )}
+        </div>
+
+        {/* RRSP HBP */}
+        <div>
+          <Toggle
+            checked={hasHbp}
+            onChange={(v) => patch({ ownerRrspHbpDown: v ? Math.min(HBP_MAX, downAmount) : 0 })}
+            label="Used RRSP Home Buyers' Plan"
+            description={hasHbp
+              ? `Adds ${fmtCAD.format(hbpAnnual)}/yr repayment to your annual costs for up to 15 years.`
+              : 'Withdraw up to $60,000 tax-free. Must repay over 15 years or it counts as income.'}
+          />
+          {hasHbp && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} transition={{ duration: 0.2 }} style={{ marginTop: '12px' }}>
+              <RangeInput
+                label={`HBP amount: ${fmtCAD.format(hbpDown)}`}
+                value={Math.round(hbpDown / 1000)}
+                min={1}
+                max={Math.round(Math.min(HBP_MAX, downAmount) / 1000)}
+                step={1}
+                onChange={(v) => patch({ ownerRrspHbpDown: v * 1_000 })}
+                formatValue={(v) => `$${v}k`}
+                color="var(--color-owner)"
+                minLabel="$1k"
+                maxLabel={`$${Math.round(Math.min(HBP_MAX, downAmount) / 1000)}k`}
+                description={`Repayment: ${fmtCAD.format(hbpAnnual)}/yr for ${Math.min(15, inputs.holdingPeriodYears)} years of your ${inputs.holdingPeriodYears}-year horizon.`}
+              />
+            </motion.div>
+          )}
+        </div>
+
+        {/* Summary when either is active */}
+        {(hasFhsa || hasHbp) && (
+          <div style={{ marginTop: '16px', padding: '12px 14px', borderRadius: '8px', border: '1px solid var(--color-outline)', backgroundColor: 'var(--color-bg-elevated)' }}>
+            <p style={{ fontSize: '11px', fontWeight: 500, color: 'var(--color-text-faint)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
+              Net impact on simulation
+            </p>
+            {hasFhsa && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '4px' }}>
+                <span>FHSA refund (year 0 portfolio credit)</span>
+                <span style={{ color: 'var(--color-renter)', fontWeight: 500 }}>+{fmtCAD.format(fhsaCredit)}</span>
+              </div>
+            )}
+            {hasHbp && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--color-text-muted)' }}>
+                <span>HBP repayment (annual extra cost)</span>
+                <span style={{ color: 'var(--color-negative)', fontWeight: 500 }}>+{fmtCAD.format(hbpAnnual)}/yr</span>
+              </div>
+            )}
+          </div>
+        )}
+      </StepAdvanced>
+
+      {/* Prior equity / surplus savings */}
       <div style={{ marginTop: '20px' }}>
         <Toggle
           checked={hasEquity}
@@ -94,15 +188,7 @@ export function StepDownPayment({ inputs, patch }: Props) {
             maxLabel="$2M"
           />
 
-          <div
-            style={{
-              marginTop: '16px',
-              padding: '12px 14px',
-              borderRadius: '8px',
-              border: '1px solid var(--color-outline)',
-              backgroundColor: 'var(--color-bg-elevated)',
-            }}
-          >
+          <div style={{ marginTop: '16px', padding: '12px 14px', borderRadius: '8px', border: '1px solid var(--color-outline)', backgroundColor: 'var(--color-bg-elevated)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '6px' }}>
               <span>Down payment</span>
               <span>{fmtCAD.format(downAmount)}</span>
@@ -111,12 +197,7 @@ export function StepDownPayment({ inputs, patch }: Props) {
               <span>Closing costs (est. 2%)</span>
               <span>~{fmtCAD.format(closingApprox)}</span>
             </div>
-            <div style={{
-              display: 'flex', justifyContent: 'space-between', fontSize: '12px',
-              color: 'var(--color-text)',
-              borderTop: '1px solid var(--color-outline)',
-              paddingTop: '6px', marginTop: '2px', fontWeight: 500,
-            }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--color-text)', borderTop: '1px solid var(--color-outline)', paddingTop: '6px', marginTop: '2px', fontWeight: 500 }}>
               <span>Invested on day 1</span>
               <span>{fmtCAD.format(extraSavings)}</span>
             </div>
@@ -138,16 +219,11 @@ export function StepDownPayment({ inputs, patch }: Props) {
                         ownerSurplusUsesRRSP: type === 'rrsp',
                       })}
                       style={{
-                        padding: '6px 14px',
-                        borderRadius: '8px',
-                        fontSize: '12px',
+                        padding: '6px 14px', borderRadius: '8px', fontSize: '12px',
                         border: `1px solid ${selected ? 'var(--color-owner)' : 'var(--color-outline)'}`,
-                        background: selected
-                          ? 'color-mix(in srgb, var(--color-owner) 10%, transparent)'
-                          : 'none',
+                        background: selected ? 'color-mix(in srgb, var(--color-owner) 10%, transparent)' : 'none',
                         color: selected ? 'var(--color-owner)' : 'var(--color-text-muted)',
-                        cursor: 'pointer',
-                        fontFamily: 'var(--font-sans), system-ui, sans-serif',
+                        cursor: 'pointer', fontFamily: 'var(--font-sans), system-ui, sans-serif',
                       }}
                     >
                       {type === 'tfsa' ? 'TFSA' : type === 'rrsp' ? 'RRSP' : 'Non-registered'}

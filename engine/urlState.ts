@@ -63,6 +63,9 @@ const KEY_MAP: Record<keyof CalculatorInputs, string> = {
   // v4
   monthlyRentalIncome: 'rsuite',
   rentalIncomeGrowthPct: 'rsuiteG',
+  // v5
+  ownerFhsaDown: 'fhsadp',
+  ownerRrspHbpDown: 'hbpdp',
 };
 
 function isHomeType(v: string): v is HomeType {

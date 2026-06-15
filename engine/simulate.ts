@@ -301,7 +301,6 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
   let ownerPortfolioCostBasis: number;
 
   if (ownerStartingEquity > 0 && ownerSurplusUsesRrsp) {
-    // Surplus goes into RRSP. Refund (tax deduction) is reinvested in taxable.
     ownerSurplusRrspBal = ownerStartingEquity;
     const rrspRefund = ownerStartingEquity * marginalTaxRatePct;
     ownerPortfolio = rrspRefund;
@@ -310,6 +309,19 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
     ownerPortfolio = ownerStartingEquity;
     ownerPortfolioCostBasis = ownerStartingEquity;
   }
+
+  // FHSA down payment credit: tax refunds received in prior years on contributions.
+  // Modeled as investable cash available at year 0.
+  const ownerFhsaDown = inputs.ownerFhsaDown ?? 0;
+  if (ownerFhsaDown > 0) {
+    const fhsaRefund = ownerFhsaDown * marginalTaxRatePct;
+    ownerPortfolio += fhsaRefund;
+    ownerPortfolioCostBasis += fhsaRefund;
+  }
+
+  // RRSP HBP: annual repayment obligation = hbpDown / 15, for years 1–min(15, holding).
+  const ownerRrspHbpDown = inputs.ownerRrspHbpDown ?? 0;
+  const hbpAnnualRepayment = ownerRrspHbpDown > 0 ? ownerRrspHbpDown / 15 : 0;
   let currentRent = monthlyRent;       // in-place rent (what renter actually pays)
   let currentMarketRent = monthlyRent;  // open-market rent for a new lease
   let currentHomeInsurance = homeInsuranceMonthly;
@@ -364,13 +376,17 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
         ownerPhysicalMovingCost
       : 0;
 
+    // RRSP HBP repayment obligation: hbpDown / 15 per year for years 1–min(15, holding).
+    const hbpRepaymentThisYear = (y <= 15 && hbpAnnualRepayment > 0) ? hbpAnnualRepayment : 0;
+
     const ownerAnnualCashOut =
       ownerAnnualMortgagePayment +
       ownerAnnualPropertyTax +
       ownerAnnualMaintenance +
       ownerAnnualInsurance +
       ownerAnnualStrata +
-      ownerMoveTransactionCost;
+      ownerMoveTransactionCost +
+      hbpRepaymentThisYear;
 
     // Renter costs: rent + insurance + deposit delta on move years + physical moving cost.
     const renterPhysicalMovingCost = renterMoveThisYear ? renterMovingCostPerMove : 0;
