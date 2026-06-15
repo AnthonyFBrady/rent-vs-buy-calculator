@@ -338,7 +338,7 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
           transition={{ duration: 0.5, delay: 3.0, ease }}
           style={{ position: 'absolute', bottom: '24px', left: '50%', transform: 'translateX(-50%)' }}
         >
-          <p style={{ fontSize: '11px', color: '#52525B', letterSpacing: '0.04em' }}>Scroll for full analysis</p>
+          <p style={{ fontSize: '12px', color: '#A1A1AA', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Scroll ↓</p>
         </motion.div>
       </div>
 
