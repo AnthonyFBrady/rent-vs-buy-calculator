@@ -294,20 +294,36 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
     ? priorEquity - ownerYear0CashOut
     : 0;
 
+  // Dollar-amount model supersedes the old boolean flags.
+  // RRSP: generates a tax refund at year 0, grows tax-deferred, taxed on exit.
+  // TFSA: grows tax-deferred, exits tax-free. Tracked separately.
+  // Taxable: remainder, grows with cap gains on exit.
   const ownerSurplusUsesRrsp = inputs.ownerSurplusUsesRRSP === true;
   let ownerSurplusRrspBal = 0;
+  let ownerSurplusTfsaBal = 0;
 
   let ownerPortfolio: number;
   let ownerPortfolioCostBasis: number;
 
-  if (ownerStartingEquity > 0 && ownerSurplusUsesRrsp) {
-    ownerSurplusRrspBal = ownerStartingEquity;
-    const rrspRefund = ownerStartingEquity * marginalTaxRatePct;
-    ownerPortfolio = rrspRefund;
-    ownerPortfolioCostBasis = rrspRefund;
+  if (ownerStartingEquity > 0) {
+    const rrspAmt = Math.min(
+      inputs.ownerSurplusRrspAmt ?? (ownerSurplusUsesRrsp ? ownerStartingEquity : 0),
+      ownerStartingEquity,
+    );
+    const tfsaAmt = Math.min(
+      inputs.ownerSurplusTfsaAmt ?? ((inputs.ownerSurplusUsesTFSA && !ownerSurplusUsesRrsp) ? ownerStartingEquity : 0),
+      ownerStartingEquity - rrspAmt,
+    );
+    const taxableAmt = Math.max(0, ownerStartingEquity - rrspAmt - tfsaAmt);
+
+    ownerSurplusRrspBal = rrspAmt;
+    ownerSurplusTfsaBal = tfsaAmt;
+    const rrspRefund = rrspAmt * marginalTaxRatePct;
+    ownerPortfolio = taxableAmt + rrspRefund;
+    ownerPortfolioCostBasis = taxableAmt + rrspRefund;
   } else {
-    ownerPortfolio = ownerStartingEquity;
-    ownerPortfolioCostBasis = ownerStartingEquity;
+    ownerPortfolio = 0;
+    ownerPortfolioCostBasis = 0;
   }
 
   // FHSA down payment credit: tax refunds received in prior years on contributions.
@@ -320,8 +336,11 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
   }
 
   // RRSP HBP: annual repayment obligation = hbpDown / 15, for years 1–min(15, holding).
+  // Repayments go back into the owner's RRSP (rebuilding it), so they are tracked as
+  // a growing tax-deferred asset on the owner side — not a pure cost.
   const ownerRrspHbpDown = inputs.ownerRrspHbpDown ?? 0;
   const hbpAnnualRepayment = ownerRrspHbpDown > 0 ? ownerRrspHbpDown / 15 : 0;
+  let ownerHbpRrspBal = 0; // owner RRSP rebuilt via HBP repayments
   let currentRent = monthlyRent;       // in-place rent (what renter actually pays)
   let currentMarketRent = monthlyRent;  // open-market rent for a new lease
   let currentHomeInsurance = homeInsuranceMonthly;
@@ -500,8 +519,18 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
     ownerPortfolio = ownerPortfolioEnd;
 
     // Owner RRSP surplus grows tax-deferred
-    if (ownerSurplusUsesRrsp) {
+    if (ownerSurplusRrspBal > 0) {
       ownerSurplusRrspBal *= (1 + netInvestmentReturnPct);
+    }
+
+    // Owner TFSA surplus grows tax-deferred (exits tax-free)
+    if (ownerSurplusTfsaBal > 0) {
+      ownerSurplusTfsaBal *= (1 + netInvestmentReturnPct);
+    }
+
+    // HBP repayment deposits into owner's RRSP, which grows tax-deferred
+    if (hbpRepaymentThisYear > 0) {
+      ownerHbpRrspBal = growMonthly(ownerHbpRrspBal, hbpRepaymentThisYear, netInvestmentReturnPct).end;
     }
 
     // Owner home value appreciates
@@ -509,9 +538,10 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
     const ownerMortgageBalance = amort.endingBalance;
     const ownerEquity = currentHomeValue - ownerMortgageBalance;
 
-    // Wealth comparison: owner equity + owner portfolio (+ RRSP net) vs renter portfolio + RRSP + deposit
+    // Wealth comparison: owner equity + portfolio + RRSP surplus net + TFSA surplus + HBP RRSP net
     const ownerRrspNetThisYear = ownerSurplusRrspBal * (1 - marginalTaxRatePct);
-    const ownerWealthThisYear = ownerEquity + ownerPortfolioEnd + ownerRrspNetThisYear;
+    const ownerHbpRrspNetThisYear = ownerHbpRrspBal * (1 - marginalTaxRatePct);
+    const ownerWealthThisYear = ownerEquity + ownerPortfolioEnd + ownerRrspNetThisYear + ownerSurplusTfsaBal + ownerHbpRrspNetThisYear;
     const renterWealthThisYear = renterPortfolioEnd + renterRrspBalance + currentDeposit;
     const wealthDelta = ownerWealthThisYear - renterWealthThisYear;
     if (breakEvenYear === null && wealthDelta >= 0 && y > 0) {
@@ -541,6 +571,7 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
       ownerPortfolioEnd,
       ownerPortfolioCostBasis,
       ownerSurplusRrspBalance: ownerSurplusRrspBal,
+      ownerSurplusTfsaBalance: ownerSurplusTfsaBal,
       renterAnnualRent,
       renterAnnualInsurance,
       renterAnnualCashOut,
@@ -588,15 +619,20 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
     0,
     ownerPortfolioValue - lastYear.ownerPortfolioCostBasis,
   );
-  const ownerPortfolioCapGainsTax = (inputs.ownerSurplusUsesTFSA ?? false)
-    ? 0
-    : capitalGainsTax(ownerPortfolioRealizedGain, marginalTaxRatePct);
+  // TFSA is now tracked separately; ownerPortfolio only holds taxable + RRSP refund.
+  const ownerPortfolioCapGainsTax = capitalGainsTax(ownerPortfolioRealizedGain, marginalTaxRatePct);
   const ownerPortfolioNetProceeds =
     ownerPortfolioValue - ownerPortfolioCapGainsTax;
 
-  const ownerSurplusRrspNet = ownerSurplusUsesRrsp
+  const ownerSurplusRrspNet = ownerSurplusRrspBal > 0
     ? ownerSurplusRrspBal * (1 - marginalTaxRatePct)
     : 0;
+
+  // TFSA exits tax-free
+  const ownerSurplusTfsaNet = ownerSurplusTfsaBal;
+
+  // HBP RRSP exits at marginal tax rate (full withdrawal taxed as income)
+  const ownerHbpRrspNet = ownerHbpRrspBal * (1 - marginalTaxRatePct);
 
   // Renter exit: TFSA (no tax) + taxable (cap gains on taxable portion only) + RRSP net + deposit.
   // TFSA is already split out — renterTaxablePortfolio tracks only the non-sheltered portion.
@@ -618,7 +654,7 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
   const renterNetProceeds =
     renterPortfolioValue - renterCapGainsTax + renterDepositReturned + renterRrspNetProceeds;
 
-  const finalOwnerWealth = ownerHomeNetProceeds + ownerPortfolioNetProceeds + ownerSurplusRrspNet - cumulativeOwnerMoveCosts;
+  const finalOwnerWealth = ownerHomeNetProceeds + ownerPortfolioNetProceeds + ownerSurplusRrspNet + ownerSurplusTfsaNet + ownerHbpRrspNet - cumulativeOwnerMoveCosts;
   const finalRenterWealth = renterNetProceeds;
   const netAdvantageToOwner = finalOwnerWealth - finalRenterWealth;
 

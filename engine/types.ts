@@ -209,8 +209,23 @@ export interface CalculatorInputs {
    */
   ownerPriorEquity?: number;
 
-  /** Whether the owner's surplus cash (prior equity above year-0 cash out) is held in a TFSA. When true, owner portfolio exits tax-free. Default false (taxable). */
+  /** Whether the owner's surplus cash (prior equity above year-0 cash out) is held in a TFSA. When true, owner portfolio exits tax-free. Default false (taxable). @deprecated Use ownerSurplusTfsaAmt for dollar-level control. */
   ownerSurplusUsesTFSA?: boolean;
+
+  /**
+   * Dollar amount of surplus savings the owner holds in a TFSA.
+   * Grows tax-deferred and exits tax-free. Must be ≤ (ownerPriorEquity − year-0 closing costs).
+   * Supersedes ownerSurplusUsesTFSA when provided.
+   */
+  ownerSurplusTfsaAmt?: number;
+
+  /**
+   * Dollar amount of surplus savings the owner holds in an RRSP.
+   * Generates a marginalTaxRate refund at year 0 (credited to taxable portfolio).
+   * Grows tax-deferred and is taxed at marginalTaxRate on exit.
+   * Supersedes ownerSurplusUsesRRSP when provided.
+   */
+  ownerSurplusRrspAmt?: number;
 
   /**
    * Explicit TFSA room available at the start of the simulation. When set,
@@ -309,8 +324,10 @@ export interface YearSnapshot {
   ownerPortfolioGrowth: number;
   ownerPortfolioEnd: number;
   ownerPortfolioCostBasis: number;
-  /** Raw (pre-tax) RRSP balance from owner surplus this year. 0 if ownerSurplusUsesRRSP is false. */
+  /** Raw (pre-tax) RRSP balance from owner surplus this year. 0 if no RRSP surplus. */
   ownerSurplusRrspBalance: number;
+  /** TFSA balance from owner surplus this year. Tax-free at exit. 0 if no TFSA surplus. */
+  ownerSurplusTfsaBalance: number;
 
   // Renter side
   renterAnnualRent: number;

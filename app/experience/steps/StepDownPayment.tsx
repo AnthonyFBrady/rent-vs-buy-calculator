@@ -33,10 +33,9 @@ export function StepDownPayment({ inputs, patch }: Props) {
   const fhsaCredit = fhsaDown * (inputs.marginalTaxRatePct ?? 0.43);
   const hbpAnnual  = hasHbp ? hbpDown / 15 : 0;
 
-  const selectedAlloc =
-    (inputs.ownerSurplusUsesRRSP ?? false) ? 'rrsp'    :
-    (inputs.ownerSurplusUsesTFSA ?? false) ? 'tfsa'    :
-    'taxable';
+  const surplusRrsp   = inputs.ownerSurplusRrspAmt ?? 0;
+  const surplusTfsa   = inputs.ownerSurplusTfsaAmt ?? 0;
+  const surplusTaxable = Math.max(0, extraSavings - surplusRrsp - surplusTfsa);
 
   return (
     <div>
@@ -205,31 +204,56 @@ export function StepDownPayment({ inputs, patch }: Props) {
 
           {extraSavings > 500 && (
             <div style={{ marginTop: '16px' }}>
-              <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '8px' }}>
-                Where does this get invested?
+              <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '12px' }}>
+                Where does this get invested? Remainder goes non-registered.
               </p>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                {(['tfsa', 'rrsp', 'taxable'] as const).map((type) => {
-                  const selected = type === selectedAlloc;
-                  return (
-                    <button
-                      key={type}
-                      onClick={() => patch({
-                        ownerSurplusUsesTFSA: type === 'tfsa',
-                        ownerSurplusUsesRRSP: type === 'rrsp',
-                      })}
-                      style={{
-                        padding: '6px 14px', borderRadius: '8px', fontSize: '12px',
-                        border: `1px solid ${selected ? 'var(--color-owner)' : 'var(--color-outline)'}`,
-                        background: selected ? 'color-mix(in srgb, var(--color-owner) 10%, transparent)' : 'none',
-                        color: selected ? 'var(--color-owner)' : 'var(--color-text-muted)',
-                        cursor: 'pointer', fontFamily: 'var(--font-sans), system-ui, sans-serif',
-                      }}
-                    >
-                      {type === 'tfsa' ? 'TFSA' : type === 'rrsp' ? 'RRSP' : 'Non-registered'}
-                    </button>
-                  );
-                })}
+
+              <RangeInput
+                label={`RRSP: ${fmtCAD.format(surplusRrsp)}`}
+                value={Math.round(surplusRrsp / 1000)}
+                min={0}
+                max={Math.round(extraSavings / 1000)}
+                step={1}
+                onChange={(v) => {
+                  const rrsp = v * 1_000;
+                  patch({
+                    ownerSurplusRrspAmt: rrsp,
+                    ownerSurplusUsesRRSP: rrsp > 0,
+                    ownerSurplusTfsaAmt: Math.min(surplusTfsa, Math.max(0, extraSavings - rrsp)),
+                  });
+                }}
+                formatValue={(v) => `$${v}k`}
+                color="var(--color-owner)"
+                minLabel="$0"
+                maxLabel={`$${Math.round(extraSavings / 1000)}k`}
+                description="Generates a tax refund at year 0; taxed at marginal rate on exit."
+              />
+
+              <div style={{ marginTop: '12px' }}>
+                <RangeInput
+                  label={`TFSA: ${fmtCAD.format(surplusTfsa)}`}
+                  value={Math.round(surplusTfsa / 1000)}
+                  min={0}
+                  max={Math.round(Math.max(0, extraSavings - surplusRrsp) / 1000)}
+                  step={1}
+                  onChange={(v) => {
+                    const tfsa = v * 1_000;
+                    patch({
+                      ownerSurplusTfsaAmt: tfsa,
+                      ownerSurplusUsesTFSA: tfsa > 0,
+                    });
+                  }}
+                  formatValue={(v) => `$${v}k`}
+                  color="var(--color-owner)"
+                  minLabel="$0"
+                  maxLabel={`$${Math.round(Math.max(0, extraSavings - surplusRrsp) / 1000)}k`}
+                  description="Grows tax-free; exits with no capital gains tax."
+                />
+              </div>
+
+              <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--color-text-muted)', padding: '8px 0', borderTop: '1px solid var(--color-outline)' }}>
+                <span>Non-registered (remainder)</span>
+                <span style={{ fontWeight: 500 }}>{fmtCAD.format(surplusTaxable)}</span>
               </div>
             </div>
           )}

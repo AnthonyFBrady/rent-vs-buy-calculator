@@ -66,6 +66,8 @@ const KEY_MAP: Record<keyof CalculatorInputs, string> = {
   // v5
   ownerFhsaDown: 'fhsadp',
   ownerRrspHbpDown: 'hbpdp',
+  ownerSurplusTfsaAmt: 'ostfsa',
+  ownerSurplusRrspAmt: 'ostrrsp',
 };
 
 function isHomeType(v: string): v is HomeType {
