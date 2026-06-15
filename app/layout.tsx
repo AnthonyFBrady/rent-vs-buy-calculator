@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Playfair_Display, Inter } from 'next/font/google';
+import { Playfair_Display, DM_Sans } from 'next/font/google';
 import './globals.css';
 import { cn } from "@/lib/utils";
 
@@ -10,10 +10,10 @@ const playfair = Playfair_Display({
   style: ['normal', 'italic'],
 });
 
-const inter = Inter({
+const dmSans = DM_Sans({
   subsets: ['latin'],
   variable: '--font-sans',
-  weight: ['400', '500', '600', '700', '900'],
+  weight: ['400', '500', '600', '700'],
 });
 
 const SITE_NAME = 'Reckon';
@@ -74,7 +74,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en-CA" className={cn("font-sans", inter.variable, playfair.variable)}>
+    <html lang="en-CA" className={cn("font-sans", dmSans.variable, playfair.variable)}>
       <body>
         {children}
         <a

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -130,7 +130,7 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
       }}>
         <ReckonSignature color="#FAFAFA" width={72} />
         <p style={{
-          fontSize: '12px', color: '#52525B', flex: 1, textAlign: 'center',
+          fontSize: '12px', color: '#71717A', flex: 1, textAlign: 'center',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           padding: '0 8px',
         }}>
@@ -167,7 +167,7 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.3, ease }}
-          style={{ fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3F3F46', marginBottom: '28px', fontWeight: 500 }}
+          style={{ fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#52525B', marginBottom: '28px', fontWeight: 500 }}
         >
           {inputs.holdingPeriodYears}-year outlook — {PROVINCE_NAMES[inputs.province] ?? inputs.province}
         </motion.p>
@@ -236,7 +236,7 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
           transition={{ duration: 0.5, delay: 1.5, ease }}
           style={{
             fontSize: 'clamp(16px, 2.2vw, 20px)',
-            color: '#71717A',
+            color: '#A1A1AA',
             marginTop: '16px',
             letterSpacing: '-0.01em',
           }}
@@ -251,7 +251,7 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4, delay: 1.9, ease }}
-            style={{ fontSize: '13px', color: '#3F3F46', marginTop: '8px' }}
+            style={{ fontSize: '13px', color: '#52525B', marginTop: '8px' }}
           >
             Lines cross at year {result.breakEvenYear}
           </motion.p>
@@ -299,7 +299,7 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
             }}>
               {fmtWealth(result.exit.finalOwnerWealth)}
             </p>
-            <p style={{ fontSize: '11px', color: '#3F3F46', marginTop: '6px', lineHeight: 1.4 }}>After exit costs</p>
+            <p style={{ fontSize: '11px', color: '#52525B', marginTop: '6px', lineHeight: 1.4 }}>After exit costs</p>
           </div>
 
           {/* Renter side */}
@@ -327,7 +327,7 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
             }}>
               {fmtWealth(result.exit.finalRenterWealth)}
             </p>
-            <p style={{ fontSize: '11px', color: '#3F3F46', marginTop: '6px', lineHeight: 1.4 }}>After capital gains tax</p>
+            <p style={{ fontSize: '11px', color: '#52525B', marginTop: '6px', lineHeight: 1.4 }}>After capital gains tax</p>
           </div>
         </motion.div>
 
@@ -338,7 +338,7 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
           transition={{ duration: 0.5, delay: 3.0, ease }}
           style={{ position: 'absolute', bottom: '24px', left: '50%', transform: 'translateX(-50%)' }}
         >
-          <p style={{ fontSize: '11px', color: '#3F3F46', letterSpacing: '0.04em' }}>Scroll for full analysis</p>
+          <p style={{ fontSize: '11px', color: '#52525B', letterSpacing: '0.04em' }}>Scroll for full analysis</p>
         </motion.div>
       </div>
 

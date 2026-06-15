@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -12,11 +12,11 @@ import { MethodologyContent } from '@/components/MethodologyContent';
 import { FaqContent } from '@/components/FaqContent';
 import { ReckonSignature } from '@/components/ReckonSignature';
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function fmtWealth(n: number): string {
   const abs = Math.abs(n);
-  const sign = n < 0 ? '−' : '';
+  const sign = n < 0 ? 'âˆ’' : '';
   if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(2)}M`;
   if (abs >= 1_000) return `${sign}$${Math.round(abs / 1_000)}k`;
   return `${sign}$${Math.round(abs)}`;
@@ -55,7 +55,7 @@ const SCENARIO_ORDER: SensitivityScenario['id'][] = ['base', 'growth+2', 'growth
 
 const ease = [0.0, 0.0, 0.2, 1] as [number, number, number, number];
 
-// ─── Assumptions drawer section ──────────────────────────────────────────────
+// â”€â”€â”€ Assumptions drawer section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function DrawerSection({ title, items }: { title: string; items: { label: string; value: string }[] }) {
   return (
@@ -75,7 +75,7 @@ function DrawerSection({ title, items }: { title: string; items: { label: string
   );
 }
 
-// ─── Page ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function ResultPage() {
   const router = useRouter();
@@ -194,8 +194,8 @@ export default function ResultPage() {
       title: 'Tax shelters',
       items: [
         { label: 'TFSA', value: inputs.renterUsesTFSA ? 'Yes' : 'No' },
-        { label: 'FHSA', value: inputs.useFHSA ? `Yes — ${fmtCAD(inputs.renterFhsaRoomOverride ?? 40_000)} room` : 'No' },
-        { label: 'RRSP', value: inputs.renterUsesRRSP ? `Yes — ${fmtCAD(inputs.renterRrspCarryforward ?? 0)} carryforward` : 'No' },
+        { label: 'FHSA', value: inputs.useFHSA ? `Yes â€” ${fmtCAD(inputs.renterFhsaRoomOverride ?? 40_000)} room` : 'No' },
+        { label: 'RRSP', value: inputs.renterUsesRRSP ? `Yes â€” ${fmtCAD(inputs.renterRrspCarryforward ?? 0)} carryforward` : 'No' },
       ],
     },
     {
@@ -224,7 +224,7 @@ export default function ResultPage() {
       style={{ minHeight: '100dvh', backgroundColor: '#0F0F11', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}
     >
 
-      {/* ─── Dark nav ──────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€ Dark nav â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <nav style={{
         height: '52px',
         display: 'flex',
@@ -242,22 +242,22 @@ export default function ResultPage() {
           <ReckonSignature color="#FAFAFA" width={72} />
         </a>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <button onClick={() => setMethodologyOpen(true)} style={{ fontSize: '13px', color: '#71717A', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.01em', textDecoration: 'underline', textUnderlineOffset: '2px', textDecorationColor: 'rgba(255,255,255,0.1)' }}>
+          <button onClick={() => setMethodologyOpen(true)} style={{ fontSize: '13px', color: '#A1A1AA', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.01em', textDecoration: 'underline', textUnderlineOffset: '2px', textDecorationColor: 'rgba(255,255,255,0.1)' }}>
             How this works
           </button>
-          <button onClick={() => setFaqOpen(true)} style={{ fontSize: '13px', color: '#71717A', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.01em', textDecoration: 'underline', textUnderlineOffset: '2px', textDecorationColor: 'rgba(255,255,255,0.1)' }}>
+          <button onClick={() => setFaqOpen(true)} style={{ fontSize: '13px', color: '#A1A1AA', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.01em', textDecoration: 'underline', textUnderlineOffset: '2px', textDecorationColor: 'rgba(255,255,255,0.1)' }}>
             FAQ
           </button>
-          <button onClick={handleShare} style={{ fontSize: '13px', color: copied ? 'var(--color-renter)' : '#71717A', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.01em', textDecoration: 'underline', textUnderlineOffset: '2px', textDecorationColor: 'rgba(255,255,255,0.1)', transition: 'color 0.2s' }}>
+          <button onClick={handleShare} style={{ fontSize: '13px', color: copied ? 'var(--color-renter)' : '#A1A1AA', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.01em', textDecoration: 'underline', textUnderlineOffset: '2px', textDecorationColor: 'rgba(255,255,255,0.1)', transition: 'color 0.2s' }}>
             {copied ? 'Copied' : 'Share'}
           </button>
           <button onClick={() => router.push('/experience')} style={{ height: '34px', padding: '0 16px', borderRadius: '9999px', border: 'none', backgroundColor: '#FAFAFA', color: '#0F0F11', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.01em' }}>
-            Recalculate →
+            Recalculate â†’
           </button>
         </div>
       </nav>
 
-      {/* ─── Dark cinematic hero ───────────────────────────────────────── */}
+      {/* â”€â”€â”€ Dark cinematic hero â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div style={{
         minHeight: 'calc(100dvh - 52px)',
         display: 'flex',
@@ -273,9 +273,9 @@ export default function ResultPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.3, ease }}
-          style={{ fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3F3F46', marginBottom: '28px', fontWeight: 500 }}
+          style={{ fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#52525B', marginBottom: '28px', fontWeight: 500 }}
         >
-          {inputs.holdingPeriodYears}-year outlook — {PROVINCE_NAMES[inputs.province] ?? inputs.province}
+          {inputs.holdingPeriodYears}-year outlook â€” {PROVINCE_NAMES[inputs.province] ?? inputs.province}
         </motion.p>
 
         {/* Verdict badge */}
@@ -314,7 +314,7 @@ export default function ResultPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 1.5, ease }}
-          style={{ fontSize: 'clamp(16px, 2.2vw, 20px)', color: '#71717A', marginTop: '16px', letterSpacing: '-0.01em' }}
+          style={{ fontSize: 'clamp(16px, 2.2vw, 20px)', color: '#A1A1AA', marginTop: '16px', letterSpacing: '-0.01em' }}
         >
           {winner !== 'tie'
             ? `ahead after ${inputs.holdingPeriodYears} years`
@@ -326,7 +326,7 @@ export default function ResultPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4, delay: 1.9, ease }}
-            style={{ fontSize: '13px', color: '#3F3F46', marginTop: '8px' }}
+            style={{ fontSize: '13px', color: '#52525B', marginTop: '8px' }}
           >
             Lines cross at year {result.breakEvenYear}
           </motion.p>
@@ -350,7 +350,7 @@ export default function ResultPage() {
             <p style={{ fontSize: 'clamp(20px, 3.5vw, 28px)', fontWeight: 700, letterSpacing: '-0.03em', color: '#FAFAFA', fontVariantNumeric: 'tabular-nums' }}>
               {fmtWealth(result.exit.finalOwnerWealth)}
             </p>
-            <p style={{ fontSize: '11px', color: '#3F3F46', marginTop: '6px', lineHeight: 1.4 }}>After exit costs</p>
+            <p style={{ fontSize: '11px', color: '#52525B', marginTop: '6px', lineHeight: 1.4 }}>After exit costs</p>
           </div>
 
           {/* Renter */}
@@ -364,7 +364,7 @@ export default function ResultPage() {
             <p style={{ fontSize: 'clamp(20px, 3.5vw, 28px)', fontWeight: 700, letterSpacing: '-0.03em', color: '#FAFAFA', fontVariantNumeric: 'tabular-nums' }}>
               {fmtWealth(result.exit.finalRenterWealth)}
             </p>
-            <p style={{ fontSize: '11px', color: '#3F3F46', marginTop: '6px', lineHeight: 1.4 }}>After capital gains tax</p>
+            <p style={{ fontSize: '11px', color: '#52525B', marginTop: '6px', lineHeight: 1.4 }}>After capital gains tax</p>
           </div>
         </motion.div>
 
@@ -375,11 +375,11 @@ export default function ResultPage() {
           transition={{ duration: 0.5, delay: 3.0, ease }}
           style={{ position: 'absolute', bottom: '24px', left: '50%', transform: 'translateX(-50%)' }}
         >
-          <p style={{ fontSize: '11px', color: '#3F3F46', letterSpacing: '0.04em' }}>Scroll for full analysis ↓</p>
+          <p style={{ fontSize: '11px', color: '#52525B', letterSpacing: '0.04em' }}>Scroll for full analysis â†“</p>
         </motion.div>
       </div>
 
-      {/* ─── Light detail section ──────────────────────────────────────── */}
+      {/* â”€â”€â”€ Light detail section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div style={{ backgroundColor: 'var(--color-bg)', borderTop: '1px solid var(--color-outline)', color: 'var(--color-text)', padding: '48px 24px 80px' }}>
         <div style={{ maxWidth: '780px', margin: '0 auto' }}>
 
@@ -453,10 +453,10 @@ export default function ResultPage() {
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '1px' }}>
                 <span style={{ fontSize: '13px', fontWeight: 500 }}>View all assumptions</span>
                 <span style={{ fontSize: '11px', color: 'var(--color-text-faint)' }}>
-                  {inputs.holdingPeriodYears}yr horizon · {PROVINCE_NAMES[inputs.province] ?? inputs.province} · {fmtPct(inputs.mortgageRatePct, 2)} rate
+                  {inputs.holdingPeriodYears}yr horizon Â· {PROVINCE_NAMES[inputs.province] ?? inputs.province} Â· {fmtPct(inputs.mortgageRatePct, 2)} rate
                 </span>
               </div>
-              <span style={{ fontSize: '18px', color: 'var(--color-text-faint)', lineHeight: 1 }}>↑</span>
+              <span style={{ fontSize: '18px', color: 'var(--color-text-faint)', lineHeight: 1 }}>â†‘</span>
             </button>
           </div>
 
@@ -466,7 +466,7 @@ export default function ResultPage() {
               {copied ? 'Link copied' : 'Share result'}
             </button>
             <button onClick={() => router.push('/experience')} style={{ flex: 1, minWidth: '140px', height: '48px', borderRadius: '9999px', backgroundColor: 'transparent', color: 'var(--color-text)', border: '1px solid var(--color-outline-active)', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.01em' }}>
-              Recalculate →
+              Recalculate â†’
             </button>
           </div>
 
@@ -479,7 +479,7 @@ export default function ResultPage() {
         </div>
       </div>
 
-      {/* ─── Assumptions drawer ────────────────────────────────────────── */}
+      {/* â”€â”€â”€ Assumptions drawer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <AnimatePresence>
         {drawerOpen && (
           <>
@@ -490,7 +490,7 @@ export default function ResultPage() {
               </div>
               <div style={{ padding: '0 24px 14px', borderBottom: '1px solid var(--color-outline)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <p style={{ fontSize: '15px', fontWeight: 600, fontFamily: 'var(--font-sans), system-ui, sans-serif', color: 'var(--color-text)', letterSpacing: '-0.01em' }}>All assumptions</p>
-                <button onClick={() => setDrawerOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: 'var(--color-text-faint)', lineHeight: 1, padding: '4px' }}>✕</button>
+                <button onClick={() => setDrawerOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: 'var(--color-text-faint)', lineHeight: 1, padding: '4px' }}>âœ•</button>
               </div>
               <div style={{ overflowY: 'auto', flex: 1, padding: '20px 24px 48px', WebkitOverflowScrolling: 'touch' }}>
                 <div style={{ maxWidth: '680px' }}>
@@ -502,7 +502,7 @@ export default function ResultPage() {
         )}
       </AnimatePresence>
 
-      {/* ─── Methodology drawer ────────────────────────────────────────── */}
+      {/* â”€â”€â”€ Methodology drawer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <AnimatePresence>
         {methodologyOpen && (
           <>
@@ -516,7 +516,7 @@ export default function ResultPage() {
                   <p style={{ fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-text-faint)', marginBottom: '2px' }}>Methodology</p>
                   <p style={{ fontSize: '16px', fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--color-text)', fontFamily: 'var(--font-serif), Georgia, serif' }}>How this calculator thinks</p>
                 </div>
-                <button onClick={() => setMethodologyOpen(false)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-outline)', background: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+                <button onClick={() => setMethodologyOpen(false)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-outline)', background: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>âœ•</button>
               </div>
               <div style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: 1, padding: '0 20px 40px' }}>
                 <MethodologyContent />
@@ -526,7 +526,7 @@ export default function ResultPage() {
         )}
       </AnimatePresence>
 
-      {/* ─── FAQ drawer ────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€ FAQ drawer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <AnimatePresence>
         {faqOpen && (
           <>
@@ -540,7 +540,7 @@ export default function ResultPage() {
                   <p style={{ fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-text-faint)', marginBottom: '2px' }}>FAQ</p>
                   <p style={{ fontSize: '16px', fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--color-text)', fontFamily: 'var(--font-serif), Georgia, serif' }}>Frequently asked questions</p>
                 </div>
-                <button onClick={() => setFaqOpen(false)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-outline)', background: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+                <button onClick={() => setFaqOpen(false)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-outline)', background: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>âœ•</button>
               </div>
               <div style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: 1, padding: '0 20px 40px' }}>
                 <FaqContent />
@@ -553,3 +553,4 @@ export default function ResultPage() {
     </motion.div>
   );
 }
+
