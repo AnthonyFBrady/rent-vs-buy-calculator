@@ -328,7 +328,9 @@ export default function ExperiencePage() {
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
 
         {/* Left: scrollable form column */}
-        <div
+        <motion.div
+          layout="size"
+          transition={{ type: 'spring', stiffness: 200, damping: 30, mass: 0.85 }}
           style={{
             flex: 1,
             overflowY: 'auto',
@@ -422,7 +424,7 @@ export default function ExperiencePage() {
               </motion.div>
             </AnimatePresence>
           </div>
-        </div>
+        </motion.div>
 
         {/* Gradient divider — only shown when chart is visible */}
         {phase > 0 && (
@@ -443,10 +445,10 @@ export default function ExperiencePage() {
             <motion.div
               key="chart-panel"
               className="dark-panel hidden lg:flex"
-              initial={{ x: '100%', opacity: 0 }}
+              initial={{ x: 24, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
-              exit={{ x: '100%', opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 280, damping: 32 }}
+              exit={{ x: 24, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 30, mass: 0.85 }}
               style={{
                 flex: 1,
                 flexDirection: 'column',
@@ -456,7 +458,7 @@ export default function ExperiencePage() {
                 overflowY: 'auto',
               }}
             >
-              <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', marginBottom: '10px', letterSpacing: '-0.01em', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
+              <p style={{ fontSize: '13px', fontWeight: 500, color: '#FAFAFA', marginBottom: '12px', letterSpacing: '-0.02em', fontFamily: 'var(--font-sans), system-ui, sans-serif', textAlign: 'center' }}>
                 {inputs.firstName ? `${inputs.firstName}'s wealth outlook` : 'Wealth outlook'} — {inputs.holdingPeriodYears}yr
               </p>
               <WealthChart
@@ -580,7 +582,7 @@ export default function ExperiencePage() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.9 }}
-              style={{ position: 'fixed', bottom: '8px', left: 'clamp(8px, 3vw, 32px)', right: 'clamp(8px, 3vw, 32px)', maxHeight: '82vh', backgroundColor: 'var(--color-bg)', borderRadius: '16px', zIndex: 51, display: 'flex', flexDirection: 'column', boxShadow: '0 -8px 48px rgba(0,0,0,0.18)' }}
+              style={{ position: 'fixed', bottom: 0, left: 'clamp(8px, 3vw, 32px)', right: 'clamp(8px, 3vw, 32px)', maxHeight: '82vh', backgroundColor: 'var(--color-bg)', borderRadius: '16px 16px 0 0', zIndex: 51, display: 'flex', flexDirection: 'column', boxShadow: '0 -8px 48px rgba(0,0,0,0.18)' }}
             >
               <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '12px', paddingBottom: '4px', flexShrink: 0 }}>
                 <div style={{ width: '36px', height: '4px', borderRadius: '9999px', backgroundColor: 'var(--color-outline-active)' }} />
@@ -617,7 +619,7 @@ export default function ExperiencePage() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.9 }}
-              style={{ position: 'fixed', bottom: '8px', left: 'clamp(8px, 3vw, 32px)', right: 'clamp(8px, 3vw, 32px)', maxHeight: '82vh', backgroundColor: 'var(--color-bg)', borderRadius: '16px', zIndex: 51, display: 'flex', flexDirection: 'column', boxShadow: '0 -8px 48px rgba(0,0,0,0.18)' }}
+              style={{ position: 'fixed', bottom: 0, left: 'clamp(8px, 3vw, 32px)', right: 'clamp(8px, 3vw, 32px)', maxHeight: '82vh', backgroundColor: 'var(--color-bg)', borderRadius: '16px 16px 0 0', zIndex: 51, display: 'flex', flexDirection: 'column', boxShadow: '0 -8px 48px rgba(0,0,0,0.18)' }}
             >
               <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '12px', paddingBottom: '4px', flexShrink: 0 }}>
                 <div style={{ width: '36px', height: '4px', borderRadius: '9999px', backgroundColor: 'var(--color-outline-active)' }} />

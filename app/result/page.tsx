@@ -1,10 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'motion/react';
+import { simulate } from '@/engine';
+import type { CalculatorInputs } from '@/engine';
 import { useCalculatorStore } from '@/lib/store';
 import type { SensitivityScenario } from '@/lib/store';
+import { RangeInput } from '../experience/components';
 import { encodeShare } from '@/lib/share';
 import { WealthChart } from '@/components/chart/WealthChart';
 import { MetricCard } from '@/components/MetricCard';
@@ -50,8 +53,6 @@ const HOME_TYPE_LABELS: Record<string, string> = {
   'freehold-townhouse': 'Freehold TH', 'semi-detached': 'Semi-detached', 'detached': 'Detached',
 };
 
-const SCENARIO_ORDER: SensitivityScenario['id'][] = ['base', 'growth+2', 'growth-2', 'rate+1', 'rate-1'];
-
 const ease = [0.0, 0.0, 0.2, 1] as [number, number, number, number];
 
 // ─── Assumptions drawer section ──────────────────────────────────────────────
@@ -83,7 +84,9 @@ export default function ResultPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [methodologyOpen, setMethodologyOpen] = useState(false);
   const [faqOpen, setFaqOpen] = useState(false);
-  const [activeSensitivity, setActiveSensitivity] = useState<SensitivityScenario['id']>('base');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [localInputs, setLocalInputs] = useState<CalculatorInputs>(() => inputs ? { ...inputs } : {} as CalculatorInputs);
+  const patchLocal = useCallback((p: Partial<CalculatorInputs>) => setLocalInputs(prev => ({ ...prev, ...p })), []);
   const [chartH, setChartH] = useState(380);
   const [activePanel, setActivePanel] = useState<'verdict' | 'chart'>('verdict');
   const [desktopChartH, setDesktopChartH] = useState(520);
@@ -116,6 +119,32 @@ export default function ResultPage() {
     return Array.from({ length: n }, (_, i) => Math.round((i + 1) * h / (n + 1)));
   }, [inputs]);
 
+  const localResult = useMemo(() => {
+    if (!localInputs || !localInputs.homePrice) return null;
+    try { return simulate(localInputs); } catch { return null; }
+  }, [localInputs]);
+
+  const localOwnerData = useMemo((): { year: number; value: number }[] => {
+    if (!localResult || !localInputs?.homePrice) return [];
+    const closingCosts = localResult.commitment.ownerStartingCashOut - localInputs.homePrice * localInputs.downPaymentPct;
+    let cumMoveCost = 0;
+    return [
+      { year: 0, value: localInputs.homePrice * localInputs.downPaymentPct - closingCosts },
+      ...localResult.yearByYear.map(y => {
+        cumMoveCost += y.ownerMoveTransactionCost;
+        return { year: y.year, value: y.ownerEquity + y.ownerPortfolioEnd - cumMoveCost - y.ownerCumulativePropertyTax - closingCosts };
+      }),
+    ];
+  }, [localResult, localInputs]);
+
+  const localRenterData = useMemo((): { year: number; value: number }[] => {
+    if (!localResult) return [];
+    return [
+      { year: 0, value: localResult.yearByYear[0]?.renterPortfolioStart ?? 0 },
+      ...localResult.yearByYear.map(y => ({ year: y.year, value: y.renterPortfolioEnd + y.renterRrspBalance })),
+    ];
+  }, [localResult]);
+
   if (!result || !inputs || sensitivity.length === 0) return null;
 
   const advantage = result.exit.netAdvantageToOwner;
@@ -128,7 +157,6 @@ export default function ResultPage() {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const countedValue = useCountUp(winner !== 'tie' ? absAdvantage : 0, 2200, 1100);
 
-  const activeScenario = sensitivity.find(s => s.id === activeSensitivity) ?? sensitivity[0]!;
   const baseScenario = sensitivity.find(s => s.id === 'base') ?? sensitivity[0]!;
 
   const ownerSubLabel = `Home ${fmtWealth(result.exit.ownerHomeNetProceeds)} + Inv ${fmtWealth(result.exit.ownerPortfolioNetProceeds)}`;
@@ -275,7 +303,7 @@ export default function ResultPage() {
                 <>Within <span style={{ color: winnerColor, fontVariantNumeric: 'tabular-nums' }}>{fmtWealth(absAdvantage)}</span> either way after {inputs.holdingPeriodYears} years.</>
               ) : (
                 <>{winner === 'buy' ? 'Buying' : 'Renting'} comes out{' '}
-                  <span style={{ display: 'inline-grid', color: winnerColor }}>
+                  <span style={{ display: 'inline-grid', color: winnerColor, whiteSpace: 'nowrap' }}>
                     <span style={{ gridArea: '1/1', color: 'transparent', userSelect: 'none', pointerEvents: 'none', fontVariantNumeric: 'tabular-nums' }}>{fmtWealth(absAdvantage)}</span>
                     <span style={{ gridArea: '1/1', fontVariantNumeric: 'tabular-nums' }}>{fmtWealth(countedValue)}</span>
                   </span>
@@ -315,9 +343,9 @@ export default function ResultPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 2.4, duration: 0.5, ease: [0, 0, 0.2, 1] }}
               onClick={() => setActivePanel('chart')}
-              whileHover={{ scale: 1.03, backgroundColor: 'rgba(255,255,255,0.14)' }}
+              whileHover={{ scale: 1.03, backgroundColor: 'rgba(255,255,255,0.08)' }}
               whileTap={{ scale: 0.97 }}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', height: '44px', padding: '0 20px', borderRadius: '9999px', backgroundColor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.13)', color: '#FAFAFA', cursor: 'pointer', fontSize: '13px', fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.01em', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', marginTop: '40px' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', height: '44px', padding: '0 20px', borderRadius: '9999px', backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.18)', color: '#FAFAFA', cursor: 'pointer', fontSize: '13px', fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.01em', marginTop: '40px' }}
             >
               See it play out
               <motion.span animate={{ x: [0, 4, 0] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut', repeatDelay: 0.2 }}>→</motion.span>
@@ -325,70 +353,132 @@ export default function ResultPage() {
           </div>
 
           {/* Panel 2: chart */}
-          <div style={{ width: '100vw', height: 'calc(100dvh - 52px)', backgroundColor: '#0F0F11', overflowY: 'auto', padding: '32px clamp(32px, 6vw, 80px) 48px' }}>
-            <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-              {/* Back + title */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-                <button
-                  onClick={() => setActivePanel('verdict')}
-                  style={{ fontSize: '13px', color: '#A1A1AA', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-sans), system-ui, sans-serif', display: 'flex', alignItems: 'center', gap: '4px' }}
-                >
-                  ← Result
-                </button>
-                <p style={{ fontSize: '15px', fontWeight: 500, color: '#FAFAFA', fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.02em' }}>
-                  {inputs.firstName ? `${inputs.firstName}'s wealth trajectory` : 'Wealth trajectory'} — {inputs.holdingPeriodYears} yr
-                </p>
-                <div style={{ width: '80px' }} />
-              </div>
+          <div style={{ width: '100vw', height: 'calc(100dvh - 52px)', backgroundColor: '#0F0F11', display: 'flex', overflow: 'hidden' }}>
+            {/* Chart scroll area */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '32px clamp(32px, 6vw, 80px) 48px', minWidth: 0 }}>
+              <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+                {/* Back + title */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                  <button
+                    onClick={() => setActivePanel('verdict')}
+                    style={{ fontSize: '13px', color: '#A1A1AA', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-sans), system-ui, sans-serif', display: 'flex', alignItems: 'center', gap: '4px' }}
+                  >
+                    ← Result
+                  </button>
+                  <p style={{ fontSize: '15px', fontWeight: 500, color: '#FAFAFA', fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.02em' }}>
+                    {inputs.firstName ? `${inputs.firstName}'s wealth trajectory` : 'Wealth trajectory'} — {localInputs.holdingPeriodYears} yr
+                  </p>
+                  <div style={{ width: '80px' }} />
+                </div>
 
-              <WealthChart
-                key={`desktop-${activeSensitivity}`}
-                ownerData={activeScenario.ownerData}
-                renterData={activeScenario.renterData}
-                breakEvenYear={result.breakEvenYear}
-                holdingPeriodYears={inputs.holdingPeriodYears}
-                height={desktopChartH}
-                ownerSubLabel={ownerSubLabel}
-                renterSubLabel={renterSubLabel}
-                yearlyBreakdown={result.yearByYear}
-                ownerMoveYears={ownerMoveYears}
-                renterMoveYears={renterMoveYears}
-              />
+                <WealthChart
+                  key="desktop-chart"
+                  ownerData={localOwnerData.length ? localOwnerData : baseScenario.ownerData}
+                  renterData={localRenterData.length ? localRenterData : baseScenario.renterData}
+                  breakEvenYear={localResult?.breakEvenYear ?? result.breakEvenYear}
+                  holdingPeriodYears={localInputs.holdingPeriodYears}
+                  height={desktopChartH}
+                  ownerSubLabel={ownerSubLabel}
+                  renterSubLabel={renterSubLabel}
+                  yearlyBreakdown={localResult?.yearByYear ?? result.yearByYear}
+                  ownerMoveYears={ownerMoveYears}
+                  renterMoveYears={renterMoveYears}
+                />
 
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '16px' }}>
-                {SCENARIO_ORDER.map(id => {
-                  const scenario = sensitivity.find(s => s.id === id);
-                  if (!scenario) return null;
-                  const isActive = activeSensitivity === id;
-                  return (
-                    <button key={id} onClick={() => setActiveSensitivity(id)}
-                      style={{ padding: '6px 14px', borderRadius: '100px', fontSize: '12px', fontFamily: 'var(--font-sans), system-ui, sans-serif', border: `1px solid ${isActive ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.1)'}`, backgroundColor: isActive ? 'rgba(255,255,255,0.1)' : 'transparent', color: isActive ? '#FAFAFA' : '#71717A', cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '-0.01em' }}
-                    >
-                      {scenario.label}
-                    </button>
-                  );
-                })}
-              </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(148px, 1fr))', gap: '8px', marginTop: '20px' }}>
+                  <MetricCard label="Net advantage" value={fmtWealth(absAdvantage)} subvalue={winner === 'buy' ? 'Owner ahead' : winner === 'rent' ? 'Renter ahead' : 'Tied'} accentColor={winnerColor} />
+                  <MetricCard label="Break-even" value={result.breakEvenYear !== null ? `Yr ${result.breakEvenYear}` : 'Never'} subvalue={result.breakEvenYear !== null ? 'Owner catches up' : 'Renter stays ahead'} />
+                  <MetricCard label="Owner wealth" value={fmtWealth(result.exit.finalOwnerWealth)} subvalue="After exit costs" accentColor="var(--color-owner)" />
+                  <MetricCard label="Renter wealth" value={fmtWealth(result.exit.finalRenterWealth)} subvalue="After tax" accentColor="var(--color-renter)" />
+                </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(148px, 1fr))', gap: '8px', marginTop: '20px' }}>
-                <MetricCard label="Net advantage" value={fmtWealth(absAdvantage)} subvalue={winner === 'buy' ? 'Owner ahead' : winner === 'rent' ? 'Renter ahead' : 'Tied'} accentColor={winnerColor} />
-                <MetricCard label="Break-even" value={result.breakEvenYear !== null ? `Yr ${result.breakEvenYear}` : 'Never'} subvalue={result.breakEvenYear !== null ? 'Owner catches up' : 'Renter stays ahead'} />
-                <MetricCard label="Owner wealth" value={fmtWealth(result.exit.finalOwnerWealth)} subvalue="After exit costs" accentColor="var(--color-owner)" />
-                <MetricCard label="Renter wealth" value={fmtWealth(result.exit.finalRenterWealth)} subvalue="After tax" accentColor="var(--color-renter)" />
-              </div>
-
-              <div style={{ marginTop: '16px' }}>
-                <button
-                  onClick={() => setDrawerOpen(true)}
-                  style={{ width: '100%', padding: '12px 18px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)', backgroundColor: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', fontFamily: 'var(--font-sans), system-ui, sans-serif', color: '#FAFAFA' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(255,255,255,0.07)'; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(255,255,255,0.04)'; }}
-                >
-                  <span style={{ fontSize: '13px', fontWeight: 500 }}>View all assumptions</span>
-                  <span style={{ fontSize: '18px', color: '#52525B', lineHeight: 1 }}>↑</span>
-                </button>
+                <div style={{ marginTop: '16px' }}>
+                  <button
+                    onClick={() => setDrawerOpen(true)}
+                    style={{ width: '100%', padding: '12px 18px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)', backgroundColor: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', fontFamily: 'var(--font-sans), system-ui, sans-serif', color: '#FAFAFA' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(255,255,255,0.07)'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(255,255,255,0.04)'; }}
+                  >
+                    <span style={{ fontSize: '13px', fontWeight: 500 }}>View all assumptions</span>
+                    <span style={{ fontSize: '18px', color: '#52525B', lineHeight: 1 }}>↑</span>
+                  </button>
+                </div>
               </div>
             </div>
+
+            {/* Edit sidebar */}
+            <motion.div
+              className="dark-panel"
+              animate={{ width: sidebarOpen ? 320 : 48 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 36, mass: 0.8 }}
+              style={{ flexShrink: 0, overflow: 'hidden', backgroundColor: '#111113', borderLeft: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', willChange: 'width', position: 'relative', height: '100%' }}
+            >
+              {/* Peek handle */}
+              <button
+                onClick={() => setSidebarOpen(p => !p)}
+                style={{ position: 'absolute', top: '50%', left: 0, transform: 'translateY(-50%)', width: '48px', height: '80px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', background: 'none', border: 'none', cursor: 'pointer', color: '#71717A', transition: 'color 0.15s', zIndex: 2 }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#FAFAFA')}
+                onMouseLeave={e => (e.currentTarget.style.color = '#71717A')}
+              >
+                <span style={{ fontSize: '9px', writingMode: 'vertical-rl', letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
+                  {sidebarOpen ? 'Close' : 'Edit'}
+                </span>
+                <span style={{ fontSize: '11px', display: 'block', transform: sidebarOpen ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform 0.2s' }}>←</span>
+              </button>
+
+              {/* Sidebar content */}
+              <motion.div
+                animate={{ opacity: sidebarOpen ? 1 : 0 }}
+                transition={{ duration: 0.18, delay: sidebarOpen ? 0.12 : 0 }}
+                style={{ overflowY: 'auto', flex: 1, padding: '24px 16px 40px 56px', pointerEvents: sidebarOpen ? 'auto' : 'none' }}
+              >
+                {/* Property */}
+                <p style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#52525B', marginBottom: '12px', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>Property</p>
+                <RangeInput label="Home price" value={Math.round(localInputs.homePrice / 1000)} min={200} max={3000} step={25} onChange={v => patchLocal({ homePrice: v * 1000 })} formatValue={v => v >= 1000 ? `$${(v / 1000).toFixed(1)}M` : `$${v}k`} color="var(--color-owner)" minLabel="$200k" maxLabel="$3M" />
+                <div style={{ marginTop: '16px' }}>
+                  <RangeInput label="Down payment" value={Math.round(localInputs.downPaymentPct * 100)} min={5} max={50} step={1} onChange={v => patchLocal({ downPaymentPct: v / 100 })} formatValue={v => `${v}%`} color="var(--color-owner)" minLabel="5%" maxLabel="50%" />
+                </div>
+
+                {/* Mortgage */}
+                <div style={{ marginTop: '20px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
+                  <p style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#52525B', marginBottom: '12px', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>Mortgage</p>
+                  <RangeInput label="Rate" value={Math.round(localInputs.mortgageRatePct * 10000) / 100} min={1} max={10} step={0.1} onChange={v => patchLocal({ mortgageRatePct: Math.round(v * 100) / 10000 })} formatValue={v => `${v.toFixed(2)}%`} color="var(--color-owner)" minLabel="1%" maxLabel="10%" />
+                  <div style={{ marginTop: '16px' }}>
+                    <RangeInput label="Amortization" value={localInputs.amortizationYears} min={10} max={30} step={1} onChange={v => patchLocal({ amortizationYears: v })} formatValue={v => `${v}yr`} color="var(--color-owner)" minLabel="10yr" maxLabel="30yr" />
+                  </div>
+                </div>
+
+                {/* Renter */}
+                <div style={{ marginTop: '20px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
+                  <p style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#52525B', marginBottom: '12px', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>Renter</p>
+                  <RangeInput label="Monthly rent" value={localInputs.monthlyRent} min={500} max={8000} step={50} onChange={v => patchLocal({ monthlyRent: v })} formatValue={v => v >= 1000 ? `$${(v / 1000).toFixed(1)}k/mo` : `$${v}/mo`} color="var(--color-renter)" minLabel="$500" maxLabel="$8k" />
+                  <div style={{ marginTop: '16px' }}>
+                    <RangeInput label="Rent growth" value={Math.round(localInputs.rentEscalationPct * 1000) / 10} min={0} max={8} step={0.25} onChange={v => patchLocal({ rentEscalationPct: Math.round(v * 10) / 1000 })} formatValue={v => `${v.toFixed(1)}%/yr`} color="var(--color-renter)" minLabel="0%" maxLabel="8%" />
+                  </div>
+                </div>
+
+                {/* Market */}
+                <div style={{ marginTop: '20px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
+                  <p style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#52525B', marginBottom: '12px', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>Market</p>
+                  <RangeInput label="Home appreciation" value={Math.round(localInputs.homeAppreciationPct * 1000) / 10} min={0} max={10} step={0.25} onChange={v => patchLocal({ homeAppreciationPct: Math.round(v * 10) / 1000 })} formatValue={v => `${v.toFixed(1)}%/yr`} color="var(--color-owner)" minLabel="0%" maxLabel="10%" />
+                  <div style={{ marginTop: '16px' }}>
+                    <RangeInput label="Investment return" value={Math.round(localInputs.investmentReturnPct * 1000) / 10} min={2} max={14} step={0.5} onChange={v => patchLocal({ investmentReturnPct: Math.round(v * 10) / 1000 })} formatValue={v => `${v.toFixed(1)}%/yr`} color="var(--color-renter)" minLabel="2%" maxLabel="14%" />
+                  </div>
+                  <div style={{ marginTop: '16px' }}>
+                    <RangeInput label="Time horizon" value={localInputs.holdingPeriodYears} min={5} max={30} step={1} onChange={v => patchLocal({ holdingPeriodYears: v })} formatValue={v => `${v}yr`} color="rgba(255,255,255,0.35)" minLabel="5yr" maxLabel="30yr" />
+                  </div>
+                </div>
+
+                {/* Costs */}
+                <div style={{ marginTop: '20px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
+                  <p style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#52525B', marginBottom: '12px', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>Costs</p>
+                  <RangeInput label="Property tax" value={Math.round(localInputs.propertyTaxPct * 1000) / 10} min={0.2} max={3} step={0.1} onChange={v => patchLocal({ propertyTaxPct: Math.round(v * 10) / 1000 })} formatValue={v => `${v.toFixed(1)}%/yr`} color="var(--color-owner)" minLabel="0.2%" maxLabel="3%" />
+                  <div style={{ marginTop: '16px' }}>
+                    <RangeInput label="Maintenance" value={Math.round(localInputs.maintenancePct * 1000) / 10} min={0.5} max={3} step={0.1} onChange={v => patchLocal({ maintenancePct: Math.round(v * 10) / 1000 })} formatValue={v => `${v.toFixed(1)}%/yr`} color="var(--color-owner)" minLabel="0.5%" maxLabel="3%" />
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
           </div>
         </motion.div>
       </div>
@@ -428,7 +518,7 @@ export default function ResultPage() {
             <>Within <span style={{ color: winnerColor, fontVariantNumeric: 'tabular-nums' }}>{fmtWealth(absAdvantage)}</span> either way after {inputs.holdingPeriodYears} years.</>
           ) : (
             <>{winner === 'buy' ? 'Buying' : 'Renting'} comes out{' '}
-              <span style={{ display: 'inline-grid', color: winnerColor }}>
+              <span style={{ display: 'inline-grid', color: winnerColor, whiteSpace: 'nowrap' }}>
                 <span style={{ gridArea: '1/1', color: 'transparent', userSelect: 'none', pointerEvents: 'none', fontVariantNumeric: 'tabular-nums' }}>{fmtWealth(absAdvantage)}</span>
                 <span style={{ gridArea: '1/1', fontVariantNumeric: 'tabular-nums' }}>{fmtWealth(countedValue)}</span>
               </span>
@@ -500,9 +590,9 @@ export default function ResultPage() {
 
           {/* Chart */}
           <WealthChart
-            key={activeSensitivity}
-            ownerData={activeScenario.ownerData}
-            renterData={activeScenario.renterData}
+            key="mobile-chart"
+            ownerData={baseScenario.ownerData}
+            renterData={baseScenario.renterData}
             breakEvenYear={result.breakEvenYear}
             holdingPeriodYears={inputs.holdingPeriodYears}
             height={chartH}
@@ -512,30 +602,6 @@ export default function ResultPage() {
             ownerMoveYears={ownerMoveYears}
             renterMoveYears={renterMoveYears}
           />
-
-          {/* Sensitivity pills */}
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '16px' }}>
-            {SCENARIO_ORDER.map(id => {
-              const scenario = sensitivity.find(s => s.id === id);
-              if (!scenario) return null;
-              const isActive = activeSensitivity === id;
-              return (
-                <button key={id} onClick={() => setActiveSensitivity(id)}
-                  style={{
-                    padding: '6px 14px', borderRadius: '100px', fontSize: '12px',
-                    fontFamily: 'var(--font-sans), system-ui, sans-serif',
-                    border: `1px solid ${isActive ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.1)'}`,
-                    backgroundColor: isActive ? 'rgba(255,255,255,0.1)' : 'transparent',
-                    color: isActive ? '#FAFAFA' : '#71717A',
-                    cursor: 'pointer', transition: 'background-color 0.15s, color 0.15s, border-color 0.15s',
-                    letterSpacing: '-0.01em',
-                  }}
-                >
-                  {scenario.label}
-                </button>
-              );
-            })}
-          </div>
 
           {/* Metric cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(148px, 1fr))', gap: '8px', marginTop: '24px' }}>
@@ -601,7 +667,7 @@ export default function ResultPage() {
         {drawerOpen && (
           <>
             <motion.div key="drawer-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} onClick={() => setDrawerOpen(false)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', zIndex: 40 }} />
-            <motion.div key="drawer-panel" initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.9 }} style={{ position: 'fixed', bottom: '8px', left: 'clamp(8px, 3vw, 32px)', right: 'clamp(8px, 3vw, 32px)', maxHeight: '80vh', backgroundColor: 'var(--color-bg)', borderRadius: '16px', zIndex: 50, display: 'flex', flexDirection: 'column', boxShadow: '0 -8px 48px rgba(0,0,0,0.18)' }}>
+            <motion.div key="drawer-panel" initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.9 }} style={{ position: 'fixed', bottom: 0, left: 'clamp(8px, 3vw, 32px)', right: 'clamp(8px, 3vw, 32px)', maxHeight: '80vh', backgroundColor: 'var(--color-bg)', borderRadius: '16px 16px 0 0', zIndex: 50, display: 'flex', flexDirection: 'column', boxShadow: '0 -8px 48px rgba(0,0,0,0.18)' }}>
               <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 8px', cursor: 'pointer', flexShrink: 0 }} onClick={() => setDrawerOpen(false)}>
                 <div style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: 'var(--color-outline-active)' }} />
               </div>
@@ -622,7 +688,7 @@ export default function ResultPage() {
         {methodologyOpen && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} onClick={() => setMethodologyOpen(false)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', zIndex: 40 }} />
-            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.9 }} style={{ position: 'fixed', bottom: '8px', left: 'clamp(8px, 3vw, 32px)', right: 'clamp(8px, 3vw, 32px)', maxHeight: '82vh', backgroundColor: 'var(--color-bg)', borderRadius: '16px', zIndex: 50, display: 'flex', flexDirection: 'column', boxShadow: '0 -8px 48px rgba(0,0,0,0.18)' }}>
+            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.9 }} style={{ position: 'fixed', bottom: 0, left: 'clamp(8px, 3vw, 32px)', right: 'clamp(8px, 3vw, 32px)', maxHeight: '82vh', backgroundColor: 'var(--color-bg)', borderRadius: '16px 16px 0 0', zIndex: 50, display: 'flex', flexDirection: 'column', boxShadow: '0 -8px 48px rgba(0,0,0,0.18)' }}>
               <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '12px', paddingBottom: '4px', flexShrink: 0 }}>
                 <div style={{ width: '36px', height: '4px', borderRadius: '9999px', backgroundColor: 'var(--color-outline-active)' }} />
               </div>
@@ -646,7 +712,7 @@ export default function ResultPage() {
         {faqOpen && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} onClick={() => setFaqOpen(false)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', zIndex: 40 }} />
-            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.9 }} style={{ position: 'fixed', bottom: '8px', left: 'clamp(8px, 3vw, 32px)', right: 'clamp(8px, 3vw, 32px)', maxHeight: '82vh', backgroundColor: 'var(--color-bg)', borderRadius: '16px', zIndex: 50, display: 'flex', flexDirection: 'column', boxShadow: '0 -8px 48px rgba(0,0,0,0.18)' }}>
+            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.9 }} style={{ position: 'fixed', bottom: 0, left: 'clamp(8px, 3vw, 32px)', right: 'clamp(8px, 3vw, 32px)', maxHeight: '82vh', backgroundColor: 'var(--color-bg)', borderRadius: '16px 16px 0 0', zIndex: 50, display: 'flex', flexDirection: 'column', boxShadow: '0 -8px 48px rgba(0,0,0,0.18)' }}>
               <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '12px', paddingBottom: '4px', flexShrink: 0 }}>
                 <div style={{ width: '36px', height: '4px', borderRadius: '9999px', backgroundColor: 'var(--color-outline-active)' }} />
               </div>

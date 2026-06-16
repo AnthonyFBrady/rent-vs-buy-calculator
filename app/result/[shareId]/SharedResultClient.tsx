@@ -42,8 +42,6 @@ const PROVINCE_NAMES: Record<string, string> = {
   NL: 'Newfoundland', PE: 'Prince Edward Island',
 };
 
-const SCENARIO_ORDER: SensitivityScenario['id'][] = ['base', 'growth+2', 'growth-2', 'rate+1', 'rate-1'];
-
 const ease = [0.0, 0.0, 0.2, 1] as [number, number, number, number];
 
 interface Props {
@@ -57,7 +55,6 @@ interface Props {
 
 export function SharedResultClient({ inputs, result, scenarios, shareId }: Props) {
   const router = useRouter();
-  const [activeSensitivity, setActiveSensitivity] = useState<SensitivityScenario['id']>('base');
   const [copied, setCopied] = useState(false);
   const [chartH, setChartH] = useState(340);
 
@@ -74,7 +71,7 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
 
   const countedValue = useCountUp(absAdvantage, 2200, 1100);
 
-  const activeScenario = scenarios.find(s => s.id === activeSensitivity) ?? scenarios[0]!;
+  const activeScenario = scenarios.find(s => s.id === 'base') ?? scenarios[0]!;
 
   async function handleShare() {
     if (typeof window === 'undefined') return;
@@ -286,37 +283,13 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
 
           {/* Chart */}
           <WealthChart
-            key={activeSensitivity}
+            key="shared-chart"
             ownerData={activeScenario.ownerData}
             renterData={activeScenario.renterData}
             breakEvenYear={result.breakEvenYear}
             holdingPeriodYears={inputs.holdingPeriodYears}
             height={chartH}
           />
-
-          {/* Sensitivity pills */}
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '16px' }}>
-            {SCENARIO_ORDER.map(id => {
-              const scenario = scenarios.find(s => s.id === id);
-              if (!scenario) return null;
-              const isActive = activeSensitivity === id;
-              return (
-                <button key={id} onClick={() => setActiveSensitivity(id)}
-                  style={{
-                    padding: '6px 14px', borderRadius: '100px', fontSize: '12px',
-                    fontFamily: 'var(--font-sans), system-ui, sans-serif',
-                    border: `1px solid ${isActive ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.1)'}`,
-                    backgroundColor: isActive ? 'rgba(255,255,255,0.1)' : 'transparent',
-                    color: isActive ? '#FAFAFA' : '#71717A',
-                    cursor: 'pointer', transition: 'background-color 0.15s, color 0.15s, border-color 0.15s',
-                    letterSpacing: '-0.01em',
-                  }}
-                >
-                  {scenario.label}
-                </button>
-              );
-            })}
-          </div>
 
           {/* Break-even callout */}
           {result.breakEvenYear !== null && (

@@ -503,9 +503,9 @@ function BottomSheet({ open, onClose, title, eyebrow, children }: {
             initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.9 }}
             style={{
-              position: 'fixed', bottom: '8px', left: 'clamp(8px, 3vw, 32px)', right: 'clamp(8px, 3vw, 32px)',
+              position: 'fixed', bottom: 0, left: 'clamp(8px, 3vw, 32px)', right: 'clamp(8px, 3vw, 32px)',
               maxHeight: '82vh', backgroundColor: 'var(--color-bg)',
-              borderRadius: '16px', zIndex: 51,
+              borderRadius: '16px 16px 0 0', zIndex: 51,
               display: 'flex', flexDirection: 'column',
               boxShadow: '0 -8px 48px rgba(0,0,0,0.24)',
             }}
