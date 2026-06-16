@@ -503,9 +503,9 @@ function BottomSheet({ open, onClose, title, eyebrow, children }: {
             initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.9 }}
             style={{
-              position: 'fixed', bottom: 0, left: 0, right: 0,
+              position: 'fixed', bottom: '8px', left: 'clamp(8px, 3vw, 32px)', right: 'clamp(8px, 3vw, 32px)',
               maxHeight: '82vh', backgroundColor: 'var(--color-bg)',
-              borderRadius: '16px 16px 0 0', zIndex: 51,
+              borderRadius: '16px', zIndex: 51,
               display: 'flex', flexDirection: 'column',
               boxShadow: '0 -8px 48px rgba(0,0,0,0.24)',
             }}
@@ -681,7 +681,7 @@ export function HomeLanding() {
                 onClick={e => { e.stopPropagation(); goBack(); }}
                 aria-label="Previous"
                 style={{
-                  position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)',
+                  position: 'absolute', left: 'clamp(24px, 4vw, 56px)', top: '50%', transform: 'translateY(-50%)',
                   width: '40px', height: '40px', borderRadius: '50%',
                   border: '1px solid rgba(255,255,255,0.10)', background: 'none',
                   cursor: 'pointer', color: '#FAFAFA', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -700,7 +700,7 @@ export function HomeLanding() {
                 onClick={e => { e.stopPropagation(); handleStoryClick(); }}
                 aria-label="Next"
                 style={{
-                  position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)',
+                  position: 'absolute', right: 'clamp(24px, 4vw, 56px)', top: '50%', transform: 'translateY(-50%)',
                   width: '40px', height: '40px', borderRadius: '50%',
                   border: '1px solid rgba(255,255,255,0.10)', background: 'none',
                   cursor: 'pointer', color: '#FAFAFA', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -795,18 +795,16 @@ export function HomeLanding() {
               {isCta && (
                 <motion.div
                   key="cta"
-                  initial={{ y: '100%' }}
-                  animate={{ y: 0 }}
-                  exit={{ y: '100%', transition: { duration: 0.25, ease: [0.4, 0, 1, 1] } }}
-                  transition={{ type: 'spring', stiffness: 260, damping: 32, mass: 1 }}
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.98 }}
+                  transition={{ duration: 0.30, ease: [0.0, 0.0, 0.2, 1] }}
                   style={{
                     position: 'absolute', inset: 0,
                     display: 'flex', flexDirection: 'column',
                     justifyContent: 'center', alignItems: 'center',
                     textAlign: 'center', padding: 'clamp(32px, 6vw, 80px) 24px',
                     backgroundColor: '#FAFAFA',
-                    borderRadius: '16px 16px 0 0',
-                    boxShadow: '0 -8px 48px rgba(0,0,0,0.20)',
                   }}
                 >
                   <div style={{ marginBottom: '28px' }}>
@@ -843,7 +841,7 @@ export function HomeLanding() {
 
             {/* Bottom controls row */}
             {!isCta && (
-              <div style={{ position: 'absolute', bottom: '20px', left: '24px', right: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10 }}>
+              <div style={{ position: 'absolute', bottom: '28px', left: '40px', right: '40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10 }}>
                 {/* Pause / play */}
                 <button
                   onClick={e => { e.stopPropagation(); setIsPaused(p => !p); }}

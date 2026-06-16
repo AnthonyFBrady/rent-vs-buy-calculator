@@ -1,7 +1,7 @@
 'use client';
 
 import type { CalculatorInputs } from '@/engine';
-import { RangeInput, Toggle, StepAdvanced } from '../components';
+import { RangeInput, Toggle } from '../components';
 
 interface Props {
   inputs: CalculatorInputs;
@@ -23,15 +23,13 @@ export function StepSituation({ inputs, patch }: Props) {
 
   return (
     <div>
-      {/* Tax shelters */}
-      <StepAdvanced label="Accounts" defaultOpen>
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            borderTop: '1px solid var(--color-outline)',
-          }}
-        >
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          borderTop: '1px solid var(--color-outline)',
+        }}
+      >
           {/* TFSA */}
           <div style={{ paddingTop: '16px', paddingBottom: '16px', borderBottom: '1px solid var(--color-outline)' }}>
             <Toggle
@@ -121,7 +119,6 @@ export function StepSituation({ inputs, patch }: Props) {
             )}
           </div>
         </div>
-      </StepAdvanced>
     </div>
   );
 }

@@ -280,14 +280,8 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
         </motion.div>
       </div>
 
-      {/* Light detail section */}
-      <div style={{
-        backgroundColor: 'var(--color-bg)',
-        clipPath: 'polygon(0 28px, 100% 0%, 100% 100%, 0 100%)',
-        marginTop: '-28px',
-        color: 'var(--color-text)',
-        padding: '72px 24px 96px',
-      }}>
+      {/* Dark detail section */}
+      <div className="dark-panel" style={{ backgroundColor: '#17171B', color: '#FAFAFA', padding: '48px 24px 96px' }}>
         <div style={{ maxWidth: '760px', margin: '0 auto' }}>
 
           {/* Chart */}
@@ -311,9 +305,9 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
                   style={{
                     padding: '6px 14px', borderRadius: '100px', fontSize: '12px',
                     fontFamily: 'var(--font-sans), system-ui, sans-serif',
-                    border: `1px solid ${isActive ? 'var(--color-text)' : 'var(--color-outline)'}`,
-                    backgroundColor: isActive ? 'var(--color-text)' : 'transparent',
-                    color: isActive ? 'var(--color-bg)' : 'var(--color-text-muted)',
+                    border: `1px solid ${isActive ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.1)'}`,
+                    backgroundColor: isActive ? 'rgba(255,255,255,0.1)' : 'transparent',
+                    color: isActive ? '#FAFAFA' : '#71717A',
                     cursor: 'pointer', transition: 'background-color 0.15s, color 0.15s, border-color 0.15s',
                     letterSpacing: '-0.01em',
                   }}
@@ -328,12 +322,12 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
           {result.breakEvenYear !== null && (
             <div style={{
               marginTop: '24px', padding: '14px 18px',
-              backgroundColor: 'var(--color-bg-subtle)',
-              border: '1px solid var(--color-outline)',
-              borderRadius: '10px', display: 'flex', gap: '10px', alignItems: 'flex-start',
+              backgroundColor: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '10px',
             }}>
-              <span style={{ fontSize: '13px', color: 'var(--color-text-muted)', lineHeight: 1.5 }}>
-                Owner and renter wealth lines cross at <strong style={{ color: 'var(--color-text)' }}>year {result.breakEvenYear}</strong>.
+              <span style={{ fontSize: '13px', color: '#A1A1AA', lineHeight: 1.5 }}>
+                Owner and renter wealth lines cross at <strong style={{ color: '#FAFAFA' }}>year {result.breakEvenYear}</strong>.
                 {winner === 'rent'
                   ? ` The owner trails until then. If the holding period extends beyond year ${result.breakEvenYear}, buying becomes the stronger outcome.`
                   : ` The renter leads until then. Shorter hold periods favor renting.`}
@@ -341,18 +335,18 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
             </div>
           )}
 
-          {/* Assumptions */}
-          <div style={{ marginTop: '40px', border: '1px solid var(--color-outline)', borderRadius: '12px', overflow: 'hidden' }}>
-            <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-outline)', backgroundColor: 'var(--color-bg-subtle)' }}>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          {/* Key assumptions */}
+          <div style={{ marginTop: '40px', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', overflow: 'hidden' }}>
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.08)', backgroundColor: 'rgba(255,255,255,0.04)' }}>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: '#71717A', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Key assumptions
               </span>
             </div>
             <div style={{ padding: '20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '16px 24px' }}>
               {keyAssumptions.map(a => (
                 <div key={a.label}>
-                  <p style={{ fontSize: '11px', color: 'var(--color-text-faint)', marginBottom: '3px' }}>{a.label}</p>
-                  <p style={{ fontSize: '14px', fontWeight: 600, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.01em' }}>{a.value}</p>
+                  <p style={{ fontSize: '11px', color: '#52525B', marginBottom: '3px' }}>{a.label}</p>
+                  <p style={{ fontSize: '14px', fontWeight: 600, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.01em', color: '#FAFAFA' }}>{a.value}</p>
                 </div>
               ))}
             </div>
@@ -364,8 +358,8 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
               onClick={handleShare}
               style={{
                 height: '40px', padding: '0 20px',
-                backgroundColor: 'transparent', color: 'var(--color-text-muted)',
-                border: '1px solid var(--color-outline)', borderRadius: '9999px',
+                backgroundColor: 'transparent', color: '#A1A1AA',
+                border: '1px solid rgba(255,255,255,0.15)', borderRadius: '9999px',
                 fontSize: '13px', fontWeight: 500, cursor: 'pointer',
                 fontFamily: 'var(--font-sans), system-ui, sans-serif',
                 letterSpacing: '-0.01em',
@@ -376,31 +370,31 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
           </div>
 
           {/* Bottom CTA */}
-          <div style={{ marginTop: '56px', textAlign: 'center', paddingTop: '40px', borderTop: '1px solid var(--color-outline)' }}>
-            <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '24px', letterSpacing: '-0.01em' }}>
+          <div style={{ marginTop: '56px', textAlign: 'center', paddingTop: '40px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+            <p style={{ fontSize: '13px', color: '#A1A1AA', marginBottom: '24px', letterSpacing: '-0.01em' }}>
               Every assumption above is editable. Run the numbers on your situation.
             </p>
             <button
               onClick={() => router.push('/experience')}
               style={{
                 height: '56px', padding: '0 44px',
-                backgroundColor: 'var(--color-btn-primary-bg)',
-                color: 'var(--color-btn-primary-text)',
+                backgroundColor: '#FAFAFA',
+                color: '#0F0F11',
                 border: 'none', borderRadius: '9999px',
                 fontSize: '16px', fontWeight: 600, cursor: 'pointer',
                 fontFamily: 'var(--font-sans), system-ui, sans-serif',
                 letterSpacing: '-0.02em',
-                boxShadow: '0 2px 16px rgba(0,0,0,0.1)',
+                boxShadow: '0 2px 16px rgba(0,0,0,0.3)',
               }}
             >
               Try with my numbers
             </button>
-            <p style={{ marginTop: '12px', fontSize: '12px', color: 'var(--color-text-faint)' }}>
+            <p style={{ marginTop: '12px', fontSize: '12px', color: '#52525B' }}>
               Free. No account. 3 minutes.
             </p>
-            <p style={{ marginTop: '20px', fontSize: '11px', color: 'var(--color-text-faint)', lineHeight: 1.6 }}>
+            <p style={{ marginTop: '20px', fontSize: '11px', color: '#52525B', lineHeight: 1.6 }}>
               Not financial advice. Every formula is cited.{' '}
-              <a href="/methodology" style={{ color: 'var(--color-text-muted)', textDecoration: 'underline', textUnderlineOffset: '2px' }}>
+              <a href="/methodology" style={{ color: '#71717A', textDecoration: 'underline', textUnderlineOffset: '2px' }}>
                 Read methodology
               </a>
             </p>

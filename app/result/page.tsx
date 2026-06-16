@@ -309,27 +309,19 @@ export default function ResultPage() {
               </div>
             </motion.div>
 
-            {/* Affordance: sparklines + pill */}
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
+            {/* Affordance: pill CTA */}
+            <motion.button
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 2.8, duration: 0.5, ease: [0, 0, 0.2, 1] }}
-              style={{ position: 'absolute', bottom: '40px', right: '48px', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}
+              transition={{ delay: 2.4, duration: 0.5, ease: [0, 0, 0.2, 1] }}
+              onClick={() => setActivePanel('chart')}
+              whileHover={{ scale: 1.03, backgroundColor: 'rgba(255,255,255,0.14)' }}
+              whileTap={{ scale: 0.97 }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', height: '44px', padding: '0 20px', borderRadius: '9999px', backgroundColor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.13)', color: '#FAFAFA', cursor: 'pointer', fontSize: '13px', fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.01em', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', marginTop: '40px' }}
             >
-              <svg viewBox="0 0 100 36" style={{ width: '90px', opacity: 0.22 }}>
-                <motion.path d="M0 30 C 20 24 40 14 55 9 S 80 3 100 1" fill="none" stroke="var(--color-owner)" strokeWidth="1.8" strokeLinecap="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 3.0, duration: 1.1, ease: 'easeOut' }} />
-                <motion.path d="M0 33 C 20 30 40 26 55 22 S 80 16 100 13" fill="none" stroke="var(--color-renter)" strokeWidth="1.8" strokeLinecap="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 3.15, duration: 1.1, ease: 'easeOut' }} />
-              </svg>
-              <motion.button
-                onClick={() => setActivePanel('chart')}
-                whileHover={{ scale: 1.03, backgroundColor: 'rgba(255,255,255,0.14)' }}
-                whileTap={{ scale: 0.97 }}
-                style={{ display: 'flex', alignItems: 'center', gap: '8px', height: '44px', padding: '0 18px', borderRadius: '9999px', backgroundColor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.13)', color: '#FAFAFA', cursor: 'pointer', fontSize: '13px', fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.01em', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
-              >
-                See it play out
-                <motion.span animate={{ x: [0, 4, 0] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut', repeatDelay: 0.2 }}>→</motion.span>
-              </motion.button>
-            </motion.div>
+              See it play out
+              <motion.span animate={{ x: [0, 4, 0] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut', repeatDelay: 0.2 }}>→</motion.span>
+            </motion.button>
           </div>
 
           {/* Panel 2: chart */}
@@ -343,7 +335,7 @@ export default function ResultPage() {
                 >
                   ← Result
                 </button>
-                <p style={{ fontSize: '13px', color: '#52525B', fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.01em' }}>
+                <p style={{ fontSize: '15px', fontWeight: 500, color: '#FAFAFA', fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.02em' }}>
                   {inputs.firstName ? `${inputs.firstName}'s wealth trajectory` : 'Wealth trajectory'} — {inputs.holdingPeriodYears} yr
                 </p>
                 <div style={{ width: '80px' }} />
@@ -502,8 +494,8 @@ export default function ResultPage() {
         </motion.div>
       </div>
 
-      {/* ─── Light detail section ──────────────────────────────────────── */}
-      <div style={{ backgroundColor: 'var(--color-bg)', clipPath: 'polygon(0 28px, 100% 0%, 100% 100%, 0 100%)', marginTop: '-28px', color: 'var(--color-text)', padding: '72px 24px 80px' }}>
+      {/* ─── Dark detail section ───────────────────────────────────────── */}
+      <div className="dark-panel" style={{ backgroundColor: '#17171B', color: '#FAFAFA', padding: '48px 24px 80px' }}>
         <div style={{ maxWidth: '780px', margin: '0 auto' }}>
 
           {/* Chart */}
@@ -532,9 +524,9 @@ export default function ResultPage() {
                   style={{
                     padding: '6px 14px', borderRadius: '100px', fontSize: '12px',
                     fontFamily: 'var(--font-sans), system-ui, sans-serif',
-                    border: `1px solid ${isActive ? 'var(--color-text)' : 'var(--color-outline)'}`,
-                    backgroundColor: isActive ? 'var(--color-text)' : 'transparent',
-                    color: isActive ? 'var(--color-bg)' : 'var(--color-text-muted)',
+                    border: `1px solid ${isActive ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.1)'}`,
+                    backgroundColor: isActive ? 'rgba(255,255,255,0.1)' : 'transparent',
+                    color: isActive ? '#FAFAFA' : '#71717A',
                     cursor: 'pointer', transition: 'background-color 0.15s, color 0.15s, border-color 0.15s',
                     letterSpacing: '-0.01em',
                   }}
@@ -555,9 +547,9 @@ export default function ResultPage() {
 
           {/* Break-even callout */}
           {result.breakEvenYear !== null && (
-            <div style={{ marginTop: '24px', padding: '14px 18px', backgroundColor: 'var(--color-bg-subtle)', border: '1px solid var(--color-outline)', borderRadius: '10px' }}>
-              <span style={{ fontSize: '13px', color: 'var(--color-text-muted)', lineHeight: 1.5 }}>
-                Owner and renter wealth lines cross at <strong style={{ color: 'var(--color-text)' }}>year {result.breakEvenYear}</strong>.
+            <div style={{ marginTop: '24px', padding: '14px 18px', backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px' }}>
+              <span style={{ fontSize: '13px', color: '#A1A1AA', lineHeight: 1.5 }}>
+                Owner and renter wealth lines cross at <strong style={{ color: '#FAFAFA' }}>year {result.breakEvenYear}</strong>.
                 {winner === 'rent'
                   ? ` The owner trails until then. If the holding period extends beyond year ${result.breakEvenYear}, buying becomes the stronger outcome.`
                   : ` The renter leads until then. Shorter hold periods favor renting.`}
@@ -569,33 +561,33 @@ export default function ResultPage() {
           <div style={{ marginTop: '24px' }}>
             <button
               onClick={() => setDrawerOpen(true)}
-              style={{ width: '100%', padding: '13px 20px', borderRadius: '10px', border: '1px solid var(--color-outline)', backgroundColor: 'var(--color-bg-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', fontFamily: 'var(--font-sans), system-ui, sans-serif', color: 'var(--color-text)', transition: 'background-color 0.15s' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--color-bg-elevated)'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--color-bg-subtle)'; }}
+              style={{ width: '100%', padding: '13px 20px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)', backgroundColor: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', fontFamily: 'var(--font-sans), system-ui, sans-serif', color: '#FAFAFA', transition: 'background-color 0.15s' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(255,255,255,0.07)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(255,255,255,0.04)'; }}
             >
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '1px' }}>
                 <span style={{ fontSize: '13px', fontWeight: 500 }}>View all assumptions</span>
-                <span style={{ fontSize: '11px', color: 'var(--color-text-faint)' }}>
+                <span style={{ fontSize: '11px', color: '#71717A' }}>
                   {inputs.holdingPeriodYears}yr horizon · {PROVINCE_NAMES[inputs.province] ?? inputs.province} · {fmtPct(inputs.mortgageRatePct, 2)} rate
                 </span>
               </div>
-              <span style={{ fontSize: '18px', color: 'var(--color-text-faint)', lineHeight: 1 }}>↑</span>
+              <span style={{ fontSize: '18px', color: '#52525B', lineHeight: 1 }}>↑</span>
             </button>
           </div>
 
           {/* Footer CTAs */}
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '32px', paddingTop: '24px', borderTop: '1px solid var(--color-outline)' }}>
-            <button onClick={handleShare} style={{ flex: 1, minWidth: '140px', height: '48px', borderRadius: '9999px', backgroundColor: 'var(--color-btn-primary-bg)', color: 'var(--color-btn-primary-text)', border: 'none', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.01em' }}>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '32px', paddingTop: '24px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+            <button onClick={handleShare} style={{ flex: 1, minWidth: '140px', height: '48px', borderRadius: '9999px', backgroundColor: '#FAFAFA', color: '#0F0F11', border: 'none', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.01em' }}>
               {copied ? 'Link copied' : 'Share result'}
             </button>
-            <button onClick={() => router.push('/experience')} style={{ flex: 1, minWidth: '140px', height: '48px', borderRadius: '9999px', backgroundColor: 'transparent', color: 'var(--color-text)', border: '1px solid var(--color-outline-active)', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.01em' }}>
+            <button onClick={() => router.push('/experience')} style={{ flex: 1, minWidth: '140px', height: '48px', borderRadius: '9999px', backgroundColor: 'transparent', color: '#FAFAFA', border: '1px solid rgba(255,255,255,0.2)', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.01em' }}>
               Recalculate →
             </button>
           </div>
 
-          <p style={{ marginTop: '20px', fontSize: '11px', color: 'var(--color-text-faint)', lineHeight: 1.55 }}>
+          <p style={{ marginTop: '20px', fontSize: '11px', color: '#52525B', lineHeight: 1.55 }}>
             Not financial advice. Every assumption is editable.{' '}
-            <button onClick={() => setMethodologyOpen(true)} style={{ color: 'var(--color-text-muted)', textDecoration: 'underline', textUnderlineOffset: '2px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', padding: 0, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
+            <button onClick={() => setMethodologyOpen(true)} style={{ color: '#71717A', textDecoration: 'underline', textUnderlineOffset: '2px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', padding: 0, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
               Read methodology
             </button>
           </p>
@@ -609,7 +601,7 @@ export default function ResultPage() {
         {drawerOpen && (
           <>
             <motion.div key="drawer-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} onClick={() => setDrawerOpen(false)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', zIndex: 40 }} />
-            <motion.div key="drawer-panel" initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.9 }} style={{ position: 'fixed', bottom: 0, left: 0, right: 0, maxHeight: '80vh', backgroundColor: 'var(--color-bg)', borderTop: '1px solid var(--color-outline)', borderRadius: '20px 20px 0 0', zIndex: 50, display: 'flex', flexDirection: 'column' }}>
+            <motion.div key="drawer-panel" initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.9 }} style={{ position: 'fixed', bottom: '8px', left: 'clamp(8px, 3vw, 32px)', right: 'clamp(8px, 3vw, 32px)', maxHeight: '80vh', backgroundColor: 'var(--color-bg)', borderRadius: '16px', zIndex: 50, display: 'flex', flexDirection: 'column', boxShadow: '0 -8px 48px rgba(0,0,0,0.18)' }}>
               <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 8px', cursor: 'pointer', flexShrink: 0 }} onClick={() => setDrawerOpen(false)}>
                 <div style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: 'var(--color-outline-active)' }} />
               </div>
@@ -617,10 +609,8 @@ export default function ResultPage() {
                 <p style={{ fontSize: '15px', fontWeight: 600, fontFamily: 'var(--font-sans), system-ui, sans-serif', color: 'var(--color-text)', letterSpacing: '-0.01em' }}>All assumptions</p>
                 <button onClick={() => setDrawerOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: 'var(--color-text-faint)', lineHeight: 1, padding: '4px' }}>✕</button>
               </div>
-              <div style={{ overflowY: 'auto', flex: 1, padding: '20px clamp(24px, 6vw, 56px) 48px', WebkitOverflowScrolling: 'touch' }}>
-                <div style={{ maxWidth: '680px', margin: '0 auto' }}>
-                  {drawerSections.map(section => <DrawerSection key={section.title} title={section.title} items={section.items} />)}
-                </div>
+              <div style={{ overflowY: 'auto', flex: 1, padding: '20px 24px 48px', WebkitOverflowScrolling: 'touch' }}>
+                {drawerSections.map(section => <DrawerSection key={section.title} title={section.title} items={section.items} />)}
               </div>
             </motion.div>
           </>
@@ -632,7 +622,7 @@ export default function ResultPage() {
         {methodologyOpen && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} onClick={() => setMethodologyOpen(false)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', zIndex: 40 }} />
-            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.9 }} style={{ position: 'fixed', bottom: 0, left: 0, right: 0, maxHeight: '82vh', backgroundColor: 'var(--color-bg)', borderRadius: '16px 16px 0 0', zIndex: 50, display: 'flex', flexDirection: 'column', boxShadow: '0 -8px 48px rgba(0,0,0,0.18)' }}>
+            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.9 }} style={{ position: 'fixed', bottom: '8px', left: 'clamp(8px, 3vw, 32px)', right: 'clamp(8px, 3vw, 32px)', maxHeight: '82vh', backgroundColor: 'var(--color-bg)', borderRadius: '16px', zIndex: 50, display: 'flex', flexDirection: 'column', boxShadow: '0 -8px 48px rgba(0,0,0,0.18)' }}>
               <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '12px', paddingBottom: '4px', flexShrink: 0 }}>
                 <div style={{ width: '36px', height: '4px', borderRadius: '9999px', backgroundColor: 'var(--color-outline-active)' }} />
               </div>
@@ -643,10 +633,8 @@ export default function ResultPage() {
                 </div>
                 <button onClick={() => setMethodologyOpen(false)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-outline)', background: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
               </div>
-              <div style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: 1, padding: '0 clamp(20px, 6vw, 56px) 48px' }}>
-                <div style={{ maxWidth: '680px', margin: '0 auto' }}>
-                  <MethodologyContent />
-                </div>
+              <div style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: 1, padding: '0 20px 40px' }}>
+                <MethodologyContent />
               </div>
             </motion.div>
           </>
@@ -658,7 +646,7 @@ export default function ResultPage() {
         {faqOpen && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} onClick={() => setFaqOpen(false)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', zIndex: 40 }} />
-            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.9 }} style={{ position: 'fixed', bottom: 0, left: 0, right: 0, maxHeight: '82vh', backgroundColor: 'var(--color-bg)', borderRadius: '16px 16px 0 0', zIndex: 50, display: 'flex', flexDirection: 'column', boxShadow: '0 -8px 48px rgba(0,0,0,0.18)' }}>
+            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.9 }} style={{ position: 'fixed', bottom: '8px', left: 'clamp(8px, 3vw, 32px)', right: 'clamp(8px, 3vw, 32px)', maxHeight: '82vh', backgroundColor: 'var(--color-bg)', borderRadius: '16px', zIndex: 50, display: 'flex', flexDirection: 'column', boxShadow: '0 -8px 48px rgba(0,0,0,0.18)' }}>
               <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '12px', paddingBottom: '4px', flexShrink: 0 }}>
                 <div style={{ width: '36px', height: '4px', borderRadius: '9999px', backgroundColor: 'var(--color-outline-active)' }} />
               </div>
@@ -669,10 +657,8 @@ export default function ResultPage() {
                 </div>
                 <button onClick={() => setFaqOpen(false)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-outline)', background: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
               </div>
-              <div style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: 1, padding: '0 clamp(20px, 6vw, 56px) 48px' }}>
-                <div style={{ maxWidth: '680px', margin: '0 auto' }}>
-                  <FaqContent />
-                </div>
+              <div style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: 1, padding: '0 20px 40px' }}>
+                <FaqContent />
               </div>
             </motion.div>
           </>
