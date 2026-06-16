@@ -87,7 +87,7 @@ export async function generateMetadata({ params }: { params: Promise<{ city: str
   if (!Object.hasOwn(CITIES, city)) return {};
   const cfg = CITIES[city as CityKey];
   return {
-    title: `${cfg.label} Rent vs Buy — Reckon`,
+    title: `${cfg.label} Rent vs Buy — reckon`,
     description: `Rent vs buy in ${cfg.label}. 25-year wealth comparison using current median home prices and rents.`,
   };
 }
@@ -164,7 +164,7 @@ export default async function CityPage({ params }: { params: Promise<{ city: str
           href="/"
           style={{ fontSize: '14px', fontWeight: 500, letterSpacing: '-0.02em', color: 'var(--color-text)', textDecoration: 'none' }}
         >
-          Reckon
+          reckon
         </Link>
         <Link
           href="/experience"

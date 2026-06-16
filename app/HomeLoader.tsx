@@ -89,7 +89,7 @@ export function HomeLoader({ onComplete }: Props) {
               />
             </svg>
 
-            {/* Reckon wordmark — reveals centered below the chart */}
+            {/* reckon wordmark — reveals centered below the chart */}
             {sigIn && (
               <div style={{
                 position: 'absolute',

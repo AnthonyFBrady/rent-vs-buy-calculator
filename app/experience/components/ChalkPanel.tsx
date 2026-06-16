@@ -70,7 +70,26 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
   const initialRatePct = (inputs.mortgageRatePct * 100).toFixed(2);
 
   const content: Record<number, React.ReactNode> = {
-    1: (
+    0: (
+      <>
+        <Section label="Why these three things">
+          <p style={{ fontSize: '12px', lineHeight: 1.65, color: CHALK_TEXT }}>
+            Age determines how much TFSA room you have accumulated. Income sets your RRSP contribution limit. Name is just for the chart.
+          </p>
+        </Section>
+        <Divider />
+        <Section label="TFSA room by age">
+          <Row label="Turns 18 in 2009 or earlier" value="$95k lifetime" color={CHALK_RENTER} />
+          <Row label="Born 1997 (age 29)" value="~$58k" color={CHALK_RENTER} />
+          <Row label="Born 2000 (age 26)" value="~$37k" color={CHALK_RENTER} />
+          <p style={{ fontSize: '10px', color: CHALK_MUTED, marginTop: '6px' }}>
+            $7,000/yr new room added each January.
+          </p>
+        </Section>
+      </>
+    ),
+
+    2: (
       <>
         <Section label="How the model works">
           <p style={{ fontSize: '12px', lineHeight: 1.65, color: CHALK_TEXT }}>
@@ -89,7 +108,7 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
       </>
     ),
 
-    2: (
+    3: (
       <>
         <Section label="Why holding period matters">
           <p style={{ fontSize: '12px', lineHeight: 1.65, color: CHALK_TEXT }}>
@@ -105,7 +124,7 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
       </>
     ),
 
-    3: (() => {
+    4: (() => {
       const ltt = landTransferTax(inputs.homePrice, inputs.province, {
         isTorontoMunicipalLTT: inputs.isTorontoMunicipalLTT,
         isFirstTimeBuyer: inputs.isFirstTimeBuyer,
@@ -142,7 +161,7 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
       );
     })(),
 
-    4: (
+    5: (
       <>
         <Section label="What the renter does instead">
           <p style={{ fontSize: '12px', lineHeight: 1.65, color: CHALK_TEXT }}>
@@ -169,7 +188,7 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
       </>
     ),
 
-    5: (
+    6: (
       <>
         <Section label="Starting lump sum">
           <p style={{ fontSize: '12px', lineHeight: 1.65, color: CHALK_TEXT }}>
@@ -187,7 +206,7 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
       </>
     ),
 
-    6: (
+    7: (
       <>
         <Section label="Fill order">
           <p style={{ fontSize: '11px', lineHeight: 1.6, color: CHALK_MUTED, marginBottom: '8px' }}>
@@ -207,7 +226,7 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
       </>
     ),
 
-    7: (
+    8: (
       <>
         <Section label={`Unrecoverable cost — ${unrecoverablePct}% of price per year`}>
           <p style={{ fontSize: '11px', lineHeight: 1.6, color: CHALK_MUTED, marginBottom: '10px' }}>
@@ -221,30 +240,6 @@ export function ChalkPanel({ phase, inputs, sim }: Props) {
           <div style={{ height: '1px', background: 'var(--color-outline)', margin: '6px 0' }} />
           <Row label="Total unrecoverable" value={fmt.format(Math.round(yr1Unrecoverable))} color={CHALK_OWNER} />
         </Section>
-      </>
-    ),
-
-    8: (
-      <>
-        {inputs.monthlyStrataFee && inputs.monthlyStrataFee > 0 ? (
-          <Section label="Condo costs">
-            <p style={{ fontSize: '12px', lineHeight: 1.65, color: CHALK_TEXT }}>
-              Strata fees are an ongoing cost that escalates with inflation. They reduce the invest-the-difference surplus for the renter.
-            </p>
-            <Divider />
-            <Row label="Monthly strata" value={fmt.format(inputs.monthlyStrataFee)} color={CHALK_OWNER} />
-            <Row label="Annual cost" value={fmt.format(inputs.monthlyStrataFee * 12)} />
-          </Section>
-        ) : (
-          <Section label="Maintenance assumption">
-            <p style={{ fontSize: '12px', lineHeight: 1.65, color: CHALK_TEXT }}>
-              The model uses {((inputs.maintenancePct ?? 0.015) * 100).toFixed(1)}% of home value per year for maintenance — replacing roofs, HVAC, appliances over time.
-            </p>
-            <p style={{ fontSize: '11px', lineHeight: 1.6, color: CHALK_MUTED, marginTop: '8px' }}>
-              Most studies suggest 1–2% annually. Condos can be lower; older homes can be higher.
-            </p>
-          </Section>
-        )}
       </>
     ),
 

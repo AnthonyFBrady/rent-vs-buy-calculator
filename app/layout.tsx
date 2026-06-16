@@ -16,9 +16,9 @@ const dmSans = DM_Sans({
   weight: ['400', '500', '600', '700'],
 });
 
-const SITE_NAME = 'Reckon';
+const SITE_NAME = 'reckon';
 const DESCRIPTION =
-  "Canada's rent vs buy calculator. The explicit costs of renting are obvious. The implicit costs of owning are not. Reckon with the real math. Every assumption editable. Every formula cited.";
+  "Canada's rent vs buy calculator. The explicit costs of renting are obvious. The implicit costs of owning are not. reckon with the real math. Every assumption editable. Every formula cited.";
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://reckon.ca'),

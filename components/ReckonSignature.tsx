@@ -3,14 +3,14 @@
 import { motion } from 'motion/react';
 
 /*
-  Reckon wordmark — Playfair Display 900 italic.
+  reckon wordmark — Playfair Display 900 italic.
   Already loaded globally as var(--font-serif).
 
   Static:  plain span, renders instantly.
   Animated: clip-path inset sweeps left → right, simulating a write-on reveal.
 
-  width prop controls fontSize (font renders ~3.7x wider than fontSize,
-  so fontSize = width / 3.7).
+  width prop controls fontSize (font renders ~2.8x wider than fontSize,
+  so fontSize = width / 2.8).
 */
 
 interface Props {
@@ -28,7 +28,7 @@ export function ReckonSignature({
   duration = 1.1,
   delay = 0,
 }: Props) {
-  const fontSize = Math.round(width / 3.7);
+  const fontSize = Math.round(width / 3.5);
 
   const style: React.CSSProperties = {
     fontFamily: 'var(--font-serif), "Playfair Display", Georgia, serif',
@@ -44,7 +44,7 @@ export function ReckonSignature({
   };
 
   if (!animate) {
-    return <span style={style}>Reckon</span>;
+    return <span style={style}>reckon</span>;
   }
 
   return (
@@ -54,7 +54,7 @@ export function ReckonSignature({
       animate={{ clipPath: 'inset(0 0% 0 0)' }}
       transition={{ duration, delay, ease: [0.4, 0, 0.2, 1] }}
     >
-      Reckon
+      reckon
     </motion.span>
   );
 }

@@ -8,11 +8,11 @@ import type { SensitivityScenario } from '@/lib/store';
 import { WealthChart } from '@/components/chart/WealthChart';
 import { ReckonSignature } from '@/components/ReckonSignature';
 
-// ??? Helpers ????????????????????????????????????????????????????????????????
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function fmtWealth(n: number): string {
   const abs = Math.abs(n);
-  const sign = n < 0 ? '?' : '';
+  const sign = n < 0 ? '-' : '';
   if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(2)}M`;
   if (abs >= 1_000) return `${sign}$${Math.round(abs / 1_000)}k`;
   return `${sign}$${Math.round(abs)}`;
@@ -53,7 +53,7 @@ interface Props {
   shareId: string;
 }
 
-// ??? Component ???????????????????????????????????????????????????????????????
+// ─── Component ───────────────────────────────────────────────────────────────
 
 export function SharedResultClient({ inputs, result, scenarios, shareId }: Props) {
   const router = useRouter();
@@ -72,13 +72,6 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
   const renterColor = 'var(--color-renter)';
   const winnerColor = winner === 'buy' ? ownerColor : winner === 'rent' ? renterColor : 'var(--color-text-muted)';
 
-  const verdictBadge = winner === 'buy' ? 'Buying wins' : winner === 'rent' ? 'Renting wins' : 'Too close to call';
-  const verdictHeadline = winner === 'buy'
-    ? 'Buying comes out ahead.'
-    : winner === 'rent'
-    ? 'Renting comes out ahead.'
-    : 'Roughly tied.';
-
   const countedValue = useCountUp(absAdvantage, 2200, 1100);
 
   const activeScenario = scenarios.find(s => s.id === activeSensitivity) ?? scenarios[0]!;
@@ -88,7 +81,7 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
     const url = `${window.location.origin}/result/${shareId}`;
     try {
       if (navigator.share) {
-        await navigator.share({ title: 'My Reckon result', url });
+        await navigator.share({ title: 'My reckon result', url });
       } else {
         await navigator.clipboard.writeText(url);
         setCopied(true);
@@ -113,7 +106,7 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
   return (
     <div style={{ minHeight: '100dvh', backgroundColor: '#0F0F11', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
 
-      {/* ??? Single header � grey, sticky ??????????????????????????????? */}
+      {/* Header */}
       <div style={{
         backgroundColor: '#17171B',
         borderBottom: '1px solid rgba(255,255,255,0.06)',
@@ -134,7 +127,7 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           padding: '0 8px',
         }}>
-          Shared result � run your own to see your number
+          Shared result. Run your own to see your number.
         </p>
         <button
           onClick={() => router.push('/experience')}
@@ -147,11 +140,11 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
             letterSpacing: '-0.01em', flexShrink: 0, whiteSpace: 'nowrap',
           }}
         >
-          Try with my numbers ?
+          Try with my numbers
         </button>
       </div>
 
-      {/* ??? Dark hero ?????????????????????????????????????????????????? */}
+      {/* Dark hero */}
       <div style={{
         minHeight: 'calc(100dvh - 52px)',
         display: 'flex',
@@ -169,99 +162,44 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
           transition={{ duration: 0.5, delay: 0.3, ease }}
           style={{ fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#52525B', marginBottom: '28px', fontWeight: 500 }}
         >
-          {inputs.holdingPeriodYears}-year outlook � {PROVINCE_NAMES[inputs.province] ?? inputs.province}
+          {inputs.holdingPeriodYears}-year outlook — {PROVINCE_NAMES[inputs.province] ?? inputs.province}
         </motion.p>
 
-        {/* Verdict badge */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.88 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.55, ease: [0.34, 1.3, 0.64, 1] }}
-          style={{
-            display: 'inline-flex', alignItems: 'center',
-            height: '30px', padding: '0 14px',
-            borderRadius: '9999px',
-            border: `1px solid ${winnerColor}`,
-            marginBottom: '28px',
-          }}
-        >
-          <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', color: winnerColor }}>
-            {verdictBadge}
-          </span>
-        </motion.div>
-
-        {/* Main headline */}
+        {/* Combined verdict headline */}
         <motion.h1
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.8, ease }}
-          style={{
-            fontFamily: 'var(--font-serif), Georgia, serif',
-            fontSize: 'clamp(34px, 6vw, 68px)',
-            fontWeight: 700,
-            letterSpacing: '-0.04em',
-            lineHeight: 1.05,
-            color: '#FAFAFA',
-            marginBottom: '32px',
-            maxWidth: '700px',
-          }}
+          initial={{ opacity: 0, x: 40 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.45, ease }}
+          style={{ fontFamily: 'var(--font-serif), Georgia, serif', fontSize: 'clamp(28px, 5vw, 60px)', fontWeight: 700, letterSpacing: '-0.04em', lineHeight: 1.1, color: '#FAFAFA', marginBottom: '16px', maxWidth: '760px' }}
         >
-          {verdictHeadline}
+          {winner === 'tie' ? (
+            <>Within <span style={{ color: winnerColor, fontVariantNumeric: 'tabular-nums' }}>{fmtWealth(absAdvantage)}</span> either way after {inputs.holdingPeriodYears} years.</>
+          ) : (
+            <>{winner === 'buy' ? 'Buying' : 'Renting'} comes out{' '}
+              <span style={{ display: 'inline-grid', color: winnerColor }}>
+                <span style={{ gridArea: '1/1', color: 'transparent', userSelect: 'none', pointerEvents: 'none', fontVariantNumeric: 'tabular-nums' }}>{fmtWealth(absAdvantage)}</span>
+                <span style={{ gridArea: '1/1', fontVariantNumeric: 'tabular-nums' }}>{fmtWealth(countedValue)}</span>
+              </span>
+              {' '}ahead after {inputs.holdingPeriodYears} years.</>
+          )}
         </motion.h1>
-
-        {/* Animated advantage number */}
-        {winner !== 'tie' && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 1.0, ease }}
-          >
-            <p style={{
-              fontSize: 'clamp(64px, 12vw, 140px)',
-              fontWeight: 700,
-              letterSpacing: '-0.05em',
-              lineHeight: 1,
-              color: winnerColor,
-              fontVariantNumeric: 'tabular-nums',
-            }}>
-              {fmtWealth(countedValue)}
-            </p>
-          </motion.div>
-        )}
-
-        {/* "ahead after N years" */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 1.5, ease }}
-          style={{
-            fontSize: 'clamp(16px, 2.2vw, 20px)',
-            color: '#A1A1AA',
-            marginTop: '16px',
-            letterSpacing: '-0.01em',
-          }}
-        >
-          {winner !== 'tie'
-            ? `ahead after ${inputs.holdingPeriodYears} years`
-            : `Within ${fmtWealth(absAdvantage)} either way after ${inputs.holdingPeriodYears} years`}
-        </motion.p>
 
         {result.breakEvenYear !== null && (
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: 1.9, ease }}
-            style={{ fontSize: '13px', color: '#52525B', marginTop: '8px' }}
+            transition={{ duration: 0.4, delay: 1.1, ease }}
+            style={{ fontSize: '13px', color: '#52525B', marginTop: '4px', marginBottom: '4px' }}
           >
             Lines cross at year {result.breakEvenYear}
           </motion.p>
         )}
 
-        {/* ??? Owner vs Renter final wealth split ??????????????????????? */}
+        {/* Owner vs Renter final wealth split */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 2.2, ease }}
+          initial={{ opacity: 0, x: 40 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 1.4, ease }}
           style={{
             display: 'flex',
             gap: 0,
@@ -342,12 +280,13 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
         </motion.div>
       </div>
 
-      {/* ??? Light detail section ??????????????????????????????????????? */}
+      {/* Light detail section */}
       <div style={{
         backgroundColor: 'var(--color-bg)',
-        borderTop: '1px solid var(--color-outline)',
+        clipPath: 'polygon(0 28px, 100% 0%, 100% 100%, 0 100%)',
+        marginTop: '-28px',
         color: 'var(--color-text)',
-        padding: '48px 24px 96px',
+        padding: '72px 24px 96px',
       }}>
         <div style={{ maxWidth: '760px', margin: '0 auto' }}>
 
@@ -454,7 +393,7 @@ export function SharedResultClient({ inputs, result, scenarios, shareId }: Props
                 boxShadow: '0 2px 16px rgba(0,0,0,0.1)',
               }}
             >
-              Try with my numbers ?
+              Try with my numbers
             </button>
             <p style={{ marginTop: '12px', fontSize: '12px', color: 'var(--color-text-faint)' }}>
               Free. No account. 3 minutes.

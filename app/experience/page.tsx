@@ -18,6 +18,7 @@ import {
   STEP_WHY,
   CONTINUE_LABEL,
 } from './config/steps';
+import { StepPersonal }    from './steps/StepPersonal';
 import { StepProvince }    from './steps/StepProvince';
 import { StepHome }        from './steps/StepHome';
 import { StepDownPayment } from './steps/StepDownPayment';
@@ -29,6 +30,7 @@ import { StepMobility }    from './steps/StepMobility';
 
 // Per-step accent color: 'owner' | 'renter' | 'neutral'
 const STEP_ACCENT: Record<number, 'owner' | 'renter' | 'neutral'> = {
+  [STEP.PERSONAL]:     'neutral',
   [STEP.PROVINCE]:     'neutral',
   [STEP.HOME]:         'owner',
   [STEP.DOWN_PAYMENT]: 'owner',
@@ -45,7 +47,7 @@ const ACCENT_COLOR: Record<string, string> = {
   neutral: 'var(--color-text-faint)',
 };
 
-type Phase = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
+type Phase = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 interface State {
   phase: Phase;
@@ -92,6 +94,7 @@ export default function ExperiencePage() {
   const [methodologyOpen, setMethodologyOpen] = useState(false);
   const [faqOpen, setFaqOpen] = useState(false);
   const [kbHintSeen, setKbHintSeen] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const { phase, inputs, direction } = state;
 
@@ -177,7 +180,8 @@ export default function ExperiencePage() {
     ];
 
     setResult(inputs, sim, scenarios);
-    router.push('/result');
+    setIsNavigating(true);
+    setTimeout(() => router.push('/result'), 220);
   }, [phase, liveSim, inputs, advance, setResult, router]);
 
   // Keyboard navigation: Enter/→ advance, ← back. Guards: skip when focused on an input.
@@ -215,9 +219,9 @@ export default function ExperiencePage() {
 
   return (
     <motion.div
-      initial={{ x: 60, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      transition={{ duration: 0.45, ease: [0.0, 0.0, 0.2, 1] }}
+      initial={{ opacity: 0, scale: 0.97 }}
+      animate={{ opacity: isNavigating ? 0 : 1, scale: isNavigating ? 0.97 : 1 }}
+      transition={{ duration: isNavigating ? 0.22 : 0.30, ease: isNavigating ? [0.4, 0, 1, 1] : [0.0, 0.0, 0.2, 1] }}
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -225,8 +229,11 @@ export default function ExperiencePage() {
         backgroundColor: 'var(--color-bg)',
         color: 'var(--color-text)',
         fontFamily: 'var(--font-sans), system-ui, sans-serif',
+        position: 'relative',
+        transformOrigin: 'center',
       }}
     >
+
       {/* Nav */}
       <nav
         style={{
@@ -402,6 +409,7 @@ export default function ExperiencePage() {
                     boxShadow: '0 1px 4px rgba(0,0,0,0.05), 0 0 0 0.5px rgba(0,0,0,0.04)',
                   }}
                 >
+                  {phase === STEP.PERSONAL     && <StepPersonal    inputs={inputs} patch={patch} />}
                   {phase === STEP.PROVINCE     && <StepProvince    inputs={inputs} patch={patch} />}
                   {phase === STEP.HOME         && <StepHome        inputs={inputs} patch={patch} />}
                   {phase === STEP.DOWN_PAYMENT && <StepDownPayment inputs={inputs} patch={patch} />}
@@ -439,6 +447,9 @@ export default function ExperiencePage() {
             overflowY: 'auto',
           }}
         >
+          <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', marginBottom: '10px', letterSpacing: '-0.01em', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
+            {inputs.firstName ? `${inputs.firstName}'s wealth outlook` : 'Wealth outlook'} — {inputs.holdingPeriodYears}yr
+          </p>
           <WealthChart
             ownerData={liveOwnerData}
             renterData={liveRenterData}
@@ -570,8 +581,10 @@ export default function ExperiencePage() {
                 </div>
                 <button onClick={() => setMethodologyOpen(false)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-outline)', background: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
               </div>
-              <div style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: 1, padding: '0 20px 40px' }}>
-                <MethodologyContent />
+              <div style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: 1, padding: '0 clamp(20px, 6vw, 56px) 48px' }}>
+                <div style={{ maxWidth: '680px', margin: '0 auto' }}>
+                  <MethodologyContent />
+                </div>
               </div>
             </motion.div>
           </>
@@ -607,13 +620,16 @@ export default function ExperiencePage() {
                 </div>
                 <button onClick={() => setFaqOpen(false)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-outline)', background: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
               </div>
-              <div style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: 1, padding: '0 20px 40px' }}>
-                <FaqContent />
+              <div style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: 1, padding: '0 clamp(20px, 6vw, 56px) 48px' }}>
+                <div style={{ maxWidth: '680px', margin: '0 auto' }}>
+                  <FaqContent />
+                </div>
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
+
     </motion.div>
   );
 }

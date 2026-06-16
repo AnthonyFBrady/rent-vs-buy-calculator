@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from 'motion/react';
 export const FAQS: { q: string; a: string }[] = [
   {
     q: 'Why does this product exist?',
-    a: "The explicit costs of renting are obvious to everyone: the deposit, the monthly cheque, the landlord who can raise your rent next year. The implicit costs of owning are invisible until you run the math: land transfer tax, CMHC insurance, property tax, maintenance, and the opportunity cost of locking $143,000 in a down payment instead of letting it compound in your portfolio. Most mortgage calculators tell you what your payment will be, not what your net worth will be. Reckon shows both sides, makes every assumption editable, and cites every formula. The goal is not to tell you what to do. It is to make the real math visible so you can decide.",
+    a: "The explicit costs of renting are obvious to everyone: the deposit, the monthly cheque, the landlord who can raise your rent next year. The implicit costs of owning are invisible until you run the math: land transfer tax, CMHC insurance, property tax, maintenance, and the opportunity cost of locking $143,000 in a down payment instead of letting it compound in your portfolio. Most mortgage calculators tell you what your payment will be, not what your net worth will be. reckon shows both sides, makes every assumption editable, and cites every formula. The goal is not to tell you what to do. It is to make the real math visible so you can decide.",
   },
   {
     q: 'Why does renting look better in this calculator?',

@@ -29,6 +29,9 @@ export interface CalculatorInputs {
   isTorontoMunicipalLTT?: boolean;
   isFirstTimeBuyer: boolean;
 
+  /** Optional. Used only for personalized chart labels. Not used by engine math. */
+  firstName?: string;
+
   /** Optional. Drives the rent-suggestion heuristic. */
   postalCode: string;
 

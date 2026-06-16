@@ -21,17 +21,17 @@ export async function generateMetadata({ params }: Props) {
       : `$${Math.round(abs)}`;
 
     return {
-      title: `${winner === 'a near-tie' ? 'Tied' : winner.charAt(0).toUpperCase() + winner.slice(1) + ' ahead'} by ${delta} — Reckon`,
+      title: `${winner === 'a near-tie' ? 'Tied' : winner.charAt(0).toUpperCase() + winner.slice(1) + ' ahead'} by ${delta} — reckon`,
       description: `${snapshot.i.holdingPeriodYears}-year rent vs buy result. ${winner.charAt(0).toUpperCase() + winner.slice(1)} comes out ${delta} ahead after exit costs.`,
       openGraph: {
         title: `${winner === 'a near-tie' ? 'Tied' : winner.charAt(0).toUpperCase() + winner.slice(1) + ' ahead'} by ${delta}`,
-        description: `${snapshot.i.holdingPeriodYears}-year analysis on Reckon`,
+        description: `${snapshot.i.holdingPeriodYears}-year analysis on reckon`,
         images: [`/api/og?id=${params.shareId}`],
       },
     };
   } catch {
     return {
-      title: 'Shared result — Reckon',
+      title: 'Shared result — reckon',
     };
   }
 }

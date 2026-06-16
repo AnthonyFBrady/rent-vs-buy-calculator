@@ -11,7 +11,6 @@ import { MetricCard } from '@/components/MetricCard';
 import { MethodologyContent } from '@/components/MethodologyContent';
 import { FaqContent } from '@/components/FaqContent';
 import { ReckonSignature } from '@/components/ReckonSignature';
-
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function fmtWealth(n: number): string {
@@ -86,6 +85,8 @@ export default function ResultPage() {
   const [faqOpen, setFaqOpen] = useState(false);
   const [activeSensitivity, setActiveSensitivity] = useState<SensitivityScenario['id']>('base');
   const [chartH, setChartH] = useState(380);
+  const [activePanel, setActivePanel] = useState<'verdict' | 'chart'>('verdict');
+  const [desktopChartH, setDesktopChartH] = useState(520);
 
   useEffect(() => {
     if (!result || !inputs) router.replace('/experience');
@@ -93,6 +94,7 @@ export default function ResultPage() {
 
   useEffect(() => {
     if (window.innerWidth < 480) setChartH(260);
+    setDesktopChartH(Math.max(360, window.innerHeight - 52 - 200));
   }, []);
 
   useEffect(() => {
@@ -123,13 +125,6 @@ export default function ResultPage() {
   const renterColor = 'var(--color-renter)';
   const winnerColor = winner === 'buy' ? ownerColor : winner === 'rent' ? renterColor : 'var(--color-text-muted)';
 
-  const verdictBadge = winner === 'buy' ? 'Buying wins' : winner === 'rent' ? 'Renting wins' : 'Too close to call';
-  const verdictHeadline = winner === 'buy'
-    ? 'Buying comes out ahead.'
-    : winner === 'rent'
-    ? 'Renting comes out ahead.'
-    : 'Roughly tied.';
-
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const countedValue = useCountUp(winner !== 'tie' ? absAdvantage : 0, 2200, 1100);
 
@@ -148,7 +143,7 @@ export default function ResultPage() {
     const url = `${window.location.origin}/result/${shareId}`;
     try {
       if (navigator.share) {
-        await navigator.share({ title: 'My Reckon result', url });
+        await navigator.share({ title: 'My reckon result', url });
       } else {
         await navigator.clipboard.writeText(url);
         setCopied(true);
@@ -218,10 +213,10 @@ export default function ResultPage() {
 
   return (
     <motion.div
-      initial={{ x: 60, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      transition={{ duration: 0.45, ease: [0.0, 0.0, 0.2, 1] }}
-      style={{ minHeight: '100dvh', backgroundColor: '#0F0F11', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}
+      initial={{ opacity: 0, scale: 0.97 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.30, ease: [0.0, 0.0, 0.2, 1] }}
+      style={{ minHeight: '100dvh', backgroundColor: '#0F0F11', fontFamily: 'var(--font-sans), system-ui, sans-serif', position: 'relative', transformOrigin: 'center' }}
     >
 
       {/* ─── Dark nav ──────────────────────────────────────────────────── */}
@@ -257,6 +252,158 @@ export default function ResultPage() {
         </div>
       </nav>
 
+      {/* ─── Desktop: horizontal two-panel layout ─────────────────────── */}
+      <div className="hidden lg:block" style={{ overflow: 'hidden' }}>
+        <motion.div
+          animate={{ x: activePanel === 'chart' ? '-50%' : '0%' }}
+          transition={{ type: 'spring', stiffness: 300, damping: 34 }}
+          style={{ display: 'flex', width: '200vw' }}
+        >
+          {/* Panel 1: verdict */}
+          <div style={{ width: '100vw', height: 'calc(100dvh - 52px)', backgroundColor: '#0F0F11', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', padding: '0 clamp(48px, 8vw, 120px)', position: 'relative', overflow: 'hidden' }}>
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.3, ease }} style={{ fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#52525B', marginBottom: '28px', fontWeight: 500 }}>
+              {inputs.holdingPeriodYears}-year outlook — {PROVINCE_NAMES[inputs.province] ?? inputs.province}
+            </motion.p>
+
+            <motion.h1
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.45, ease }}
+              style={{ fontFamily: 'var(--font-serif), Georgia, serif', fontSize: 'clamp(28px, 4vw, 56px)', fontWeight: 700, letterSpacing: '-0.04em', lineHeight: 1.1, color: '#FAFAFA', marginBottom: '16px', maxWidth: '720px' }}
+            >
+              {winner === 'tie' ? (
+                <>Within <span style={{ color: winnerColor, fontVariantNumeric: 'tabular-nums' }}>{fmtWealth(absAdvantage)}</span> either way after {inputs.holdingPeriodYears} years.</>
+              ) : (
+                <>{winner === 'buy' ? 'Buying' : 'Renting'} comes out{' '}
+                  <span style={{ display: 'inline-grid', color: winnerColor }}>
+                    <span style={{ gridArea: '1/1', color: 'transparent', userSelect: 'none', pointerEvents: 'none', fontVariantNumeric: 'tabular-nums' }}>{fmtWealth(absAdvantage)}</span>
+                    <span style={{ gridArea: '1/1', fontVariantNumeric: 'tabular-nums' }}>{fmtWealth(countedValue)}</span>
+                  </span>
+                  {' '}ahead after {inputs.holdingPeriodYears} years.</>
+              )}
+            </motion.h1>
+
+            {result.breakEvenYear !== null && (
+              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4, delay: 1.1, ease }} style={{ fontSize: '13px', color: '#52525B', marginBottom: '4px' }}>
+                Lines cross at year {result.breakEvenYear}
+              </motion.p>
+            )}
+
+            <motion.div
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 1.4, ease }}
+              style={{ display: 'flex', gap: 0, marginTop: '48px', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '16px', overflow: 'hidden', width: '100%', maxWidth: '400px' }}
+            >
+              <div style={{ flex: 1, padding: '20px 16px', textAlign: 'left', backgroundColor: winner === 'buy' ? 'rgba(217,119,6,0.07)' : 'rgba(255,255,255,0.01)', borderRight: '1px solid rgba(255,255,255,0.06)', position: 'relative' }}>
+                {winner === 'buy' && <div style={{ position: 'absolute', top: '8px', right: '8px', fontSize: '9px', backgroundColor: ownerColor, color: '#000', padding: '2px 6px', borderRadius: '4px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>WINNER</div>}
+                <p style={{ fontSize: '10px', color: ownerColor, textTransform: 'uppercase', letterSpacing: '0.09em', fontWeight: 700, marginBottom: '8px' }}>Owner</p>
+                <p style={{ fontSize: 'clamp(18px, 2.5vw, 26px)', fontWeight: 700, letterSpacing: '-0.03em', color: '#FAFAFA', fontVariantNumeric: 'tabular-nums' }}>{fmtWealth(result.exit.finalOwnerWealth)}</p>
+                <p style={{ fontSize: '11px', color: '#52525B', marginTop: '4px' }}>After exit costs</p>
+              </div>
+              <div style={{ flex: 1, padding: '20px 16px', textAlign: 'left', backgroundColor: winner === 'rent' ? 'rgba(20,184,166,0.07)' : 'rgba(255,255,255,0.01)', position: 'relative' }}>
+                {winner === 'rent' && <div style={{ position: 'absolute', top: '8px', right: '8px', fontSize: '9px', backgroundColor: renterColor, color: '#000', padding: '2px 6px', borderRadius: '4px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>WINNER</div>}
+                <p style={{ fontSize: '10px', color: renterColor, textTransform: 'uppercase', letterSpacing: '0.09em', fontWeight: 700, marginBottom: '8px' }}>Renter</p>
+                <p style={{ fontSize: 'clamp(18px, 2.5vw, 26px)', fontWeight: 700, letterSpacing: '-0.03em', color: '#FAFAFA', fontVariantNumeric: 'tabular-nums' }}>{fmtWealth(result.exit.finalRenterWealth)}</p>
+                <p style={{ fontSize: '11px', color: '#52525B', marginTop: '4px' }}>After capital gains tax</p>
+              </div>
+            </motion.div>
+
+            {/* Affordance: sparklines + pill */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 2.8, duration: 0.5, ease: [0, 0, 0.2, 1] }}
+              style={{ position: 'absolute', bottom: '40px', right: '48px', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}
+            >
+              <svg viewBox="0 0 100 36" style={{ width: '90px', opacity: 0.22 }}>
+                <motion.path d="M0 30 C 20 24 40 14 55 9 S 80 3 100 1" fill="none" stroke="var(--color-owner)" strokeWidth="1.8" strokeLinecap="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 3.0, duration: 1.1, ease: 'easeOut' }} />
+                <motion.path d="M0 33 C 20 30 40 26 55 22 S 80 16 100 13" fill="none" stroke="var(--color-renter)" strokeWidth="1.8" strokeLinecap="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 3.15, duration: 1.1, ease: 'easeOut' }} />
+              </svg>
+              <motion.button
+                onClick={() => setActivePanel('chart')}
+                whileHover={{ scale: 1.03, backgroundColor: 'rgba(255,255,255,0.14)' }}
+                whileTap={{ scale: 0.97 }}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', height: '44px', padding: '0 18px', borderRadius: '9999px', backgroundColor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.13)', color: '#FAFAFA', cursor: 'pointer', fontSize: '13px', fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.01em', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+              >
+                See it play out
+                <motion.span animate={{ x: [0, 4, 0] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut', repeatDelay: 0.2 }}>→</motion.span>
+              </motion.button>
+            </motion.div>
+          </div>
+
+          {/* Panel 2: chart */}
+          <div style={{ width: '100vw', height: 'calc(100dvh - 52px)', backgroundColor: '#0F0F11', overflowY: 'auto', padding: '32px clamp(32px, 6vw, 80px) 48px' }}>
+            <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+              {/* Back + title */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                <button
+                  onClick={() => setActivePanel('verdict')}
+                  style={{ fontSize: '13px', color: '#A1A1AA', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-sans), system-ui, sans-serif', display: 'flex', alignItems: 'center', gap: '4px' }}
+                >
+                  ← Result
+                </button>
+                <p style={{ fontSize: '13px', color: '#52525B', fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.01em' }}>
+                  {inputs.firstName ? `${inputs.firstName}'s wealth trajectory` : 'Wealth trajectory'} — {inputs.holdingPeriodYears} yr
+                </p>
+                <div style={{ width: '80px' }} />
+              </div>
+
+              <WealthChart
+                key={`desktop-${activeSensitivity}`}
+                ownerData={activeScenario.ownerData}
+                renterData={activeScenario.renterData}
+                breakEvenYear={result.breakEvenYear}
+                holdingPeriodYears={inputs.holdingPeriodYears}
+                height={desktopChartH}
+                ownerSubLabel={ownerSubLabel}
+                renterSubLabel={renterSubLabel}
+                yearlyBreakdown={result.yearByYear}
+                ownerMoveYears={ownerMoveYears}
+                renterMoveYears={renterMoveYears}
+              />
+
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '16px' }}>
+                {SCENARIO_ORDER.map(id => {
+                  const scenario = sensitivity.find(s => s.id === id);
+                  if (!scenario) return null;
+                  const isActive = activeSensitivity === id;
+                  return (
+                    <button key={id} onClick={() => setActiveSensitivity(id)}
+                      style={{ padding: '6px 14px', borderRadius: '100px', fontSize: '12px', fontFamily: 'var(--font-sans), system-ui, sans-serif', border: `1px solid ${isActive ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.1)'}`, backgroundColor: isActive ? 'rgba(255,255,255,0.1)' : 'transparent', color: isActive ? '#FAFAFA' : '#71717A', cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '-0.01em' }}
+                    >
+                      {scenario.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(148px, 1fr))', gap: '8px', marginTop: '20px' }}>
+                <MetricCard label="Net advantage" value={fmtWealth(absAdvantage)} subvalue={winner === 'buy' ? 'Owner ahead' : winner === 'rent' ? 'Renter ahead' : 'Tied'} accentColor={winnerColor} />
+                <MetricCard label="Break-even" value={result.breakEvenYear !== null ? `Yr ${result.breakEvenYear}` : 'Never'} subvalue={result.breakEvenYear !== null ? 'Owner catches up' : 'Renter stays ahead'} />
+                <MetricCard label="Owner wealth" value={fmtWealth(result.exit.finalOwnerWealth)} subvalue="After exit costs" accentColor="var(--color-owner)" />
+                <MetricCard label="Renter wealth" value={fmtWealth(result.exit.finalRenterWealth)} subvalue="After tax" accentColor="var(--color-renter)" />
+              </div>
+
+              <div style={{ marginTop: '16px' }}>
+                <button
+                  onClick={() => setDrawerOpen(true)}
+                  style={{ width: '100%', padding: '12px 18px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)', backgroundColor: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', fontFamily: 'var(--font-sans), system-ui, sans-serif', color: '#FAFAFA' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(255,255,255,0.07)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(255,255,255,0.04)'; }}
+                >
+                  <span style={{ fontSize: '13px', fontWeight: 500 }}>View all assumptions</span>
+                  <span style={{ fontSize: '18px', color: '#52525B', lineHeight: 1 }}>↑</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* ─── Mobile: vertical layout ────────────────────────────────────── */}
+      <div className="lg:hidden">
+
       {/* ─── Dark cinematic hero ───────────────────────────────────────── */}
       <div style={{
         minHeight: 'calc(100dvh - 52px)',
@@ -278,55 +425,31 @@ export default function ResultPage() {
           {inputs.holdingPeriodYears}-year outlook — {PROVINCE_NAMES[inputs.province] ?? inputs.province}
         </motion.p>
 
-        {/* Verdict badge */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.88 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.55, ease: [0.34, 1.3, 0.64, 1] }}
-          style={{ display: 'inline-flex', alignItems: 'center', height: '30px', padding: '0 14px', borderRadius: '9999px', border: `1px solid ${winnerColor}`, marginBottom: '28px' }}
-        >
-          <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', color: winnerColor }}>
-            {verdictBadge}
-          </span>
-        </motion.div>
-
-        {/* Headline */}
+        {/* Combined verdict headline */}
         <motion.h1
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.8, ease }}
-          style={{ fontFamily: 'var(--font-serif), Georgia, serif', fontSize: 'clamp(34px, 6vw, 68px)', fontWeight: 700, letterSpacing: '-0.04em', lineHeight: 1.05, color: '#FAFAFA', marginBottom: '32px', maxWidth: '700px' }}
+          initial={{ opacity: 0, x: 40 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.45, ease }}
+          style={{ fontFamily: 'var(--font-serif), Georgia, serif', fontSize: 'clamp(28px, 5vw, 60px)', fontWeight: 700, letterSpacing: '-0.04em', lineHeight: 1.1, color: '#FAFAFA', marginBottom: '16px', maxWidth: '760px' }}
         >
-          {verdictHeadline}
+          {winner === 'tie' ? (
+            <>Within <span style={{ color: winnerColor, fontVariantNumeric: 'tabular-nums' }}>{fmtWealth(absAdvantage)}</span> either way after {inputs.holdingPeriodYears} years.</>
+          ) : (
+            <>{winner === 'buy' ? 'Buying' : 'Renting'} comes out{' '}
+              <span style={{ display: 'inline-grid', color: winnerColor }}>
+                <span style={{ gridArea: '1/1', color: 'transparent', userSelect: 'none', pointerEvents: 'none', fontVariantNumeric: 'tabular-nums' }}>{fmtWealth(absAdvantage)}</span>
+                <span style={{ gridArea: '1/1', fontVariantNumeric: 'tabular-nums' }}>{fmtWealth(countedValue)}</span>
+              </span>
+              {' '}ahead after {inputs.holdingPeriodYears} years.</>
+          )}
         </motion.h1>
-
-        {/* Count-up advantage number */}
-        {winner !== 'tie' && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 1.0, ease }}>
-            <p style={{ fontSize: 'clamp(64px, 12vw, 140px)', fontWeight: 700, letterSpacing: '-0.05em', lineHeight: 1, color: winnerColor, fontVariantNumeric: 'tabular-nums' }}>
-              {fmtWealth(countedValue)}
-            </p>
-          </motion.div>
-        )}
-
-        {/* "ahead after N years" */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 1.5, ease }}
-          style={{ fontSize: 'clamp(16px, 2.2vw, 20px)', color: '#A1A1AA', marginTop: '16px', letterSpacing: '-0.01em' }}
-        >
-          {winner !== 'tie'
-            ? `ahead after ${inputs.holdingPeriodYears} years`
-            : `Within ${fmtWealth(absAdvantage)} either way after ${inputs.holdingPeriodYears} years`}
-        </motion.p>
 
         {result.breakEvenYear !== null && (
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: 1.9, ease }}
-            style={{ fontSize: '13px', color: '#52525B', marginTop: '8px' }}
+            transition={{ duration: 0.4, delay: 1.1, ease }}
+            style={{ fontSize: '13px', color: '#52525B', marginTop: '4px', marginBottom: '4px' }}
           >
             Lines cross at year {result.breakEvenYear}
           </motion.p>
@@ -334,9 +457,9 @@ export default function ResultPage() {
 
         {/* Owner vs Renter split card */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 2.2, ease }}
+          initial={{ opacity: 0, x: 40 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 1.4, ease }}
           style={{ display: 'flex', gap: 0, marginTop: '56px', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '16px', overflow: 'hidden', width: '100%', maxWidth: '440px' }}
         >
           {/* Owner */}
@@ -380,7 +503,7 @@ export default function ResultPage() {
       </div>
 
       {/* ─── Light detail section ──────────────────────────────────────── */}
-      <div style={{ backgroundColor: 'var(--color-bg)', borderTop: '1px solid var(--color-outline)', color: 'var(--color-text)', padding: '48px 24px 80px' }}>
+      <div style={{ backgroundColor: 'var(--color-bg)', clipPath: 'polygon(0 28px, 100% 0%, 100% 100%, 0 100%)', marginTop: '-28px', color: 'var(--color-text)', padding: '72px 24px 80px' }}>
         <div style={{ maxWidth: '780px', margin: '0 auto' }}>
 
           {/* Chart */}
@@ -479,6 +602,8 @@ export default function ResultPage() {
         </div>
       </div>
 
+      </div>{/* end lg:hidden */}
+
       {/* ─── Assumptions drawer ────────────────────────────────────────── */}
       <AnimatePresence>
         {drawerOpen && (
@@ -492,8 +617,8 @@ export default function ResultPage() {
                 <p style={{ fontSize: '15px', fontWeight: 600, fontFamily: 'var(--font-sans), system-ui, sans-serif', color: 'var(--color-text)', letterSpacing: '-0.01em' }}>All assumptions</p>
                 <button onClick={() => setDrawerOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: 'var(--color-text-faint)', lineHeight: 1, padding: '4px' }}>✕</button>
               </div>
-              <div style={{ overflowY: 'auto', flex: 1, padding: '20px 24px 48px', WebkitOverflowScrolling: 'touch' }}>
-                <div style={{ maxWidth: '680px' }}>
+              <div style={{ overflowY: 'auto', flex: 1, padding: '20px clamp(24px, 6vw, 56px) 48px', WebkitOverflowScrolling: 'touch' }}>
+                <div style={{ maxWidth: '680px', margin: '0 auto' }}>
                   {drawerSections.map(section => <DrawerSection key={section.title} title={section.title} items={section.items} />)}
                 </div>
               </div>
@@ -518,8 +643,10 @@ export default function ResultPage() {
                 </div>
                 <button onClick={() => setMethodologyOpen(false)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-outline)', background: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
               </div>
-              <div style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: 1, padding: '0 20px 40px' }}>
-                <MethodologyContent />
+              <div style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: 1, padding: '0 clamp(20px, 6vw, 56px) 48px' }}>
+                <div style={{ maxWidth: '680px', margin: '0 auto' }}>
+                  <MethodologyContent />
+                </div>
               </div>
             </motion.div>
           </>
@@ -542,8 +669,10 @@ export default function ResultPage() {
                 </div>
                 <button onClick={() => setFaqOpen(false)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-outline)', background: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
               </div>
-              <div style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: 1, padding: '0 20px 40px' }}>
-                <FaqContent />
+              <div style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: 1, padding: '0 clamp(20px, 6vw, 56px) 48px' }}>
+                <div style={{ maxWidth: '680px', margin: '0 auto' }}>
+                  <FaqContent />
+                </div>
               </div>
             </motion.div>
           </>

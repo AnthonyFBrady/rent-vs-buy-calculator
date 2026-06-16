@@ -60,6 +60,7 @@ const KEY_MAP: Record<keyof CalculatorInputs, string> = {
   renterTfsaRoomOverride: 'tfsaroom',
   renterFhsaRoomOverride: 'fhsaroom',
   renterRrspCarryforward: 'rrspcarry',
+  firstName: 'fn',
   // v4
   monthlyRentalIncome: 'rsuite',
   rentalIncomeGrowthPct: 'rsuiteG',

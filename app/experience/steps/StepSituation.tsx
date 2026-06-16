@@ -13,54 +13,18 @@ const fmtCAD = new Intl.NumberFormat('en-CA', {
 });
 
 export function StepSituation({ inputs, patch }: Props) {
-  const incomeK = Math.round((inputs.annualIncome ?? 120_000) / 1_000);
-  const age = 2026 - (inputs.birthYear ?? 1990);
-
   const usesTFSA = inputs.renterUsesTFSA ?? false;
   const useFHSA = inputs.useFHSA ?? false;
   const usesRRSP = inputs.renterUsesRRSP ?? false;
 
   const fhsaRoom = inputs.renterFhsaRoomOverride ?? 40_000;
   const rrspCarry = inputs.renterRrspCarryforward ?? 0;
-  const annualIncome = inputs.annualIncome ?? 120_000;
-  const rrspAnnualRoom = Math.min(annualIncome * 0.18, 31_560);
+  const rrspAnnualRoom = Math.min((inputs.annualIncome ?? 120_000) * 0.18, 31_560);
 
   return (
     <div>
-      {/* Age */}
-      <div style={{ marginBottom: '28px' }}>
-        <RangeInput
-          label="Age"
-          value={age}
-          min={18}
-          max={70}
-          step={1}
-          onChange={(v) => patch({ birthYear: 2026 - v })}
-          formatValue={(v) => `${v}`}
-          color="var(--color-renter)"
-          minLabel="18"
-          maxLabel="70"
-          description="Sets your TFSA room and RRSP contribution timing."
-        />
-      </div>
-
-      {/* Annual income */}
-      <RangeInput
-        label="Annual income"
-        value={incomeK}
-        min={40}
-        max={300}
-        step={5}
-        onChange={(v) => patch({ annualIncome: v * 1_000 })}
-        formatValue={(v) => `$${v}k`}
-        color="var(--color-owner)"
-        minLabel="$40k"
-        maxLabel="$300k"
-        description={`RRSP room = 18% of income, max ${fmtCAD.format(31_560)}/yr.`}
-      />
-
-      {/* Advanced — accounts */}
-      <StepAdvanced label="Tax shelters">
+      {/* Tax shelters */}
+      <StepAdvanced label="Accounts" defaultOpen>
         <div
           style={{
             display: 'flex',

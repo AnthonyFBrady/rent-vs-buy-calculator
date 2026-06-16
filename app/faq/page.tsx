@@ -38,7 +38,7 @@ export default function FAQPage() {
             textDecoration: 'none',
           }}
         >
-          Reckon
+          reckon
         </Link>
         <Link
           href="/experience"

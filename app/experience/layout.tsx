@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 export const metadata = {
-  title: 'Reckon — Run the numbers',
+  title: 'reckon — Run the numbers',
   description:
     'The real cost of owning versus renting in Canada. Evidence-based math, every assumption editable.',
 };
