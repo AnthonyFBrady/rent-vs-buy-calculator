@@ -4,6 +4,8 @@
  * Components reference tokens directly; never hardcode hex values.
  */
 
+// Light theme is the shipped theme. Dark values are specced but not active —
+// the experience page no longer applies dark overrides.
 export const color = {
   // Brand
   owner:      { light: '#B07800', dark: '#F2C94C' },

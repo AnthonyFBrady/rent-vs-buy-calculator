@@ -230,38 +230,11 @@ function ExperiencePageInner() {
       animate={{ opacity: isNavigating ? 0 : 1, scale: isNavigating ? 0.97 : 1 }}
       transition={{ duration: isNavigating ? 0.22 : 0.30, ease: isNavigating ? [0.4, 0, 1, 1] : [0.0, 0.0, 0.2, 1] }}
       style={{
-        // Dark theme overrides — scoped to experience page only
-        '--color-bg':                  '#0B0B0D',
-        '--color-bg-subtle':           '#111114',
-        '--color-bg-elevated':         '#18181B',
-        '--color-surface':             '#D4D4D8',
-        '--color-surface-raised':      '#1F1F22',
-        '--color-hover':               '#1F1F22',
-        '--color-text':                '#F4F4F5',
-        '--color-text-muted':          '#A1A1AA',
-        '--color-text-faint':          '#71717A',
-        '--color-text-dim':            '#52525B',
-        '--color-text-dimmer':         '#3F3F46',
-        '--color-outline':             'rgba(255,255,255,0.07)',
-        '--color-outline-active':      'rgba(255,255,255,0.13)',
-        '--color-border':              'rgba(255,255,255,0.07)',
-        '--color-input-bg':            '#1F1F22',
-        '--color-input-text':          '#F4F4F5',
-        '--color-input-placeholder':   '#71717A',
-        '--color-btn-primary-bg':      '#F4F4F5',
-        '--color-btn-primary-text':    '#0B0B0D',
-        '--color-btn-ghost-text':      '#A1A1AA',
-        '--color-chart-bg':            '#111114',
-        '--color-chart-grid':          '#1F1F22',
-        '--color-chart-tooltip-bg':    '#18181B',
-        '--color-chart-tooltip-border':'#2A2A2E',
-        '--color-chart-crosshair':     '#F4F4F5',
-        // Layout
         display: 'flex',
         flexDirection: 'column',
         minHeight: '100dvh',
-        backgroundColor: '#0B0B0D',
-        color: '#F4F4F5',
+        backgroundColor: 'var(--color-bg)',
+        color: 'var(--color-text)',
         fontFamily: 'var(--font-sans), system-ui, sans-serif',
         position: 'relative',
         transformOrigin: 'center',
@@ -292,16 +265,14 @@ function ExperiencePageInner() {
             onClick={() => setMethodologyOpen(true)}
             style={{
               fontSize: '13px',
-              color: 'var(--color-text-dim)',
-              background: 'none',
-              border: 'none',
+              color: 'var(--color-text-muted)',
+              background: 'transparent',
+              border: '1px solid var(--color-outline)',
+              borderRadius: '9999px',
               cursor: 'pointer',
-              padding: 0,
+              padding: '4px 12px',
               fontFamily: 'var(--font-sans), system-ui, sans-serif',
               letterSpacing: '-0.01em',
-              textDecoration: 'underline',
-              textUnderlineOffset: '2px',
-              textDecorationColor: 'rgba(255,255,255,0.12)',
             }}
           >
             How this works
@@ -310,16 +281,14 @@ function ExperiencePageInner() {
             onClick={() => setFaqOpen(true)}
             style={{
               fontSize: '13px',
-              color: 'var(--color-text-dim)',
-              background: 'none',
-              border: 'none',
+              color: 'var(--color-text-muted)',
+              background: 'transparent',
+              border: '1px solid var(--color-outline)',
+              borderRadius: '9999px',
               cursor: 'pointer',
-              padding: 0,
+              padding: '4px 12px',
               fontFamily: 'var(--font-sans), system-ui, sans-serif',
               letterSpacing: '-0.01em',
-              textDecoration: 'underline',
-              textUnderlineOffset: '2px',
-              textDecorationColor: 'rgba(255,255,255,0.12)',
             }}
           >
             FAQ
@@ -341,7 +310,7 @@ function ExperiencePageInner() {
         style={{
           height: '2px',
           flexShrink: 0,
-          backgroundColor: 'rgba(255,255,255,0.05)',
+          backgroundColor: 'var(--color-outline)',
           position: 'relative',
         }}
       >
@@ -377,11 +346,11 @@ function ExperiencePageInner() {
                 exit={{ opacity: 0, y: direction * -12 }}
                 transition={{ duration: 0.3, ease: [0.0, 0.0, 0.2, 1] }}
                 style={{
-                  backgroundColor: 'var(--color-bg-elevated)',
+                  backgroundColor: 'var(--color-surface-raised)',
                   border: '1px solid var(--color-outline)',
-                  borderRadius: '16px',
+                  borderRadius: '20px',
                   overflow: 'hidden',
-                  boxShadow: '0 12px 48px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.35)',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 6px 24px rgba(0,0,0,0.07)',
                 }}
               >
                 {/* Section accent edge */}
@@ -389,13 +358,12 @@ function ExperiencePageInner() {
 
                 {/* Header zone */}
                 <div style={{ padding: '22px 24px 16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                    <div style={{ width: '22px', height: '3px', borderRadius: '9999px', backgroundColor: accentColor, opacity: 0.9 }} />
-                    <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: accentColor, opacity: 0.9, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
+                  <div style={{ marginBottom: '12px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: accentColor, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
                       {sectionLabel}
                     </span>
                   </div>
-                  <h1 style={{ fontFamily: 'var(--font-serif), Georgia, serif', fontSize: 'clamp(22px, 4vw, 30px)', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.15, color: 'var(--color-text)', margin: 0 }}>
+                  <h1 style={{ fontFamily: 'var(--font-serif), Georgia, serif', fontSize: 'clamp(24px, 4vw, 34px)', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.15, color: 'var(--color-text)', margin: 0 }}>
                     {stepLabel}
                   </h1>
                   {whyCopy && (
@@ -433,7 +401,8 @@ function ExperiencePageInner() {
             style={{
               flexShrink: 0,
               borderTop: '1px solid var(--color-outline)',
-              backgroundColor: 'var(--color-bg)',
+              backgroundColor: 'rgba(250,250,249,0.92)',
+              backdropFilter: 'blur(8px)',
               padding: '12px 20px calc(12px + env(safe-area-inset-bottom))',
             }}
           >
@@ -453,13 +422,15 @@ function ExperiencePageInner() {
                   height: '48px',
                   padding: '0 16px',
                   fontSize: '14px',
-                  color: isFirstStep ? 'var(--color-outline)' : 'var(--color-text-muted)',
-                  background: 'none',
-                  border: 'none',
+                  color: isFirstStep ? 'var(--color-text-dimmer)' : 'var(--color-text-muted)',
+                  background: 'transparent',
+                  border: isFirstStep ? '1px solid var(--color-outline)' : '1px solid var(--color-outline-active)',
+                  borderRadius: '9999px',
                   cursor: isFirstStep ? 'default' : 'pointer',
                   fontFamily: 'var(--font-sans), system-ui, sans-serif',
-                  transition: 'color 0.15s',
+                  transition: 'color 0.15s, border-color 0.15s',
                   flexShrink: 0,
+                  opacity: isFirstStep ? 0.4 : 1,
                 }}
               >
                 ← Back
@@ -540,7 +511,7 @@ function ExperiencePageInner() {
             flex: 1,
             position: 'relative',
             minHeight: 0,
-            borderLeft: '1px solid rgba(255,255,255,0.08)',
+            borderLeft: '1px solid var(--color-outline)',
           }}
         >
           <LazyMapPanel step={phase} inputs={inputs} onPatch={patch} onAdvance={advance} />

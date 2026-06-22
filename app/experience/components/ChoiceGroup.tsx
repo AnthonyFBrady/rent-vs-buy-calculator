@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 // Single shared single-select control. One selected-state language (outline +
 // accent tint) for every "pick one" question: province, home type, and the
 // lifestyle dimensions. Do not hand-roll selection buttons in a step — use this.
@@ -35,14 +37,17 @@ export function ChoiceGroup<T extends string>({
   align = 'left',
   ariaLabel,
 }: Props<T>) {
+  const [hoveredValue, setHoveredValue] = useState<string | null>(null);
+
   return (
     <div
       role="radiogroup"
       aria-label={ariaLabel}
-      style={{ display: 'grid', gridTemplateColumns: `repeat(${columns}, 1fr)`, gap: '6px' }}
+      style={{ display: 'grid', gridTemplateColumns: `repeat(${columns}, 1fr)`, gap: '8px' }}
     >
       {options.map((opt) => {
         const selected = value === opt.value;
+        const hovered = hoveredValue === opt.value;
         return (
           <button
             key={opt.value}
@@ -50,21 +55,25 @@ export function ChoiceGroup<T extends string>({
             role="radio"
             aria-checked={selected}
             onClick={() => onChange(opt.value)}
+            onMouseEnter={() => setHoveredValue(opt.value)}
+            onMouseLeave={() => setHoveredValue(null)}
             style={{
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
               alignItems: align === 'center' ? 'center' : 'flex-start',
               gap: opt.sublabel ? '3px' : 0,
-              padding: variant === 'chip' ? '0 12px' : '11px 13px',
-              height: variant === 'chip' ? '38px' : undefined,
-              minHeight: variant === 'card' ? '44px' : undefined,
-              borderRadius: '8px',
+              padding: variant === 'chip' ? '0 12px' : '11px 14px',
+              height: variant === 'chip' ? '40px' : undefined,
+              minHeight: variant === 'card' ? '48px' : undefined,
+              borderRadius: '10px',
               textAlign: align,
               border: `1px solid ${selected ? accent : 'var(--color-outline)'}`,
               backgroundColor: selected
                 ? `color-mix(in srgb, ${accent} 8%, transparent)`
-                : 'var(--color-bg-elevated)',
+                : hovered
+                  ? 'var(--color-hover)'
+                  : 'var(--color-surface-raised)',
               cursor: 'pointer',
               transition: 'border-color 0.15s, background-color 0.15s',
               fontFamily: 'var(--font-sans), system-ui, sans-serif',

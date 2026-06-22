@@ -123,14 +123,14 @@ export function StepHomeCompare({ inputs, patch }: Props) {
             width: '28px',
             height: '28px',
             borderRadius: '50%',
-            backgroundColor: 'rgba(245,158,11,0.15)',
-            border: '1.5px solid #F59E0B',
+            backgroundColor: 'color-mix(in srgb, var(--color-owner) 15%, transparent)',
+            border: '1.5px solid var(--color-owner)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
           }}>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: '#F59E0B' }}>B</span>
+            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-owner)' }}>B</span>
           </div>
           <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.01em' }}>
             What would you buy?
@@ -184,14 +184,14 @@ export function StepHomeCompare({ inputs, patch }: Props) {
                 width: '28px',
                 height: '28px',
                 borderRadius: '50%',
-                backgroundColor: 'rgba(16,185,129,0.12)',
-                border: '1.5px solid #10B981',
+                backgroundColor: 'color-mix(in srgb, var(--color-renter) 12%, transparent)',
+                border: '1.5px solid var(--color-renter)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0,
               }}>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: '#10B981' }}>R</span>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-renter)' }}>R</span>
               </div>
               <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.01em' }}>
                 What would you rent?
