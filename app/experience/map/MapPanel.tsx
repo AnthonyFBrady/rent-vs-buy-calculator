@@ -217,7 +217,7 @@ export function MapPanel({ step, inputs, onPatch, onAdvance }: Props) {
   const provinceMarkers = markers.filter(m => m.type === 'province') as import('./useMapState').ProvinceMarker[];
   const metroMarkers    = markers.filter(m => m.type === 'metro')    as import('./useMapState').MetroMarker[];
 
-  const showChoropleth = isProvinceMode || mode === 'city-prices' || mode === 'city-rent-signal' || mode === 'stable';
+  const showChoropleth = !showCityAreaLayer && (isProvinceMode || mode === 'city-prices' || mode === 'city-rent-signal' || mode === 'stable');
 
   const hoveredMetric = hoveredProvinceCode ? PROVINCE_METRICS.get(hoveredProvinceCode) : null;
 
@@ -293,19 +293,19 @@ export function MapPanel({ step, inputs, onPatch, onAdvance }: Props) {
           />
         )}
 
-        {mode === 'city-prices' && (
+        {mode === 'city-prices' && !showCityAreaLayer && (
           <PriceMarkerLayer
             markers={metroMarkers}
             onCityClick={step === STEP.CITY ? handleCityMarkerClick : undefined}
           />
         )}
 
-        {(mode === 'city-rent-signal' || mode === 'stable') && (
+        {(mode === 'city-rent-signal' || mode === 'stable') && !showCityAreaLayer && (
           <RentBuySignalLayer markers={metroMarkers} />
         )}
 
-        {/* Dashed ring for selected city or borough */}
-        {selectionCenter && (
+        {/* Dashed ring for selected city — hidden when borough choropleth takes over */}
+        {selectionCenter && !showCityAreaLayer && (
           <SelectedAreaLayer
             lat={selectionCenter.lat}
             lng={selectionCenter.lng}
