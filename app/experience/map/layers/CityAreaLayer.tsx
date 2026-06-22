@@ -50,8 +50,9 @@ export function fsaToBoroughId(fsa: string): string | null {
 export function CityAreaLayer({ metric, homeType, buyBedMult, rentBedMult, hoveredId, selectedFSA }: Props) {
   const selectedBoroughId = selectedFSA ? fsaToBoroughId(selectedFSA) : null;
 
-  // Load accurate FSA boundaries from StatCan-derived file in public/
-  const [baseGeometry, setBaseGeometry] = useState<Record<string, Geometry> | null>(null);
+  // Load accurate FSA boundaries from StatCan-derived file in public/.
+  // Start with empty object so Source/Layer mount immediately; update once fetch lands.
+  const [baseGeometry, setBaseGeometry] = useState<Record<string, Geometry>>({});
   useEffect(() => {
     fetch('/data/toronto-boroughs.geojson')
       .then(r => r.json())
@@ -63,7 +64,7 @@ export function CityAreaLayer({ metric, homeType, buyBedMult, rentBedMult, hover
         });
         setBaseGeometry(map);
       })
-      .catch(() => {/* fallback: keep null, layer won't render */});
+      .catch(err => console.error('[CityAreaLayer] failed to load toronto-boroughs.geojson:', err));
   }, []);
 
   const areas = useMemo<CityAreaData[]>(() => {
@@ -142,8 +143,6 @@ export function CityAreaLayer({ metric, homeType, buyBedMult, rentBedMult, hover
       0.8,
     ] as unknown as number,
   };
-
-  if (!baseGeometry) return null;
 
   return (
     <Source id="city-areas" type="geojson" data={geojson}>
