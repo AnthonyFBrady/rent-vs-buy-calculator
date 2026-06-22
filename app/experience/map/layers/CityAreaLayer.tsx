@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { Source, Layer } from 'react-map-gl/maplibre';
-import type { FeatureCollection } from 'geojson';
+import type { FeatureCollection, Geometry } from 'geojson';
 import { suggestPriceAndRent } from '@/engine';
 import type { HomeType } from '@/engine';
 
@@ -35,17 +35,6 @@ const TORONTO_BOROUGHS: [string, string, string][] = [
   ['scarborough','M1B', 'Scarborough'],
 ];
 
-// Simplified rectangular boundaries. Covers the Toronto amalgamated municipality.
-// Coordinates: [lng, lat]. Exterior ring, SW → SE → NE → NW → close.
-const TORONTO_POLYGONS: Record<string, [number, number][]> = {
-  'etobicoke':  [[-79.648,43.598],[-79.490,43.598],[-79.490,43.782],[-79.648,43.782],[-79.648,43.598]],
-  'west-end':   [[-79.490,43.598],[-79.428,43.598],[-79.428,43.710],[-79.490,43.710],[-79.490,43.598]],
-  'downtown':   [[-79.428,43.598],[-79.298,43.598],[-79.298,43.710],[-79.428,43.710],[-79.428,43.598]],
-  'east-end':   [[-79.298,43.598],[-79.268,43.598],[-79.268,43.710],[-79.298,43.710],[-79.298,43.598]],
-  'north-york': [[-79.490,43.710],[-79.268,43.710],[-79.268,43.782],[-79.490,43.782],[-79.490,43.710]],
-  'scarborough':[[-79.268,43.598],[-79.160,43.598],[-79.160,43.782],[-79.268,43.782],[-79.268,43.598]],
-};
-
 // FSA → borough id (first 2 chars of FSA → which polygon it belongs to)
 const FSA_TO_BOROUGH: Record<string, string> = {
   M1: 'scarborough', M2: 'north-york', M3: 'north-york',
@@ -60,6 +49,22 @@ export function fsaToBoroughId(fsa: string): string | null {
 
 export function CityAreaLayer({ metric, homeType, buyBedMult, rentBedMult, hoveredId, selectedFSA }: Props) {
   const selectedBoroughId = selectedFSA ? fsaToBoroughId(selectedFSA) : null;
+
+  // Load accurate FSA boundaries from StatCan-derived file in public/
+  const [baseGeometry, setBaseGeometry] = useState<Record<string, Geometry> | null>(null);
+  useEffect(() => {
+    fetch('/data/toronto-boroughs.geojson')
+      .then(r => r.json())
+      .then((fc: FeatureCollection) => {
+        const map: Record<string, Geometry> = {};
+        fc.features.forEach(f => {
+          const id = f.properties?.id as string | undefined;
+          if (id && f.geometry) map[id] = f.geometry;
+        });
+        setBaseGeometry(map);
+      })
+      .catch(() => {/* fallback: keep null, layer won't render */});
+  }, []);
 
   const areas = useMemo<CityAreaData[]>(() => {
     return TORONTO_BOROUGHS.map(([id, fsa, label]) => {
@@ -76,6 +81,8 @@ export function CityAreaLayer({ metric, homeType, buyBedMult, rentBedMult, hover
   }, [homeType, buyBedMult, rentBedMult]);
 
   const geojson = useMemo((): FeatureCollection => {
+    if (!baseGeometry) return { type: 'FeatureCollection', features: [] };
+
     const values = areas.map(a => metric === 'price' ? a.price : a.rent);
     const minVal = Math.min(...values);
     const maxVal = Math.max(...values);
@@ -83,23 +90,22 @@ export function CityAreaLayer({ metric, homeType, buyBedMult, rentBedMult, hover
 
     return {
       type: 'FeatureCollection',
-      features: areas.map(a => ({
-        type: 'Feature' as const,
-        id: a.id,
-        properties: {
+      features: areas
+        .filter(a => baseGeometry[a.id])
+        .map(a => ({
+          type: 'Feature' as const,
           id: a.id,
-          label: a.label,
-          price: a.price,
-          rent: a.rent,
-          norm: (((metric === 'price' ? a.price : a.rent) - minVal) / range),
-        },
-        geometry: {
-          type: 'Polygon' as const,
-          coordinates: [TORONTO_POLYGONS[a.id] ?? []],
-        },
-      })),
+          properties: {
+            id: a.id,
+            label: a.label,
+            price: a.price,
+            rent: a.rent,
+            norm: ((metric === 'price' ? a.price : a.rent) - minVal) / range,
+          },
+          geometry: baseGeometry[a.id] as Geometry,
+        })),
     };
-  }, [areas, metric]);
+  }, [areas, metric, baseGeometry]);
 
   const accent   = metric === 'price' ? '#F59E0B' : '#10B981';
   const accentHi = metric === 'price' ? 'rgba(245,158,11,0.52)' : 'rgba(16,185,129,0.52)';
@@ -115,7 +121,7 @@ export function CityAreaLayer({ metric, homeType, buyBedMult, rentBedMult, hover
   const fillPaint = {
     'fill-color': [
       'case',
-      ['==', ['get', 'id'], hoveredId ?? ''],      accentMd,
+      ['==', ['get', 'id'], hoveredId ?? ''],         accentMd,
       ['==', ['get', 'id'], selectedBoroughId ?? ''], accentMd,
       fillColor,
     ] as unknown as string,
@@ -136,6 +142,8 @@ export function CityAreaLayer({ metric, homeType, buyBedMult, rentBedMult, hover
       0.8,
     ] as unknown as number,
   };
+
+  if (!baseGeometry) return null;
 
   return (
     <Source id="city-areas" type="geojson" data={geojson}>
