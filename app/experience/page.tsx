@@ -411,7 +411,7 @@ function ExperiencePageInner() {
                 {/* Input zone */}
                 <div style={{ padding: '20px 24px 24px' }}>
                   {phase === STEP.PROVINCE     && <StepProvince    inputs={inputs} patch={patch} onAdvance={advance} />}
-                  {phase === STEP.CITY         && <StepCity        inputs={inputs} patch={patch} />}
+                  {phase === STEP.CITY         && <StepCity        inputs={inputs} patch={patch} onAdvance={advance} />}
                   {phase === STEP.HOME_COMPARE && <StepHomeCompare inputs={inputs} patch={patch} />}
                   {phase === STEP.HOME_PRICE   && <StepHomePrice   inputs={inputs} patch={patch} />}
                   {phase === STEP.RENT         && <StepRent        inputs={inputs} patch={patch} />}
