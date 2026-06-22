@@ -21,6 +21,14 @@ import {
   regionFromFSA,
   type OntarioRegion,
 } from './ontarioBoroughs';
+import { getMunicipalProfile } from './data/regions/municipal';
+export { getMunicipalProfile, type MunicipalProfile } from './data/regions/municipal';
+
+export const POSTAL_CODE_METADATA = {
+  asOf: '2025-01',
+  source: 'CREA HPI 2024-2025, CMHC RMR 2024, Rentals.ca 2025',
+  nextRefresh: '2026-09',
+};
 
 // Rent elasticity to home price ≈ 0.5 in recent Canadian metro data:
 // a 1% rise in home price corresponds to ~0.5% rise in rent.
@@ -48,8 +56,10 @@ interface MetroProfile {
   province: Province;
   /** Mid-range P/R ratio AT the metro median home price. */
   priceToRent: number;
-  /** Approximate median home price for the metro (CAD). */
+  /** Approximate median home price for the metro (CAD) — all types blended. */
   medianHomePrice: number;
+  /** Per home-type median prices. When present, used instead of nonOntarioSeedPrice. */
+  medianPriceByType?: Partial<Record<HomeType, number>>;
   /** FSA prefixes that belong to this metro. */
   fsas: readonly string[];
   /** Confidence in the P/R figure based on PWL paper coverage. */
@@ -63,7 +73,123 @@ interface MetroProfile {
 // 20-year average from the PWL paper. The simulation can still use PWL paper
 // numbers via the preset; the suggestion shows what a user could realistically
 // rent for today.
+// FSA entries may be 2-char prefix (e.g. 'M5') or 3-char full FSA (e.g. 'V9R').
+// 3-char entries take precedence and allow precise sub-prefix matching in dense
+// markets (BC interior, NB cities) where a 2-char prefix spans multiple metros.
+// When multiple entries could match, order here is significant: first match wins.
 const METRO_PROFILES: readonly MetroProfile[] = [
+  // ── Ontario ───────────────────────────────────────────────────────────────
+  // Toronto, Ottawa, Hamilton, KW are handled by ontarioBoroughs at 3-char FSA
+  // resolution and only reach this list as a fallback. Secondary ON markets
+  // below are not yet in ontarioBoroughs so they rely on this list entirely.
+  // 3-char FSAs are used where the 2-char prefix spans multiple municipalities.
+  {
+    // L4M, L4N = Barrie urban. L4B/C = Richmond Hill; L4S = Richmond Hill.
+    name: 'Barrie',
+    province: 'ON',
+    priceToRent: 23,
+    medianHomePrice: 740_000,
+    confidence: 'medium',
+    fsas: ['L4M', 'L4N', 'L4R'],
+    medianPriceByType: {
+      'condo-apt': 520_000,
+      'condo-townhouse': 640_000,
+      'freehold-townhouse': 740_000,
+      'semi-detached': 820_000,
+      'detached': 960_000,
+    },
+  },
+  {
+    name: 'Guelph',
+    province: 'ON',
+    priceToRent: 22,
+    medianHomePrice: 710_000,
+    confidence: 'medium',
+    fsas: ['N1E', 'N1G', 'N1H', 'N1K', 'N1L'],
+    medianPriceByType: {
+      'condo-apt': 490_000,
+      'condo-townhouse': 610_000,
+      'freehold-townhouse': 710_000,
+      'semi-detached': 790_000,
+      'detached': 940_000,
+    },
+  },
+  {
+    // L1G, L1H, L1J, L1K, L1L = Oshawa. L1V–L1Z = Pickering/Ajax/Whitby.
+    name: 'Oshawa / Durham',
+    province: 'ON',
+    priceToRent: 22,
+    medianHomePrice: 730_000,
+    confidence: 'medium',
+    fsas: ['L1G', 'L1H', 'L1J', 'L1K', 'L1L', 'L1V', 'L1W', 'L1X', 'L1Y', 'L1Z'],
+    medianPriceByType: {
+      'condo-apt': 490_000,
+      'condo-townhouse': 610_000,
+      'freehold-townhouse': 720_000,
+      'semi-detached': 810_000,
+      'detached': 950_000,
+    },
+  },
+  {
+    name: 'St. Catharines / Niagara',
+    province: 'ON',
+    priceToRent: 21,
+    medianHomePrice: 650_000,
+    confidence: 'medium',
+    fsas: ['L2M', 'L2N', 'L2P', 'L2R', 'L2S', 'L2T', 'L2W'],
+    medianPriceByType: {
+      'condo-apt': 440_000,
+      'condo-townhouse': 560_000,
+      'freehold-townhouse': 660_000,
+      'semi-detached': 750_000,
+      'detached': 880_000,
+    },
+  },
+  {
+    name: 'Peterborough',
+    province: 'ON',
+    priceToRent: 20,
+    medianHomePrice: 600_000,
+    confidence: 'medium',
+    fsas: ['K9H', 'K9J', 'K9K', 'K9L'],
+    medianPriceByType: {
+      'condo-apt': 400_000,
+      'condo-townhouse': 500_000,
+      'freehold-townhouse': 600_000,
+      'semi-detached': 680_000,
+      'detached': 820_000,
+    },
+  },
+  {
+    name: 'Sudbury',
+    province: 'ON',
+    priceToRent: 15,
+    medianHomePrice: 430_000,
+    confidence: 'medium',
+    fsas: ['P3A', 'P3B', 'P3C', 'P3E'],
+    medianPriceByType: {
+      'condo-apt': 290_000,
+      'condo-townhouse': 360_000,
+      'freehold-townhouse': 430_000,
+      'semi-detached': 490_000,
+      'detached': 580_000,
+    },
+  },
+  {
+    name: 'Thunder Bay',
+    province: 'ON',
+    priceToRent: 13,
+    medianHomePrice: 360_000,
+    confidence: 'medium',
+    fsas: ['P7A', 'P7B', 'P7C', 'P7E'],
+    medianPriceByType: {
+      'condo-apt': 240_000,
+      'condo-townhouse': 300_000,
+      'freehold-townhouse': 360_000,
+      'semi-detached': 410_000,
+      'detached': 460_000,
+    },
+  },
   {
     name: 'Toronto',
     province: 'ON',
@@ -71,38 +197,13 @@ const METRO_PROFILES: readonly MetroProfile[] = [
     medianHomePrice: 1_100_000,
     confidence: 'high',
     fsas: ['M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9'],
-  },
-  {
-    name: 'Vancouver',
-    province: 'BC',
-    priceToRent: 30,
-    medianHomePrice: 1_300_000,
-    confidence: 'high',
-    fsas: ['V5', 'V6', 'V7'],
-  },
-  {
-    name: 'Victoria',
-    province: 'BC',
-    priceToRent: 28,
-    medianHomePrice: 900_000,
-    confidence: 'high',
-    fsas: ['V8', 'V9'],
-  },
-  {
-    name: 'Calgary',
-    province: 'AB',
-    priceToRent: 16,
-    medianHomePrice: 580_000,
-    confidence: 'high',
-    fsas: ['T2', 'T3'],
-  },
-  {
-    name: 'Edmonton',
-    province: 'AB',
-    priceToRent: 14,
-    medianHomePrice: 410_000,
-    confidence: 'high',
-    fsas: ['T5', 'T6'],
+    medianPriceByType: {
+      'condo-apt': 720_000,
+      'condo-townhouse': 900_000,
+      'freehold-townhouse': 1_050_000,
+      'semi-detached': 1_200_000,
+      'detached': 1_600_000,
+    },
   },
   {
     name: 'Ottawa',
@@ -111,6 +212,13 @@ const METRO_PROFILES: readonly MetroProfile[] = [
     medianHomePrice: 660_000,
     confidence: 'high',
     fsas: ['K1', 'K2', 'K4'],
+    medianPriceByType: {
+      'condo-apt': 420_000,
+      'condo-townhouse': 530_000,
+      'freehold-townhouse': 640_000,
+      'semi-detached': 720_000,
+      'detached': 850_000,
+    },
   },
   {
     name: 'Hamilton',
@@ -119,6 +227,13 @@ const METRO_PROFILES: readonly MetroProfile[] = [
     medianHomePrice: 720_000,
     confidence: 'high',
     fsas: ['L8', 'L9'],
+    medianPriceByType: {
+      'condo-apt': 480_000,
+      'condo-townhouse': 600_000,
+      'freehold-townhouse': 700_000,
+      'semi-detached': 780_000,
+      'detached': 920_000,
+    },
   },
   {
     name: 'Kitchener-Waterloo',
@@ -127,7 +242,202 @@ const METRO_PROFILES: readonly MetroProfile[] = [
     medianHomePrice: 720_000,
     confidence: 'high',
     fsas: ['N2'],
+    medianPriceByType: {
+      'condo-apt': 470_000,
+      'condo-townhouse': 590_000,
+      'freehold-townhouse': 690_000,
+      'semi-detached': 770_000,
+      'detached': 920_000,
+    },
   },
+  // ── British Columbia ───────────────────────────────────────────────────────
+  {
+    name: 'Vancouver',
+    province: 'BC',
+    priceToRent: 30,
+    medianHomePrice: 1_300_000,
+    confidence: 'high',
+    fsas: ['V5', 'V6', 'V7'],
+    medianPriceByType: {
+      'condo-apt': 820_000,
+      'condo-townhouse': 950_000,
+      'freehold-townhouse': 1_100_000,
+      'semi-detached': 1_400_000,
+      'detached': 2_200_000,
+    },
+  },
+  {
+    name: 'Kelowna',
+    province: 'BC',
+    priceToRent: 26,
+    medianHomePrice: 850_000,
+    confidence: 'medium',
+    // 3-char FSAs: V1Y, V1X, V1V = Kelowna urban; V4T = West Kelowna
+    fsas: ['V1Y', 'V1X', 'V1V', 'V4T'],
+    medianPriceByType: {
+      'condo-apt': 550_000,
+      'condo-townhouse': 680_000,
+      'freehold-townhouse': 780_000,
+      'semi-detached': 870_000,
+      'detached': 1_100_000,
+    },
+  },
+  {
+    name: 'Abbotsford / Mission',
+    province: 'BC',
+    priceToRent: 24,
+    medianHomePrice: 780_000,
+    confidence: 'medium',
+    // 3-char: V2S, V2T, V3G = Abbotsford; V2V = Mission
+    fsas: ['V2S', 'V2T', 'V2V', 'V3G'],
+    medianPriceByType: {
+      'condo-apt': 530_000,
+      'condo-townhouse': 660_000,
+      'freehold-townhouse': 780_000,
+      'semi-detached': 890_000,
+      'detached': 1_100_000,
+    },
+  },
+  {
+    name: 'Chilliwack',
+    province: 'BC',
+    priceToRent: 22,
+    medianHomePrice: 650_000,
+    confidence: 'medium',
+    fsas: ['V2P', 'V2R'],
+    medianPriceByType: {
+      'condo-apt': 440_000,
+      'condo-townhouse': 550_000,
+      'freehold-townhouse': 660_000,
+      'semi-detached': 750_000,
+      'detached': 900_000,
+    },
+  },
+  {
+    name: 'Kamloops',
+    province: 'BC',
+    priceToRent: 22,
+    medianHomePrice: 570_000,
+    confidence: 'medium',
+    fsas: ['V2B', 'V2C', 'V2E', 'V2H'],
+    medianPriceByType: {
+      'condo-apt': 380_000,
+      'condo-townhouse': 480_000,
+      'freehold-townhouse': 580_000,
+      'semi-detached': 660_000,
+      'detached': 780_000,
+    },
+  },
+  // Nanaimo 3-char FSAs listed before Victoria so V9R/V9S/V9T match Nanaimo,
+  // while V9A, V9B, V9C (Greater Victoria) fall through to the Victoria entry.
+  {
+    name: 'Nanaimo',
+    province: 'BC',
+    priceToRent: 25,
+    medianHomePrice: 720_000,
+    confidence: 'medium',
+    fsas: ['V9R', 'V9S', 'V9T', 'V9V'],
+    medianPriceByType: {
+      'condo-apt': 490_000,
+      'condo-townhouse': 620_000,
+      'freehold-townhouse': 720_000,
+      'semi-detached': 820_000,
+      'detached': 1_050_000,
+    },
+  },
+  {
+    name: 'Victoria',
+    province: 'BC',
+    priceToRent: 28,
+    medianHomePrice: 900_000,
+    confidence: 'high',
+    fsas: ['V8', 'V9'],
+    medianPriceByType: {
+      'condo-apt': 600_000,
+      'condo-townhouse': 720_000,
+      'freehold-townhouse': 850_000,
+      'semi-detached': 980_000,
+      'detached': 1_300_000,
+    },
+  },
+  {
+    name: 'Prince George',
+    province: 'BC',
+    priceToRent: 16,
+    medianHomePrice: 390_000,
+    confidence: 'low',
+    fsas: ['V2L', 'V2M', 'V2N'],
+    medianPriceByType: {
+      'condo-apt': 280_000,
+      'condo-townhouse': 340_000,
+      'freehold-townhouse': 400_000,
+      'semi-detached': 450_000,
+      'detached': 520_000,
+    },
+  },
+  // ── Alberta ───────────────────────────────────────────────────────────────
+  {
+    name: 'Calgary',
+    province: 'AB',
+    priceToRent: 16,
+    medianHomePrice: 580_000,
+    confidence: 'high',
+    fsas: ['T2', 'T3'],
+    medianPriceByType: {
+      'condo-apt': 350_000,
+      'condo-townhouse': 430_000,
+      'freehold-townhouse': 550_000,
+      'semi-detached': 650_000,
+      'detached': 780_000,
+    },
+  },
+  {
+    name: 'Edmonton',
+    province: 'AB',
+    priceToRent: 14,
+    medianHomePrice: 410_000,
+    confidence: 'high',
+    fsas: ['T5', 'T6'],
+    medianPriceByType: {
+      'condo-apt': 230_000,
+      'condo-townhouse': 300_000,
+      'freehold-townhouse': 380_000,
+      'semi-detached': 450_000,
+      'detached': 520_000,
+    },
+  },
+  {
+    // T4N, T4P, T4R, T4S are Red Deer urban core. T4A/T4B/T4C are Calgary satellites.
+    name: 'Red Deer',
+    province: 'AB',
+    priceToRent: 13,
+    medianHomePrice: 340_000,
+    confidence: 'low',
+    fsas: ['T4N', 'T4P', 'T4R', 'T4S'],
+    medianPriceByType: {
+      'condo-apt': 210_000,
+      'condo-townhouse': 270_000,
+      'freehold-townhouse': 330_000,
+      'semi-detached': 380_000,
+      'detached': 450_000,
+    },
+  },
+  {
+    name: 'Lethbridge',
+    province: 'AB',
+    priceToRent: 12,
+    medianHomePrice: 310_000,
+    confidence: 'low',
+    fsas: ['T1H', 'T1J', 'T1K'],
+    medianPriceByType: {
+      'condo-apt': 190_000,
+      'condo-townhouse': 240_000,
+      'freehold-townhouse': 300_000,
+      'semi-detached': 350_000,
+      'detached': 420_000,
+    },
+  },
+  // ── Quebec ────────────────────────────────────────────────────────────────
   {
     name: 'Montreal',
     province: 'QC',
@@ -135,6 +445,13 @@ const METRO_PROFILES: readonly MetroProfile[] = [
     medianHomePrice: 580_000,
     confidence: 'high',
     fsas: ['H1', 'H2', 'H3', 'H4', 'H5', 'H7', 'H8', 'H9'],
+    medianPriceByType: {
+      'condo-apt': 430_000,
+      'condo-townhouse': 530_000,
+      'freehold-townhouse': 620_000,
+      'semi-detached': 680_000,
+      'detached': 800_000,
+    },
   },
   {
     name: 'Quebec City',
@@ -142,8 +459,62 @@ const METRO_PROFILES: readonly MetroProfile[] = [
     priceToRent: 15,
     medianHomePrice: 400_000,
     confidence: 'high',
-    fsas: ['G1', 'G2'],
+    // G3 adds western suburbs (Cap-Rouge, Sillery, Val-Bélair)
+    fsas: ['G1', 'G2', 'G3'],
+    medianPriceByType: {
+      'condo-apt': 260_000,
+      'condo-townhouse': 320_000,
+      'freehold-townhouse': 390_000,
+      'semi-detached': 440_000,
+      'detached': 530_000,
+    },
   },
+  {
+    name: 'Sherbrooke',
+    province: 'QC',
+    priceToRent: 15,
+    medianHomePrice: 420_000,
+    confidence: 'low',
+    fsas: ['J1E', 'J1G', 'J1H', 'J1J', 'J1K', 'J1L', 'J1M', 'J1N'],
+    medianPriceByType: {
+      'condo-apt': 280_000,
+      'condo-townhouse': 350_000,
+      'freehold-townhouse': 420_000,
+      'semi-detached': 470_000,
+      'detached': 560_000,
+    },
+  },
+  {
+    name: 'Trois-Rivières',
+    province: 'QC',
+    priceToRent: 13,
+    medianHomePrice: 350_000,
+    confidence: 'low',
+    fsas: ['G8T', 'G8V', 'G8W', 'G8Y', 'G8Z'],
+    medianPriceByType: {
+      'condo-apt': 230_000,
+      'condo-townhouse': 290_000,
+      'freehold-townhouse': 350_000,
+      'semi-detached': 400_000,
+      'detached': 470_000,
+    },
+  },
+  {
+    name: 'Saguenay',
+    province: 'QC',
+    priceToRent: 12,
+    medianHomePrice: 330_000,
+    confidence: 'low',
+    fsas: ['G7'],
+    medianPriceByType: {
+      'condo-apt': 210_000,
+      'condo-townhouse': 260_000,
+      'freehold-townhouse': 320_000,
+      'semi-detached': 370_000,
+      'detached': 440_000,
+    },
+  },
+  // ── Manitoba ──────────────────────────────────────────────────────────────
   {
     name: 'Winnipeg',
     province: 'MB',
@@ -151,7 +522,77 @@ const METRO_PROFILES: readonly MetroProfile[] = [
     medianHomePrice: 380_000,
     confidence: 'high',
     fsas: ['R2', 'R3'],
+    medianPriceByType: {
+      'condo-apt': 230_000,
+      'condo-townhouse': 300_000,
+      'freehold-townhouse': 370_000,
+      'semi-detached': 420_000,
+      'detached': 500_000,
+    },
   },
+  {
+    name: 'Brandon',
+    province: 'MB',
+    priceToRent: 11,
+    medianHomePrice: 290_000,
+    confidence: 'low',
+    fsas: ['R7'],
+    medianPriceByType: {
+      'condo-apt': 190_000,
+      'condo-townhouse': 230_000,
+      'freehold-townhouse': 280_000,
+      'semi-detached': 320_000,
+      'detached': 380_000,
+    },
+  },
+  // ── Saskatchewan ──────────────────────────────────────────────────────────
+  {
+    name: 'Saskatoon',
+    province: 'SK',
+    priceToRent: 14,
+    medianHomePrice: 390_000,
+    confidence: 'medium',
+    fsas: ['S7'],
+    medianPriceByType: {
+      'condo-apt': 250_000,
+      'condo-townhouse': 310_000,
+      'freehold-townhouse': 370_000,
+      'semi-detached': 430_000,
+      'detached': 510_000,
+    },
+  },
+  {
+    name: 'Regina',
+    province: 'SK',
+    priceToRent: 13,
+    medianHomePrice: 350_000,
+    confidence: 'medium',
+    fsas: ['S4'],
+    medianPriceByType: {
+      'condo-apt': 220_000,
+      'condo-townhouse': 280_000,
+      'freehold-townhouse': 330_000,
+      'semi-detached': 390_000,
+      'detached': 470_000,
+    },
+  },
+  {
+    // S6V, S6W, S6X = Prince Albert urban. S6H, S6J = Moose Jaw.
+    name: 'Prince Albert',
+    province: 'SK',
+    priceToRent: 10,
+    medianHomePrice: 250_000,
+    confidence: 'low',
+    fsas: ['S6V', 'S6W', 'S6X'],
+    medianPriceByType: {
+      'condo-apt': 160_000,
+      'condo-townhouse': 200_000,
+      'freehold-townhouse': 250_000,
+      'semi-detached': 290_000,
+      'detached': 340_000,
+    },
+  },
+  // ── Nova Scotia ───────────────────────────────────────────────────────────
   {
     name: 'Halifax',
     province: 'NS',
@@ -159,15 +600,77 @@ const METRO_PROFILES: readonly MetroProfile[] = [
     medianHomePrice: 530_000,
     confidence: 'medium',
     fsas: ['B3'],
+    medianPriceByType: {
+      'condo-apt': 360_000,
+      'condo-townhouse': 450_000,
+      'freehold-townhouse': 540_000,
+      'semi-detached': 610_000,
+      'detached': 680_000,
+    },
   },
   {
-    name: 'Saskatoon / Regina',
-    province: 'SK',
+    name: 'Sydney / Cape Breton',
+    province: 'NS',
+    priceToRent: 12,
+    medianHomePrice: 310_000,
+    confidence: 'low',
+    fsas: ['B1'],
+    medianPriceByType: {
+      'condo-apt': 200_000,
+      'condo-townhouse': 250_000,
+      'freehold-townhouse': 300_000,
+      'semi-detached': 340_000,
+      'detached': 400_000,
+    },
+  },
+  // ── New Brunswick ─────────────────────────────────────────────────────────
+  {
+    name: 'Moncton',
+    province: 'NB',
+    priceToRent: 14,
+    medianHomePrice: 300_000,
+    confidence: 'low',
+    fsas: ['E1'],
+    medianPriceByType: {
+      'condo-apt': 220_000,
+      'condo-townhouse': 270_000,
+      'freehold-townhouse': 310_000,
+      'semi-detached': 360_000,
+      'detached': 410_000,
+    },
+  },
+  {
+    // E2J–E2M = Saint John urban. E2E, E2G, E2H = Sussex / Hampton (rural).
+    name: 'Saint John',
+    province: 'NB',
+    priceToRent: 13,
+    medianHomePrice: 270_000,
+    confidence: 'low',
+    fsas: ['E2J', 'E2K', 'E2L', 'E2M'],
+    medianPriceByType: {
+      'condo-apt': 200_000,
+      'condo-townhouse': 245_000,
+      'freehold-townhouse': 285_000,
+      'semi-detached': 325_000,
+      'detached': 390_000,
+    },
+  },
+  {
+    name: 'Fredericton',
+    province: 'NB',
     priceToRent: 14,
     medianHomePrice: 370_000,
-    confidence: 'medium',
-    fsas: ['S7', 'S4'],
+    confidence: 'low',
+    fsas: ['E3'],
+    medianPriceByType: {
+      'condo-apt': 250_000,
+      'condo-townhouse': 300_000,
+      'freehold-townhouse': 360_000,
+      'semi-detached': 410_000,
+      'detached': 490_000,
+    },
   },
+  // ── Newfoundland ──────────────────────────────────────────────────────────
   {
     name: 'St. John\'s',
     province: 'NL',
@@ -175,7 +678,30 @@ const METRO_PROFILES: readonly MetroProfile[] = [
     medianHomePrice: 330_000,
     confidence: 'low',
     fsas: ['A1'],
+    medianPriceByType: {
+      'condo-apt': 210_000,
+      'condo-townhouse': 260_000,
+      'freehold-townhouse': 310_000,
+      'semi-detached': 360_000,
+      'detached': 430_000,
+    },
   },
+  {
+    name: 'Corner Brook',
+    province: 'NL',
+    priceToRent: 11,
+    medianHomePrice: 220_000,
+    confidence: 'low',
+    fsas: ['A2H'],
+    medianPriceByType: {
+      'condo-apt': 160_000,
+      'condo-townhouse': 200_000,
+      'freehold-townhouse': 240_000,
+      'semi-detached': 280_000,
+      'detached': 320_000,
+    },
+  },
+  // ── Prince Edward Island ──────────────────────────────────────────────────
   {
     name: 'Charlottetown',
     province: 'PE',
@@ -183,14 +709,13 @@ const METRO_PROFILES: readonly MetroProfile[] = [
     medianHomePrice: 390_000,
     confidence: 'low',
     fsas: ['C1'],
-  },
-  {
-    name: 'Saint John / Moncton',
-    province: 'NB',
-    priceToRent: 14,
-    medianHomePrice: 320_000,
-    confidence: 'low',
-    fsas: ['E1', 'E2'],
+    medianPriceByType: {
+      'condo-apt': 250_000,
+      'condo-townhouse': 310_000,
+      'freehold-townhouse': 380_000,
+      'semi-detached': 430_000,
+      'detached': 520_000,
+    },
   },
 ];
 
@@ -312,9 +837,15 @@ export function suggestRent(
   const prefix = normalizeFSAPrefix(postalCodeOrFSA);
   if (!prefix) return null;
 
-  // Match against metro FSAs first.
+  const fsa3 = normalizeFSA3(postalCodeOrFSA);
+
+  // Match against metro FSAs. Entries may be 2-char prefix or 3-char FSA.
+  // 3-char entries are tested against the full FSA; 2-char against the prefix.
   for (const metro of METRO_PROFILES) {
-    if (metro.fsas.includes(prefix)) {
+    const matched = metro.fsas.some(f =>
+      f.length === 3 ? f === fsa3 : f === prefix,
+    );
+    if (matched) {
       const adjustedPR = tierAdjustedPR(
         metro.priceToRent,
         homePrice,
@@ -370,6 +901,12 @@ export interface PriceAndRentSuggestion {
   priceToRent: number;
   source: string;
   confidence: 'high' | 'medium' | 'low';
+  /** Municipal property tax rate, if a matching profile was found. */
+  propertyTaxPct?: number;
+  /** Whether this municipality charges a second municipal LTT (Toronto only). */
+  municipalLTT?: boolean;
+  /** Regional insurance escalation factor above inflation. */
+  insuranceEscalationOverInflationPct?: number;
 }
 
 /**
@@ -387,6 +924,16 @@ export function suggestPriceAndRent(
 ): PriceAndRentSuggestion | null {
   const fsa3 = normalizeFSA3(postalCodeOrFSA);
 
+  // Municipal lookup — runs for all postal codes, supplements price/rent data.
+  const municipal = getMunicipalProfile(postalCodeOrFSA);
+  const municipalExtras = municipal
+    ? {
+        propertyTaxPct: municipal.propertyTaxPct,
+        municipalLTT: municipal.municipalLTT,
+        insuranceEscalationOverInflationPct: municipal.insuranceEscalationOverInflationPct,
+      }
+    : {};
+
   if (fsa3) {
     const region = regionFromFSA(fsa3);
     if (region) {
@@ -403,13 +950,26 @@ export function suggestPriceAndRent(
         priceToRent,
         source: profile.source,
         confidence: 'high',
+        ...municipalExtras,
       };
     }
   }
 
-  // Non-ON fallback: use the v1 metro-or-province price-tier model, seeded
-  // with a reasonable starting home price for the chosen type.
-  const seedHomePrice = nonOntarioSeedPrice(homeType);
+  // Non-ON fallback: prefer the metro's per-type median price if available,
+  // otherwise fall back to national type-tier seeds.
+  const prefix2 = normalizeFSAPrefix(postalCodeOrFSA);
+  const fsa3check = normalizeFSA3(postalCodeOrFSA);
+  let seedHomePrice = nonOntarioSeedPrice(homeType);
+  for (const metro of METRO_PROFILES) {
+    const matched = metro.fsas.some(f =>
+      f.length === 3 ? f === fsa3check : f === prefix2,
+    );
+    if (matched && metro.medianPriceByType?.[homeType] != null) {
+      seedHomePrice = metro.medianPriceByType[homeType]!;
+      break;
+    }
+  }
+
   const v1 = suggestRent(seedHomePrice, postalCodeOrFSA);
   if (!v1) return null;
 
@@ -422,6 +982,7 @@ export function suggestPriceAndRent(
     priceToRent: v1.priceToRent,
     source: v1.source,
     confidence: v1.confidence,
+    ...municipalExtras,
   };
 }
 

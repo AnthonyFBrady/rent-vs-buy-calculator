@@ -1,7 +1,7 @@
 'use client';
 
 import type { CalculatorInputs } from '@/engine';
-import { RangeInput } from '../components';
+import { RangeInput, TextInput } from '../components';
 
 interface Props {
   inputs: CalculatorInputs;
@@ -21,46 +21,14 @@ export function StepPersonal({ inputs, patch }: Props) {
     <div>
       {/* Name */}
       <div style={{ marginBottom: '28px' }}>
-        <label
-          style={{
-            display: 'block',
-            fontSize: '12px',
-            fontWeight: 500,
-            color: 'var(--color-text-muted)',
-            marginBottom: '8px',
-            fontFamily: 'var(--font-sans), system-ui, sans-serif',
-            letterSpacing: '-0.01em',
-          }}
-        >
-          First name
-        </label>
-        <input
-          type="text"
+        <TextInput
+          label="First name"
           value={firstName}
-          onChange={(e) => patch({ firstName: e.target.value || undefined })}
+          onChange={(v) => patch({ firstName: v || undefined })}
           placeholder="Optional — personalizes your chart"
           maxLength={32}
-          style={{
-            width: '100%',
-            height: '52px',
-            padding: '0 16px',
-            borderRadius: '10px',
-            fontSize: '16px',
-            fontWeight: 500,
-            letterSpacing: '-0.01em',
-            fontFamily: 'var(--font-sans), system-ui, sans-serif',
-            backgroundColor: 'var(--color-surface-raised)',
-            color: 'var(--color-text)',
-            border: '1px solid var(--color-outline)',
-            outline: 'none',
-            boxSizing: 'border-box',
-          }}
-          onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--color-outline-active)'; }}
-          onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-outline)'; }}
+          description={`Shows as "${firstName || 'Your'} wealth outlook" on the chart.`}
         />
-        <p style={{ fontSize: '11px', color: 'var(--color-text-faint)', marginTop: '6px', lineHeight: 1.5 }}>
-          Shows as "{firstName || 'Your'} wealth outlook" on the chart.
-        </p>
       </div>
 
       {/* Age */}

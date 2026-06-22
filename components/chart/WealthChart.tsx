@@ -118,6 +118,12 @@ interface DetailedTooltipProps {
 
 function DetailedTooltip({ year, ownerWealth, renterWealth, snapshot, hasRenter }: DetailedTooltipProps) {
   const advantage = renterWealth != null ? ownerWealth - renterWealth : null;
+  const equityPct = snapshot && snapshot.ownerHomeValue > 0
+    ? Math.round((snapshot.ownerEquity / snapshot.ownerHomeValue) * 100)
+    : null;
+  const interestShare = snapshot && snapshot.ownerAnnualMortgagePayment > 0
+    ? Math.round((snapshot.ownerAnnualInterest / snapshot.ownerAnnualMortgagePayment) * 100)
+    : null;
 
   return (
     <div style={{
@@ -126,44 +132,61 @@ function DetailedTooltip({ year, ownerWealth, renterWealth, snapshot, hasRenter 
       borderRadius: 10,
       padding: '12px 14px',
       color: 'var(--color-text)',
-      width: 220,
+      width: 260,
+      boxShadow: '0 8px 32px rgba(0,0,0,0.28)',
     }}>
       {/* Year header */}
-      <p style={{
-        fontSize: 13,
-        fontWeight: 600,
-        letterSpacing: '-0.02em',
-        marginBottom: 8,
-        fontFamily: 'var(--font-sans), system-ui, sans-serif',
-        color: 'var(--color-text)',
-      }}>
-        {year === 0 ? 'Today' : `Year ${year}`}
-      </p>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
+        <p style={{ fontSize: 13, fontWeight: 600, letterSpacing: '-0.02em', fontFamily: 'var(--font-sans), system-ui, sans-serif', color: 'var(--color-text)' }}>
+          {year === 0 ? 'Today' : `Year ${year}`}
+        </p>
+        {snapshot?.ownerMoveOccurredThisYear && (
+          <span style={{ fontSize: 9, color: 'var(--color-owner)', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>Owner moved</span>
+        )}
+        {snapshot?.renterMoveOccurredThisYear && (
+          <span style={{ fontSize: 9, color: 'var(--color-renter)', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>Renter moved</span>
+        )}
+      </div>
 
       {/* Owner section */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5 }}>
-        <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--color-owner)', flexShrink: 0, display: 'inline-block' }} />
-        <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-owner)', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
-          Owner — {fmt(ownerWealth)}
-        </span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--color-owner)', flexShrink: 0, display: 'inline-block' }} />
+          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-owner)', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>Owner</span>
+        </div>
+        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-owner)', fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>{fmt(ownerWealth)}</span>
       </div>
 
       {snapshot && (
         <>
           <TRow label="Home value" value={fmtK(snapshot.ownerHomeValue)} indent />
-          <TRow label="Mortgage" value={`−${fmtK(snapshot.ownerMortgageBalance)}`} indent dim />
-          <TRow label="Equity" value={fmtK(snapshot.ownerEquity)} indent />
+          <TRow label="Mortgage balance" value={`−${fmtK(snapshot.ownerMortgageBalance)}`} indent dim />
+          <TRow
+            label={`Equity${equityPct != null ? ` (${equityPct}%)` : ''}`}
+            value={fmtK(snapshot.ownerEquity)}
+            indent
+            color="var(--color-owner)"
+          />
           {snapshot.ownerPortfolioEnd > 100 && (
-            <TRow label="Portfolio" value={fmtK(snapshot.ownerPortfolioEnd)} indent />
+            <TRow label="Invested surplus" value={fmtK(snapshot.ownerPortfolioEnd)} indent dim />
           )}
           <Divider />
-          <TRow label="Costs this year" value={fmtK(snapshot.ownerAnnualCashOut)} indent />
-          <TRow label="  Mortgage P+I" value={fmtK(snapshot.ownerAnnualMortgagePayment)} indent dim />
-          <TRow label="  Tax" value={fmtK(snapshot.ownerAnnualPropertyTax)} indent dim />
+          <TRow label="Annual cash out" value={fmtK(snapshot.ownerAnnualCashOut)} indent />
+          <TRow
+            label={`  Interest${interestShare != null ? ` (${interestShare}% of pmt)` : ''}`}
+            value={fmtK(snapshot.ownerAnnualInterest)}
+            indent dim
+          />
+          <TRow label="  Principal" value={fmtK(snapshot.ownerAnnualPrincipal)} indent dim />
+          <TRow label="  Property tax" value={fmtK(snapshot.ownerAnnualPropertyTax)} indent dim />
           <TRow label="  Maintenance" value={fmtK(snapshot.ownerAnnualMaintenance)} indent dim />
           {snapshot.ownerAnnualStrata > 0 && (
             <TRow label="  Strata" value={fmtK(snapshot.ownerAnnualStrata)} indent dim />
           )}
+          {snapshot.ownerMoveTransactionCost > 0 && (
+            <TRow label="  Move cost" value={fmtK(snapshot.ownerMoveTransactionCost)} indent dim />
+          )}
+          <TRow label="Cumul. property tax" value={fmtK(snapshot.ownerCumulativePropertyTax)} indent dim />
         </>
       )}
 
@@ -172,22 +195,39 @@ function DetailedTooltip({ year, ownerWealth, renterWealth, snapshot, hasRenter 
           <div style={{ height: 8 }} />
 
           {/* Renter section */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5 }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--color-renter)', flexShrink: 0, display: 'inline-block' }} />
-            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-renter)', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
-              Renter — {fmt(renterWealth)}
-            </span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--color-renter)', flexShrink: 0, display: 'inline-block' }} />
+              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-renter)', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>Renter</span>
+            </div>
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-renter)', fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>{fmt(renterWealth)}</span>
           </div>
 
           {snapshot && (
             <>
-              <TRow label="Portfolio" value={fmtK(snapshot.renterPortfolioEnd)} indent />
+              <TRow label="Portfolio" value={fmtK(snapshot.renterPortfolioEnd)} indent color="var(--color-renter)" />
               {snapshot.renterRrspBalance > 100 && (
                 <TRow label="RRSP" value={fmtK(snapshot.renterRrspBalance)} indent dim />
               )}
               <Divider />
               <TRow label="Rent this year" value={fmtK(snapshot.renterAnnualRent)} indent />
               <TRow label="Invested this year" value={fmtK(snapshot.renterPortfolioContribution)} indent dim />
+              <TRow label="Portfolio growth" value={fmtK(snapshot.renterPortfolioGrowth)} indent dim />
+              {snapshot.renterMoveOccurredThisYear && snapshot.renterPhysicalMovingCost > 0 && (
+                <TRow label="Move cost" value={fmtK(snapshot.renterPhysicalMovingCost)} indent dim />
+              )}
+            </>
+          )}
+
+          {/* Annual cost comparison */}
+          {snapshot && (
+            <>
+              <Divider />
+              <TRow
+                label={snapshot.cashOutDelta > 0 ? 'Owner pays more/yr' : 'Renter pays more/yr'}
+                value={`${fmtK(Math.abs(snapshot.cashOutDelta))}`}
+                color={snapshot.cashOutDelta > 0 ? 'var(--color-owner)' : 'var(--color-renter)'}
+              />
             </>
           )}
 
@@ -197,15 +237,15 @@ function DetailedTooltip({ year, ownerWealth, renterWealth, snapshot, hasRenter 
               <Divider />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                 <span style={{ fontSize: 11, color: 'var(--color-text-faint)', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
-                  {advantage > 0 ? 'Buy leads' : 'Rent leads'}
+                  {Math.abs(advantage) < 500 ? 'Effectively tied' : advantage > 0 ? 'Buy leads' : 'Rent leads'}
                 </span>
                 <span style={{
-                  fontSize: 12, fontWeight: 700,
+                  fontSize: 13, fontWeight: 700,
                   fontVariantNumeric: 'tabular-nums',
                   fontFamily: 'var(--font-sans), system-ui, sans-serif',
-                  color: advantage > 0 ? 'var(--color-owner)' : 'var(--color-renter)',
+                  color: Math.abs(advantage) < 500 ? 'var(--color-text-faint)' : advantage > 0 ? 'var(--color-owner)' : 'var(--color-renter)',
                 }}>
-                  +{fmt(Math.abs(advantage))}
+                  {Math.abs(advantage) < 500 ? '≈ $0' : `+${fmt(Math.abs(advantage))}`}
                 </span>
               </div>
             </>
@@ -264,7 +304,7 @@ function ChartInner({
     ...(hasRenter && renterBand ? renterBand.flatMap(d => [d.lo, d.hi]) : []),
   ];
   const yRawMin = Math.min(...allValues, 0);
-  const yRawMax = Math.max(...allValues, 1);
+  const yRawMax = Math.max(...allValues, 1) * 1.08;
 
   const xScale = useMemo(() => scaleLinear({
     domain: [0, holdingPeriodYears],
@@ -358,7 +398,7 @@ function ChartInner({
     return { year: hoverYear, owner: o.value, renter: r?.value ?? null, snap };
   }, [hoverYear, ownerData, renterData, hasRenter, yearlyBreakdown]);
 
-  const TOOLTIP_W = 220;
+  const TOOLTIP_W = 260;
   const ttLeft = vpCursor
     ? (typeof window !== 'undefined' && vpCursor.x > window.innerWidth * 0.6
         ? vpCursor.x - TOOLTIP_W - 12
@@ -391,13 +431,27 @@ function ChartInner({
             <rect x={0} y={0} width={innerWidth} height={innerHeight} />
           </clipPath>
           <linearGradient id="wc-grad-owner" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" style={{ stopColor: 'var(--color-owner)', stopOpacity: 0.22 }} />
+            <stop offset="0%" style={{ stopColor: 'var(--color-owner)', stopOpacity: 0.30 }} />
             <stop offset="100%" style={{ stopColor: 'var(--color-owner)', stopOpacity: 0 }} />
           </linearGradient>
           <linearGradient id="wc-grad-renter" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" style={{ stopColor: 'var(--color-renter)', stopOpacity: 0.18 }} />
+            <stop offset="0%" style={{ stopColor: 'var(--color-renter)', stopOpacity: 0.26 }} />
             <stop offset="100%" style={{ stopColor: 'var(--color-renter)', stopOpacity: 0 }} />
           </linearGradient>
+          <filter id="wc-glow-owner" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <filter id="wc-glow-renter" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
         </defs>
         <g transform={`translate(${MARGIN.left},${MARGIN.top})`}>
 
@@ -496,6 +550,7 @@ function ChartInner({
               strokeLinecap="round"
               strokeLinejoin="round"
               clipPath="url(#wc-clip)"
+              filter="url(#wc-glow-owner)"
               initial={animateOnMount ? { pathLength: 0, opacity: 0 } : false}
               animate={{ pathLength: 1, opacity: 1 }}
               transition={{ duration: 1.4, ease: [0.4, 0, 0.2, 1] }}
@@ -511,6 +566,7 @@ function ChartInner({
               strokeLinecap="round"
               strokeLinejoin="round"
               clipPath="url(#wc-clip)"
+              filter="url(#wc-glow-renter)"
               initial={{ pathLength: 0, opacity: 0 }}
               animate={{ pathLength: 1, opacity: 1 }}
               transition={{ duration: 1.4, ease: [0.4, 0, 0.2, 1], delay: 0.2 }}
@@ -520,18 +576,18 @@ function ChartInner({
           {/* Move annotations */}
           {computeMoveMarkers(ownerMoveYears ?? [], ownerData, xScale, yScale).map(({ bx: mbx, by: mby, key }) => (
             <motion.g key={`om-${key}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-              <line x1={mbx} y1={mby} x2={mbx} y2={mby + 20}
-                stroke="var(--color-owner)" strokeWidth={1} strokeDasharray="2 3" strokeOpacity={0.55} />
-              <path d={`M ${mbx - 4} ${mby} L ${mbx + 4} ${mby} L ${mbx} ${mby + 7} Z`}
-                fill="var(--color-owner)" fillOpacity={0.5} />
+              <line x1={mbx} y1={mby} x2={mbx} y2={mby - 18}
+                stroke="var(--color-owner)" strokeWidth={1.5} strokeDasharray="2 3" strokeOpacity={0.65} />
+              <path d={`M ${mbx - 5} ${mby} L ${mbx + 5} ${mby} L ${mbx} ${mby - 10} Z`}
+                fill="var(--color-owner)" fillOpacity={0.8} />
             </motion.g>
           ))}
           {computeMoveMarkers(renterMoveYears ?? [], renterData, xScale, yScale).map(({ bx: mbx, by: mby, key }) => (
             <motion.g key={`rm-${key}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-              <line x1={mbx} y1={mby} x2={mbx} y2={mby + 20}
-                stroke="var(--color-renter)" strokeWidth={1} strokeDasharray="2 3" strokeOpacity={0.55} />
-              <path d={`M ${mbx - 4} ${mby} L ${mbx + 4} ${mby} L ${mbx} ${mby + 7} Z`}
-                fill="var(--color-renter)" fillOpacity={0.5} />
+              <line x1={mbx} y1={mby} x2={mbx} y2={mby - 18}
+                stroke="var(--color-renter)" strokeWidth={1.5} strokeDasharray="2 3" strokeOpacity={0.65} />
+              <path d={`M ${mbx - 5} ${mby} L ${mbx + 5} ${mby} L ${mbx} ${mby - 10} Z`}
+                fill="var(--color-renter)" fillOpacity={0.8} />
             </motion.g>
           ))}
 

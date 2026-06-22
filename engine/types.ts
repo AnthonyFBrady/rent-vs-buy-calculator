@@ -212,6 +212,15 @@ export interface CalculatorInputs {
    */
   ownerPriorEquity?: number;
 
+  /**
+   * The user's intent for "savings to invest after closing", in dollars. This is
+   * the SOURCE OF TRUTH for prior equity. When set, `normalizeInputs` derives
+   * `ownerPriorEquity = downPayment + closing + ownerExtraSavings` so the prior
+   * equity tracks home price and down payment automatically. When undefined, any
+   * explicitly-set `ownerPriorEquity` is respected as-is (tests, advanced links).
+   */
+  ownerExtraSavings?: number;
+
   /** Whether the owner's surplus cash (prior equity above year-0 cash out) is held in a TFSA. When true, owner portfolio exits tax-free. Default false (taxable). @deprecated Use ownerSurplusTfsaAmt for dollar-level control. */
   ownerSurplusUsesTFSA?: boolean;
 
@@ -264,6 +273,35 @@ export interface CalculatorInputs {
   ownerFhsaDown?: number;
 
   /**
+   * How much faster than general inflation home insurance premiums are rising in
+   * this location. National baseline: 0.03 (3% above CPI). Higher in BC/AB
+   * wildfire zones and coastal flood-risk areas.
+   * Set automatically from engine/data/regions/municipal.ts when a postal code
+   * is entered. Users can override it. Source: NBER Housing Climate Risk 2025.
+   */
+  insuranceEscalationOverInflationPct?: number;
+
+  /**
+   * Miscellaneous closing costs at purchase beyond legal fees: home inspection
+   * (~$500-800), mortgage appraisal (~$300-600), title insurance (~$250-400).
+   * Added to ownerYear0CashOut. Defaults to $0 so existing test fixtures are
+   * unaffected. Users who want an accurate year-0 cost should enter their real
+   * inspection + appraisal + title insurance total here.
+   * Source: Himmelberg et al. (2005) user-cost framework; Henderson & Ioannides (1983)
+   * empirical transaction cost estimates.
+   */
+  closingMiscFees?: number;
+
+  /**
+   * The user's estimated total net worth (excluding the home being modeled),
+   * in CAD. When provided, the engine computes homePrice / estimatedNetWorth
+   * and flags if the home represents > 50% of net worth — a portfolio
+   * concentration risk identified by Flavin & Yamashita (2002/2011).
+   * Optional. Has no effect on the simulation math; only drives the flag.
+   */
+  estimatedNetWorth?: number;
+
+  /**
    * Amount withdrawn under the RRSP Home Buyers' Plan for the down payment (0–$60,000).
    * Adds hbpDown / 15 to owner annual cash out for each year of the holding period,
    * up to 15 years (mandatory repayment window). We model full repayment each year.
@@ -294,6 +332,29 @@ export interface CalculatorInputs {
    * rentEscalationPct (market rent growth). Set lower if rent control applies.
    */
   rentalIncomeGrowthPct?: number;
+
+  // ─── v7 — HOME_COMPARE step fields ───────────────────────────────────────
+  // UI-level only. Do not affect engine math. Drive price/rent seeding via
+  // bedroom multipliers in the HOME_COMPARE step component.
+
+  /**
+   * Bedroom count for the home the user would buy.
+   * 0 = Studio, 1 = 1 BR, 2 = 2 BR, 3 = 3 BR, 4 = 4+ BR.
+   * Used to apply a multiplier to the 2BR baseline from suggestPriceAndRent.
+   */
+  buyBedrooms?: number;
+
+  /**
+   * Bedroom count for the unit the user would rent (comparison side).
+   * Defaults to buyBedrooms. Used with rentHomeType to seed monthlyRent.
+   */
+  rentBedrooms?: number;
+
+  /**
+   * Home type on the renting side. Allows the user to compare buying a
+   * detached to renting a condo, for example. Defaults to homeType.
+   */
+  rentHomeType?: HomeType;
 }
 
 export interface YearSnapshot {
@@ -453,4 +514,22 @@ export interface SimulationResult {
   breakEvenYear: number | null;    // first year owner net worth >= renter, null if never
   /** One entry per mortgage term. First entry is the initial purchase term. */
   renewalBoundaries: RenewalBoundary[];
+
+  /**
+   * Price-to-rent ratio at the inputs (homePrice / (monthlyRent × 12)).
+   * A ratio above ~25 in the Canadian context suggests appreciation assumptions
+   * may be optimistic relative to historical mean-reversion. (Jordà et al. 2019;
+   * Himmelberg, Mayer & Sinai 2005.)
+   */
+  priceToRentRatio: number;
+  /** True if priceToRentRatio > 25. Surfaces a warning on the result page. */
+  priceToRentRatioFlagged: boolean;
+
+  /**
+   * homePrice / estimatedNetWorth. Null when estimatedNetWorth is not provided.
+   * Above 0.5 indicates portfolio concentration risk per Flavin & Yamashita (2002).
+   */
+  portfolioConcentrationPct: number | null;
+  /** True if portfolioConcentrationPct > 0.5. */
+  portfolioConcentrationFlagged: boolean;
 }

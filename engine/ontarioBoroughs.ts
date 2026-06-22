@@ -24,6 +24,12 @@
 
 import type { HomeType } from './types';
 
+export const ONTARIO_BOROUGHS_METADATA = {
+  asOf: '2025-04',
+  source: 'TRREB Q4-2024, CREA HPI April 2025, Rentals.ca Nov 2024, CMHC RMR Oct 2024',
+  nextRefresh: '2026-09', // Target quarterly refresh: Sept 2026
+};
+
 export type OntarioRegion =
   | 'toronto-downtown'
   | 'toronto-east'

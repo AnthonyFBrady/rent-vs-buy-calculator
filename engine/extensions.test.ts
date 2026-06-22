@@ -471,7 +471,7 @@ describe('renter first + last deposit', () => {
     );
   });
 
-  it('deposit reduces renter starting lump sum vs owner cash out', () => {
+  it('deposit reduces renter starting lump sum below the owner year-0 cash-out', () => {
     // renterYear0Investment = ownerYear0CashOut - deposit - renterMovingCost
     const inputs = {
       ...defaultInputsFor('ON'),
@@ -687,16 +687,20 @@ describe('owner surplus RRSP (v4)', () => {
   });
 
   it('RRSP net is included in finalOwnerWealth at exit', () => {
-    const withRrsp = simulate({ ...baseWithSurplus(), ownerSurplusUsesRRSP: true });
+    const inputs = baseWithSurplus();
+    const withRrsp = simulate({ ...inputs, ownerSurplusUsesRRSP: true });
     const lastY = withRrsp.yearByYear[withRrsp.yearByYear.length - 1]!;
     const expectedRrspNet = lastY.ownerSurplusRrspBalance * (1 - MARGINAL);
-    // finalOwnerWealth = homeNetProceeds + portfolioNetProceeds + rrspNet - moveCosts
-    expect(withRrsp.exit.finalOwnerWealth).toBeGreaterThan(
-      withRrsp.exit.ownerHomeNetProceeds + withRrsp.exit.ownerPortfolioNetProceeds,
-    );
-    expect(withRrsp.exit.finalOwnerWealth).toBeCloseTo(
-      withRrsp.exit.ownerHomeNetProceeds + withRrsp.exit.ownerPortfolioNetProceeds + expectedRrspNet,
-      -2,
-    );
+    expect(expectedRrspNet).toBeGreaterThan(0);
+
+    // finalOwnerWealth = home net + portfolio net + RRSP net - cumulative move costs.
+    // Property tax and closing costs are not deducted here — they are captured via
+    // the renter's higher starting investment and larger annual contributions (textbook NPV).
+    // (No TFSA surplus, HBP, or moves in this scenario, so those terms are 0.)
+    const expected =
+      withRrsp.exit.ownerHomeNetProceeds +
+      withRrsp.exit.ownerPortfolioNetProceeds +
+      expectedRrspNet;
+    expect(withRrsp.exit.finalOwnerWealth).toBeCloseTo(expected, -2);
   });
 });

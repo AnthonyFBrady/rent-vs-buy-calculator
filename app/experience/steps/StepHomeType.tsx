@@ -1,120 +1,125 @@
-﻿'use client';
+'use client';
 
 import { motion, AnimatePresence } from 'motion/react';
 import type { CalculatorInputs, HomeType } from '@/engine';
-import { homeTypeDefaults, HOME_TYPES } from '@/engine';
-import { StepWrapper } from '../components';
+import { homeTypeDefaults, HOME_TYPES, suggestPriceAndRent } from '@/engine';
+import { ChoiceGroup, FactorSlider, RangeInput, StepAdvanced } from '../components';
+import { FACTORS } from '../config/factors';
 
 interface Props {
   inputs: CalculatorInputs;
   patch: (p: Partial<CalculatorInputs>) => void;
 }
 
-const fmt = new Intl.NumberFormat('en-CA', {
-  style: 'currency',
-  currency: 'CAD',
-  maximumFractionDigits: 0,
-});
-
-const HOME_TYPE_SHORT: Record<HomeType, string> = {
-  'condo-apt': 'Condo',
-  'condo-townhouse': 'Condo TH',
+const HOME_TYPE_LABEL: Record<HomeType, string> = {
+  'condo-apt':          'Condo',
+  'condo-townhouse':    'Condo TH',
   'freehold-townhouse': 'Freehold TH',
-  'semi-detached': 'Semi',
-  detached: 'Detached',
+  'semi-detached':      'Semi',
+  'detached':           'Detached',
 };
 
-const HOME_TYPE_IMPACT: Record<HomeType, { headline: string; details: string }> = {
-  'condo-apt': {
-    headline: 'Lower appreciation, lower maintenance — but strata adds ongoing cost.',
-    details: "Condo apartments have appreciated ~2.5%/yr in Ontario vs ~3.5% for ground-oriented homes (CREA HPI 2014–2024). The strata fee ($650/mo) is added to the owner's annual carrying cost, making the owner line higher in early years.",
-  },
-  'condo-townhouse': {
-    headline: 'Moderate appreciation with a small strata fee.',
-    details: 'Condo townhouses share appreciation closer to ground-oriented housing (~3.0%/yr). Reduced strata ($300/mo) covers only common elements. Lower maintenance than freehold since the condo corp handles exterior capex.',
-  },
-  'freehold-townhouse': {
-    headline: 'Ground-oriented appreciation, no strata, full maintenance.',
-    details: 'Freehold means no condo fee, but you own the full envelope — roof, windows, mechanicals. Maintenance budgeted at 1.0%/yr. Appreciation aligns with ground-oriented housing (~3.5%/yr).',
-  },
-  'semi-detached': {
-    headline: 'Close to detached appreciation with slightly higher maintenance.',
-    details: 'Shares one wall but is otherwise a full freehold property. Maintenance at 1.3%/yr reflects a similar envelope responsibility to detached. Appreciation tracks detached at ~3.5%/yr.',
-  },
-  detached: {
-    headline: 'Highest appreciation potential — and highest maintenance budget.',
-    details: 'Full envelope responsibility: roof, siding, foundation, mechanicals. CMHC benchmarks maintenance at 1.5–2.0%/yr for detached homes. This is the home type where the payoff advantage is largest at long horizons.',
-  },
+const HOME_TYPE_FULL: Record<HomeType, string> = {
+  'condo-apt':          'Condo apartment',
+  'condo-townhouse':    'Condo townhouse',
+  'freehold-townhouse': 'Freehold townhouse',
+  'semi-detached':      'Semi-detached',
+  'detached':           'Detached house',
 };
 
 export function StepHomeType({ inputs, patch }: Props) {
+  const selectedType = inputs.homeType;
+  const selectedDefaults = selectedType ? homeTypeDefaults(selectedType) : null;
+  const maintenancePct = inputs.maintenancePct ?? 0.015;
+  const strataFee = inputs.monthlyStrataFee ?? 0;
+  const hasStrata = strataFee > 0 || (selectedType === 'condo-apt' || selectedType === 'condo-townhouse');
+  const appreciation = inputs.homeAppreciationPct ?? 0.035;
+
   function handleHomeType(ht: HomeType) {
     const d = homeTypeDefaults(ht);
+    const pc = inputs.postalCode;
+    const suggestion = pc ? suggestPriceAndRent(pc, ht) : null;
     patch({
       homeType: ht,
       maintenancePct: d.maintenancePct,
       monthlyStrataFee: d.monthlyStrataFee,
       homeAppreciationPct: d.homeAppreciationPct,
+      ...(suggestion
+        ? {
+            homePrice: suggestion.medianPrice,
+            monthlyRent: Math.round(suggestion.suggestedMonthlyRent),
+          }
+        : {}),
     });
   }
 
-  const selectedType = inputs.homeType;
-  const impact = selectedType ? HOME_TYPE_IMPACT[selectedType] : null;
-
   return (
-    <StepWrapper
-      heading="What are you buying?"
-      description="Home type sets appreciation rate, maintenance budget, and strata fee — watch the owner line react."
-    >
-      <div className="mt-6">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {HOME_TYPES.map((ht) => {
-            const d = homeTypeDefaults(ht);
-            const selected = inputs.homeType === ht;
-            return (
-              <button
-                key={ht}
-                type="button"
-                onClick={() => handleHomeType(ht)}
-                className="rounded-sm border px-3 py-3 text-left transition-all duration-150"
-                style={{
-                  borderColor: selected ? 'color-mix(in srgb, var(--color-owner) 55%, transparent)' : 'var(--color-outline)',
-                  backgroundColor: selected ? 'color-mix(in srgb, var(--color-owner) 9%, transparent)' : 'transparent',
-                }}
-              >
-                <p className="text-xs font-medium leading-snug" style={{ color: selected ? 'var(--color-owner)' : 'var(--color-text)' }}>
-                  {HOME_TYPE_SHORT[ht]}
-                </p>
-                <div className="mt-2 flex flex-col gap-0.5">
-                  <span className="text-[10px] text-muted" style={{ opacity: 0.65 }}>↑ {(d.homeAppreciationPct * 100).toFixed(1)}%/yr</span>
-                  <span className="text-[10px] text-muted" style={{ opacity: 0.65 }}>⚙ {(d.maintenancePct * 100).toFixed(1)}%</span>
-                  {d.monthlyStrataFee > 0 && (
-                    <span className="text-[10px] text-muted" style={{ opacity: 0.65 }}>≡ {fmt.format(d.monthlyStrataFee)}/mo</span>
-                  )}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        <AnimatePresence mode="wait">
-          {impact && (
-            <motion.div
-              key={selectedType}
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.22 }}
-              className="mt-4"
-            >
-              <div>
-                <p className="text-xs font-medium leading-snug" style={{ color: 'var(--color-owner)' }}>{impact.headline}</p>
-                <p className="mt-1.5 text-xs leading-relaxed text-muted">{impact.details}</p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+    <div>
+      {/* Type picker */}
+      <div style={{ marginBottom: '16px' }}>
+        <ChoiceGroup
+          ariaLabel="Home type"
+          columns={3}
+          variant="chip"
+          align="center"
+          options={HOME_TYPES.map((ht) => ({ value: ht, label: HOME_TYPE_LABEL[ht] }))}
+          value={selectedType}
+          onChange={handleHomeType}
+        />
       </div>
-    </StepWrapper>
+
+      {/* Contextual description */}
+      <AnimatePresence mode="wait">
+        {selectedDefaults && (
+          <motion.p
+            key={selectedType}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.18 }}
+            style={{
+              fontSize: '13px',
+              color: 'var(--color-text-muted)',
+              lineHeight: 1.55,
+              fontFamily: 'var(--font-sans), system-ui, sans-serif',
+              marginBottom: '20px',
+            }}
+          >
+            {HOME_TYPE_FULL[selectedType!]}. Defaults to {(maintenancePct * 100).toFixed(1)}% annual maintenance
+            {strataFee > 0 ? `, $${strataFee.toLocaleString('en-CA')}/mo strata` : ', no strata fee'},
+            and {(appreciation * 100).toFixed(1)}%/yr appreciation.
+          </motion.p>
+        )}
+      </AnimatePresence>
+
+      {/* Maintenance slider — always visible */}
+      <FactorSlider
+        factor={FACTORS.maintenance}
+        inputs={inputs}
+        patch={patch}
+        description="Annual reserve for repairs and replacements, as a % of home value."
+      />
+
+      <StepAdvanced label="Strata fee and appreciation">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {hasStrata && (
+            <RangeInput
+              label="Monthly strata fee"
+              value={strataFee}
+              min={0}
+              max={1500}
+              step={50}
+              onChange={(v) => patch({ monthlyStrataFee: v })}
+              formatValue={(v) => `$${v}/mo`}
+              color="var(--color-owner)"
+              minLabel="$0"
+              maxLabel="$1,500"
+              description="Mandatory fee to the condo corporation."
+            />
+          )}
+          <FactorSlider factor={FACTORS.homeAppreciation} inputs={inputs} patch={patch} />
+        </div>
+      </StepAdvanced>
+    </div>
   );
 }

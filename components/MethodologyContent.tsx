@@ -93,8 +93,8 @@ export function MethodologyContent() {
 
         <h3 style={H3_STYLE}>Renter path</h3>
         <ul style={{ marginTop: '8px', marginLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px', listStyle: 'disc' }}>
-          <li style={LI_STYLE}>Year 0: invest the amount the owner paid in closing costs as a starting portfolio lump sum.</li>
-          <li style={LI_STYLE}>Each year: pay rent and renter's insurance, then invest the positive difference between the owner's annual cash-out and the renter's.</li>
+          <li style={LI_STYLE}>Year 0: invest the owner's full year-0 cash-out (down payment + land transfer tax + legal fees + CMHC premium PST + owner moving cost) minus the renter's first+last deposit and moving cost. This captures the opportunity cost of every dollar the owner deploys at closing.</li>
+          <li style={LI_STYLE}>Each year: pay rent and renter's insurance, then invest the positive difference between the owner's full annual cash-out (including property tax and maintenance) and the renter's. Property tax is treated as a compounding investable difference, not a nominal deduction from owner wealth.</li>
           <li style={LI_STYLE}>A savings-discipline factor (default 100%) accounts for how much of the difference is actually invested rather than consumed.</li>
           <li style={LI_STYLE}>Portfolio compounds at (expected return minus investment fees). TFSA, FHSA, and RRSP shelters apply if enabled.</li>
           <li style={LI_STYLE}>Exit: liquidate the portfolio. Capital gains tax applies at 50% inclusion at your marginal rate.</li>

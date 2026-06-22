@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Playfair_Display, DM_Sans } from 'next/font/google';
 import './globals.css';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import { cn } from "@/lib/utils";
 
 const playfair = Playfair_Display({
@@ -63,7 +64,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
-  themeColor: '#FAF9F7',
+  themeColor: '#FAFAF9',
   width: 'device-width',
   initialScale: 1,
 };

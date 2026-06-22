@@ -27,7 +27,7 @@ export function StepMobility({ inputs, patch }: Props) {
         <div className="flex flex-col gap-3">
           <div>
             <p className="text-sm font-medium" style={{ color: 'var(--color-owner)' }}>Owner</p>
-            <p className="mt-0.5 text-xs leading-relaxed text-muted">
+            <p className="mt-0.5 text-xs leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>
               Each move: commission, LTT, legal, movers
             </p>
           </div>
@@ -44,7 +44,7 @@ export function StepMobility({ inputs, patch }: Props) {
             </p>
           )}
           {ownerMoves === 0 && (
-            <p className="text-xs text-muted" style={{ opacity: 0.5 }}>Stay put the full period</p>
+            <p className="text-xs" style={{ color: 'var(--color-text-muted)', opacity: 0.5 }}>Stay put the full period</p>
           )}
         </div>
 
@@ -52,7 +52,7 @@ export function StepMobility({ inputs, patch }: Props) {
         <div className="flex flex-col gap-3">
           <div>
             <p className="text-sm font-medium" style={{ color: 'var(--color-renter)' }}>Renter</p>
-            <p className="mt-0.5 text-xs leading-relaxed text-muted">
+            <p className="mt-0.5 text-xs leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>
               Each move: $400 movers + rent resets to market
             </p>
           </div>
@@ -69,7 +69,7 @@ export function StepMobility({ inputs, patch }: Props) {
             </p>
           )}
           {renterMoves === 0 && (
-            <p className="text-xs text-muted" style={{ opacity: 0.5 }}>Stay put the full period</p>
+            <p className="text-xs" style={{ color: 'var(--color-text-muted)', opacity: 0.5 }}>Stay put the full period</p>
           )}
         </div>
       </div>

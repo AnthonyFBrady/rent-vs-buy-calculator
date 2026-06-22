@@ -161,7 +161,7 @@ export function defaultInputsFor(
     monthlyRent: prov.exampleMonthlyRent,
 
     downPaymentPct: 0.20,
-    mortgageRatePct: 0.05,         // Bank of Canada 5-year posted, June 2026 placeholder
+    mortgageRatePct: 0.05,         // Static fallback — UI fetches live rate from /api/mortgage-rate
     amortizationYears: 25,
     holdingPeriodYears: 10,
 
@@ -203,5 +203,8 @@ export function defaultInputsFor(
     renterUsesRRSP: false,
     birthYear: 1990,
     annualIncome: 120_000,
+    closingMiscFees: 0,
+    insuranceEscalationOverInflationPct: 0.03,
+    // estimatedNetWorth intentionally omitted — optional field, no default
   };
 }

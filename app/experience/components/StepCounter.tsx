@@ -33,7 +33,7 @@ export function StepCounter({ value, min, max, onChange, color = 'var(--color-ow
       </button>
       <span
         style={{
-          fontFamily: 'Lora, Georgia, serif',
+          fontFamily: 'var(--font-serif), Georgia, serif',
           fontSize: '48px',
           color,
           minWidth: '2ch',

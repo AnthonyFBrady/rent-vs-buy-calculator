@@ -4,56 +4,79 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Brand color tokens — editorial NYT Upshot palette ──────────────────── */
+/* ════════════════════════════════════════════════════════════════════════
+   BRAND — the single source of truth for colour. Reskin the whole site by
+   changing the --brand-* values below. Everything else (and every component)
+   resolves to these through the --color-* semantic tokens. Light theme.
+   Add a new colour only as a deliberate decision, never a one-off hex.
+   ════════════════════════════════════════════════════════════════════════ */
 :root {
-  /* Backgrounds */
-  --color-bg:              #FAF9F7;
-  --color-bg-subtle:       #F3F2EF;
-  --color-bg-elevated:     #FFFFFF;
-  --color-hover:           #EEECEA;
-  --color-surface:         var(--color-bg-subtle);
-  --color-surface-raised:  var(--color-bg-elevated);
+  /* Core brand palette — change THESE to rebrand. */
+  --brand-bg:        #FAFAF9;   /* page background */
+  --brand-surface:   #F4F4F3;   /* cards / panels */
+  --brand-elevated:  #EAEAE8;   /* raised surfaces, inputs */
+  --brand-ink:       #0F0F0E;   /* primary text + primary button */
+  /* Owner/renter as rgb triplets so the line, band, and tint all reskin together. */
+  --brand-owner-rgb:  245, 158, 11;  /* buy / owner accent */
+  --brand-renter-rgb: 16, 185, 129;  /* rent / renter accent */
+  --brand-owner:     rgb(var(--brand-owner-rgb));
+  --brand-renter:    rgb(var(--brand-renter-rgb));
+  --brand-cross:     #A78BFA;   /* breakeven / crossover */
+  --brand-positive:  #4ADE80;
+  --brand-negative:  #F87171;
 
-  /* Text */
-  --color-text:            #1A1A1A;
-  --color-text-muted:      #404040;
-  --color-text-faint:      #737373;
+  /* Neutral grey ramp (structural, usually stays put across rebrands). */
+  --grey-300: #D4D4D8;
+  --grey-400: #A1A1AA;
+  --grey-500: #71717A;
+  --grey-600: #52525B;
 
-  /* Borders */
-  --color-outline:         #E3E1DC;
-  --color-outline-active:  #A09C96;
+  /* Semantic tokens — components reference THESE, never raw hex. */
+  --color-bg:             var(--brand-bg);
+  --color-bg-subtle:      var(--brand-surface);
+  --color-bg-elevated:    var(--brand-elevated);
+  --color-hover:          var(--brand-elevated);
+  --color-surface:        var(--brand-surface);
+  --color-surface-raised: var(--brand-elevated);
 
-  /* Semantic */
-  --color-positive:        #1E6B3F;
-  --color-negative:        #B91C1C;
+  --color-text:           var(--brand-ink);
+  --color-text-muted:     var(--grey-600);
+  --color-text-faint:     var(--grey-500);
+  --color-text-dim:       var(--grey-400);
+  --color-text-dimmer:    var(--grey-300);
 
-  /* Chart — amber (owner) + emerald (renter) */
-  --color-owner:           #B45309;
-  --color-renter:          #047857;
-  --color-cross:           #7C3AED;
-  --color-owner-band:      rgba(180, 83, 9, 0.10);
-  --color-renter-band:     rgba(4, 120, 87, 0.10);
+  --color-outline:        rgba(0,0,0,0.08);
+  --color-outline-active: rgba(0,0,0,0.16);
 
-  /* Buttons + inputs */
-  --color-btn-primary-bg:    #1A1A1A;
-  --color-btn-primary-text:  #FFFFFF;
+  --color-positive:       var(--brand-positive);
+  --color-negative:       var(--brand-negative);
+
+  --color-owner:          var(--brand-owner);
+  --color-renter:         var(--brand-renter);
+  --color-cross:          var(--brand-cross);
+  --color-owner-band:     rgba(var(--brand-owner-rgb), 0.13);
+  --color-renter-band:    rgba(var(--brand-renter-rgb), 0.13);
+  --color-owner-tint:     rgba(var(--brand-owner-rgb), 0.07);  /* winner-card wash */
+  --color-renter-tint:    rgba(var(--brand-renter-rgb), 0.07);
+
+  --color-btn-primary-bg:    var(--brand-ink);
+  --color-btn-primary-text:  var(--brand-bg);
   --color-btn-ghost-bg:      transparent;
-  --color-btn-ghost-text:    #5C5C5C;
-  --color-input-bg:          #FFFFFF;
-  --color-input-text:        #1A1A1A;
-  --color-input-placeholder: #9C9C9C;
-  --color-accent-cta:        #1A1A1A;
-  --color-scrollbar:         #A09C96;
+  --color-btn-ghost-text:    var(--grey-600);
+  --color-input-bg:          var(--brand-elevated);
+  --color-input-text:        var(--brand-ink);
+  --color-input-placeholder: var(--grey-500);
+  --color-accent-cta:        var(--brand-ink);
+  --color-scrollbar:         var(--brand-ink);
 
-  /* Chart specifics */
-  --color-chart-bg:             #FAF9F7;
-  --color-chart-grid:           #E8E4E0;
-  --color-chart-axis:           #9C9C9C;
-  --color-chart-owner-band:     rgba(180, 83, 9, 0.10);
-  --color-chart-renter-band:    rgba(4, 120, 87, 0.10);
-  --color-chart-tooltip-bg:     #FFFFFF;
-  --color-chart-tooltip-border: #E3E1DC;
-  --color-chart-crosshair:      #1A1A1A;
+  --color-chart-bg:             var(--brand-bg);
+  --color-chart-grid:           var(--brand-elevated);
+  --color-chart-axis:           var(--grey-500);
+  --color-chart-owner-band:     rgba(var(--brand-owner-rgb), 0.13);
+  --color-chart-renter-band:    rgba(var(--brand-renter-rgb), 0.13);
+  --color-chart-tooltip-bg:     var(--brand-surface);
+  --color-chart-tooltip-border: var(--brand-elevated);
+  --color-chart-crosshair:      var(--brand-ink);
 
   /* shadcn semantic bridge */
   --background:         var(--color-bg);
@@ -70,57 +93,6 @@
   --input:              var(--color-outline);
   --ring:               var(--color-outline-active);
   --radius:             8px;
-}
-
-.dark {
-  --color-bg:             #0F0F11;
-  --color-bg-subtle:      #18181B;
-  --color-bg-elevated:    #27272A;
-  --color-hover:          #27272A;
-  --color-surface:        var(--color-bg-subtle);
-  --color-surface-raised: var(--color-bg-elevated);
-  --color-text:           #FAFAFA;
-  --color-text-muted:     #D4D4D8;
-  --color-text-faint:     #A1A1AA;
-  --color-outline:        rgba(255,255,255,0.08);
-  --color-outline-active: rgba(255,255,255,0.20);
-  --color-positive:       #4ADE80;
-  --color-negative:       #F87171;
-  --color-owner:          #F59E0B;
-  --color-renter:         #10B981;
-  --color-cross:          #A78BFA;
-  --color-owner-band:     rgba(245, 158, 11, 0.13);
-  --color-renter-band:    rgba(16, 185, 129, 0.13);
-  --color-btn-primary-bg:    #FAFAFA;
-  --color-btn-primary-text:  #0F0F11;
-  --color-btn-ghost-bg:      transparent;
-  --color-btn-ghost-text:    #D4D4D8;
-  --color-input-bg:          #27272A;
-  --color-input-text:        #FAFAFA;
-  --color-input-placeholder: #71717A;
-  --color-accent-cta:        #FAFAFA;
-  --color-scrollbar:         #FAFAFA;
-  --color-chart-bg:             #0F0F11;
-  --color-chart-grid:           #27272A;
-  --color-chart-axis:           #71717A;
-  --color-chart-owner-band:     rgba(245, 158, 11, 0.13);
-  --color-chart-renter-band:    rgba(16, 185, 129, 0.13);
-  --color-chart-tooltip-bg:     #18181B;
-  --color-chart-tooltip-border: #27272A;
-  --color-chart-crosshair:      #FAFAFA;
-  --background:         var(--color-bg);
-  --foreground:         var(--color-text);
-  --card:               var(--color-bg-subtle);
-  --card-foreground:    var(--color-text);
-  --popover:            var(--color-bg-elevated);
-  --popover-foreground: var(--color-text);
-  --primary:            var(--color-btn-primary-bg);
-  --primary-foreground: var(--color-btn-primary-text);
-  --muted:              var(--color-hover);
-  --muted-foreground:   var(--color-text-muted);
-  --border:             var(--color-outline);
-  --input:              var(--color-outline);
-  --ring:               var(--color-outline-active);
 }
 
 /* ── Design tokens ──────────────────────────────────────────────────────── */
@@ -179,31 +151,10 @@
   --type-caption-ls:   0.04em;
 }
 
-/* ── Always-dark chart panel (force dark tokens on right column regardless of system preference) ── */
+/* ── Chart panel — structural selector retained for SharedResultClient compatibility. ── */
 .dark-panel {
-  --color-bg:             #0F0F11;
-  --color-bg-subtle:      #18181B;
-  --color-bg-elevated:    #27272A;
-  --color-hover:          #2D2D31;
-  --color-text:           #FAFAFA;
-  --color-text-muted:     #D4D4D8;
-  --color-text-faint:     #A1A1AA;
-  --color-outline:        rgba(255,255,255,0.08);
-  --color-outline-active: rgba(255,255,255,0.20);
-  --color-owner:          #F59E0B;
-  --color-renter:         #10B981;
-  --color-cross:          #A78BFA;
-  --color-owner-band:     rgba(245,158,11,0.13);
-  --color-renter-band:    rgba(16,185,129,0.13);
-  --color-chart-bg:             #0F0F11;
-  --color-chart-grid:           #3F3F46;
-  --color-chart-axis:           #D4D4D8;
-  --color-chart-owner-band:     rgba(245,158,11,0.13);
-  --color-chart-renter-band:    rgba(16,185,129,0.13);
-  --color-chart-tooltip-bg:     #18181B;
-  --color-chart-tooltip-border: rgba(255,255,255,0.08);
-  --color-chart-crosshair:      #FAFAFA;
-  color-scheme: dark;
+  --color-chart-grid: var(--brand-elevated);
+  --color-chart-axis: var(--grey-500);
 }
 
 /* ── Value number pulse on change ── */
@@ -338,6 +289,25 @@
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum";
   }
+}
+
+/* ── Thin scrollbar ── */
+.thin-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.12) transparent;
+}
+.thin-scroll::-webkit-scrollbar {
+  width: 3px;
+}
+.thin-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.thin-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.12);
+  border-radius: 2px;
+}
+.thin-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.24);
 }
 
 @media (prefers-reduced-motion: reduce) {

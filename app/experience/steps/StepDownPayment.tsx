@@ -2,7 +2,8 @@
 
 import { motion } from 'motion/react';
 import type { CalculatorInputs } from '@/engine';
-import { RangeInput, Toggle, StepAdvanced } from '../components';
+import { RangeInput, Toggle, StepAdvanced, FactorSlider } from '../components';
+import { FACTORS } from '../config/factors';
 
 interface Props {
   inputs: CalculatorInputs;
@@ -17,13 +18,13 @@ const FHSA_MAX = 40_000;
 const HBP_MAX  = 60_000;
 
 export function StepDownPayment({ inputs, patch }: Props) {
-  const downPct    = Math.round(inputs.downPaymentPct * 100);
   const downAmount = inputs.homePrice * inputs.downPaymentPct;
   const isCMHC     = inputs.downPaymentPct < 0.2;
   const closingApprox = inputs.homePrice * 0.02;
-  const priorEquity   = inputs.ownerPriorEquity ?? 0;
-  const hasEquity     = priorEquity > 0;
-  const extraSavings  = Math.max(0, priorEquity - downAmount - closingApprox);
+  // ownerExtraSavings is the source of truth. normalizeInputs derives
+  // ownerPriorEquity = downAmount + closing + extraSavings on every simulate.
+  const hasEquity     = inputs.ownerExtraSavings !== undefined;
+  const extraSavings  = Math.max(0, inputs.ownerExtraSavings ?? 0);
 
   const fhsaDown   = inputs.ownerFhsaDown   ?? 0;
   const hbpDown    = inputs.ownerRrspHbpDown ?? 0;
@@ -45,29 +46,7 @@ export function StepDownPayment({ inputs, patch }: Props) {
 
   return (
     <div>
-      <RangeInput
-        label="Down payment"
-        value={downPct}
-        min={5}
-        max={50}
-        step={1}
-        onChange={(v) => {
-          const newDown = inputs.homePrice * (v / 100);
-          const newClosing = inputs.homePrice * 0.02;
-          patch({
-            downPaymentPct: v / 100,
-            ownerPriorEquity: hasEquity ? newDown + newClosing + extraSavings : 0,
-            // Clamp account amounts to new down payment
-            ownerFhsaDown:   Math.min(fhsaDown, Math.min(FHSA_MAX, newDown)),
-            ownerRrspHbpDown: Math.min(hbpDown, Math.min(HBP_MAX, newDown)),
-          });
-        }}
-        formatValue={(v) => `${v}%`}
-        color="var(--color-owner)"
-        minLabel="5% min"
-        maxLabel="50%"
-        description={fmtCAD.format(downAmount)}
-      />
+      <FactorSlider factor={FACTORS.downPayment} inputs={inputs} patch={patch} description={fmtCAD.format(downAmount)} />
 
       {isCMHC && (
         <p style={{ marginTop: '8px', fontSize: '12px', color: 'var(--color-negative)', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
@@ -165,9 +144,7 @@ export function StepDownPayment({ inputs, patch }: Props) {
       <div style={{ marginTop: '20px' }}>
         <Toggle
           checked={hasEquity}
-          onChange={(v) => patch({
-            ownerPriorEquity: v ? downAmount + closingApprox + 50_000 : 0,
-          })}
+          onChange={(v) => patch({ ownerExtraSavings: v ? 50_000 : undefined })}
           label="I have savings to invest after closing"
           description="The renter invests your down payment from day 1. This levels the field."
         />
@@ -186,7 +163,7 @@ export function StepDownPayment({ inputs, patch }: Props) {
             min={10}
             max={2000}
             step={10}
-            onChange={(v) => patch({ ownerPriorEquity: downAmount + closingApprox + v * 1_000 })}
+            onChange={(v) => patch({ ownerExtraSavings: v * 1_000 })}
             formatValue={(v) => `$${v}k`}
             color="var(--color-owner)"
             minLabel="$10k"

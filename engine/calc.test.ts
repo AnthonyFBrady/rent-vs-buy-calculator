@@ -317,9 +317,9 @@ describe('Commitment summary', () => {
     );
   });
 
-  it('renter starting lump sum equals owner closing cash minus deposit and moving cost', () => {
-    // The renter has the same year-0 cash as the owner but pays first+last deposit
-    // and a physical moving cost before investing the rest.
+  it('renter starting lump sum equals the owner year-0 cash-out minus renter deposit and moving cost', () => {
+    // Textbook NPV: renter invests the owner's full year-0 cash-out (down payment +
+    // closing costs) minus the renter's own first+last deposit and moving cost.
     const inputs = defaultInputsFor('ON');
     const result = simulate(inputs);
     const deposit = 2 * inputs.monthlyRent;

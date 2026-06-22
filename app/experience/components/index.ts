@@ -1,12 +1,11 @@
-export { ChalkPanel } from './ChalkPanel';
-export { StepWrapper } from './StepWrapper';
-export { StepAdvanced } from './StepAdvanced';
-export { PhaseButton } from './PhaseButton';
-export { ProgressBar } from './ProgressBar';
+// Form primitives used by the live 9-step experience and the result-page editor.
+// Keep this barrel in sync with the actual components present in this folder.
+
 export { RangeInput } from './RangeInput';
-export { TextInput } from './TextInput';
-export { SelectionCard } from './SelectionCard';
-export { Callout } from './Callout';
+export { FactorSlider } from './FactorSlider';
 export { Toggle } from './Toggle';
+export { ChoiceGroup } from './ChoiceGroup';
+export type { ChoiceOption } from './ChoiceGroup';
+export { TextInput } from './TextInput';
+export { StepAdvanced } from './StepAdvanced';
 export { StepCounter } from './StepCounter';
-export { TrustSignal } from './TrustSignal';

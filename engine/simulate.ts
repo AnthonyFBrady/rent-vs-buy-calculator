@@ -41,17 +41,22 @@ import {
   capitalGainsTax,
 } from './taxes';
 import { fivePercentRule } from './fivePercent';
+import { normalizeInputs } from './normalizeInputs';
+import {
+  TFSA_ANNUAL_ACCRUAL,
+  TFSA_LIFETIME_CAP,
+  TFSA_ELIGIBLE_FROM_YEAR,
+  RRSP_CONTRIBUTION_RATE,
+  RRSP_ANNUAL_MAX,
+  FHSA_ANNUAL_ROOM,
+  FHSA_LIFETIME_LIMIT,
+} from './data/limits';
 
-/**
- * Home insurance has been escalating faster than CPI in Canada due to
- * climate-driven losses. We use this as the escalation rate for the owner's
- * home insurance and the renter's contents insurance.
- */
-const INSURANCE_ESCALATION_OVER_INFLATION_PCT = 0.03;
-
-/** FHSA lifetime contribution room. $8K/yr for 5 years. */
-const FHSA_LIFETIME_LIMIT = 40_000;
-const FHSA_ANNUAL_ROOM = 8_000;
+// Home insurance escalates faster than CPI due to climate-driven losses.
+// National baseline 3%; regional values come from engine/data/regions/municipal.ts
+// and are passed in via inputs.insuranceEscalationOverInflationPct (not yet a
+// CalculatorInputs field — municipal lookup sets propertyTaxPct + this value).
+const DEFAULT_INSURANCE_ESCALATION_OVER_INFLATION_PCT = 0.03;
 
 /**
  * Compute the years a move occurs given an evenly-spaced moves count.
@@ -88,7 +93,9 @@ function growMonthly(
   return { end: balance, growth };
 }
 
-export function simulate(inputs: CalculatorInputs): SimulationResult {
+export function simulate(rawInputs: CalculatorInputs): SimulationResult {
+  // Enforce cross-field invariants once, here, so every caller is consistent.
+  const inputs = normalizeInputs(rawInputs);
   const {
     province,
     isTorontoMunicipalLTT,
@@ -125,6 +132,8 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
     renterUsesRRSP = false,
     // v4
     monthlyRentalIncome = 0,
+    // v6
+    closingMiscFees = 0,
   } = inputs;
 
   const rentalIncomeGrowthPct = inputs.rentalIncomeGrowthPct ?? rentEscalationPct;
@@ -133,13 +142,11 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
   const renterDiscipline = inputs.renterSavingsDisciplinePct ?? savingsDisciplinePct;
   const ownerDiscipline = inputs.ownerSavingsDisciplinePct ?? savingsDisciplinePct;
 
-  // TFSA room: lifetime cap $95k accumulated through 2025.
-  // Simplified: each year from max(birthYear+18, 2009) to 2025 contributes $7k.
+  // TFSA room: lifetime cap accumulated through 2025.
+  // Each year from max(birthYear+18, TFSA_ELIGIBLE_FROM_YEAR) contributes TFSA_ANNUAL_ACCRUAL.
   // renterTfsaRoomOverride lets the user specify exact remaining room directly.
   const birthYear = inputs.birthYear ?? 1990;
-  const tfsaEligibleSince = Math.max(birthYear + 18, 2009);
-  const TFSA_ANNUAL_ACCRUAL = 7_000;
-  const TFSA_LIFETIME_CAP = 95_000;
+  const tfsaEligibleSince = Math.max(birthYear + 18, TFSA_ELIGIBLE_FROM_YEAR);
   const usesTfsaAnywhere = (inputs.renterStartingUsesTFSA ?? false) || inputs.renterUsesTFSA;
   const computedTfsaRoom = usesTfsaAnywhere
     ? Math.min(TFSA_LIFETIME_CAP, Math.max(0, (2026 - tfsaEligibleSince) * TFSA_ANNUAL_ACCRUAL))
@@ -151,7 +158,7 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
   // RRSP annual deduction limit: 18% of prior-year earned income, max $31,560 (2024 limit).
   // renterRrspCarryforward is extra unused room the user can contribute in year 1.
   const annualIncome = inputs.annualIncome ?? 120_000;
-  const rrspAnnualRoom = Math.min(annualIncome * 0.18, 31_560);
+  const rrspAnnualRoom = Math.min(annualIncome * RRSP_CONTRIBUTION_RATE, RRSP_ANNUAL_MAX);
   let rrspCarryforwardRemaining = inputs.renterUsesRRSP ? (inputs.renterRrspCarryforward ?? 0) : 0;
 
   // FHSA: use renterFhsaRoomOverride if provided; otherwise start with the full $40k cap.
@@ -176,13 +183,13 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
   });
 
   const ownerYear0CashOut =
-    downPayment + ltt.total + legalFeesAtPurchase + cmhcPST + ownerMovingCostPerMove;
+    downPayment + ltt.total + legalFeesAtPurchase + cmhcPST + ownerMovingCostPerMove + closingMiscFees;
 
   // Non-down-payment year-0 owner costs. These are sunk costs that permanently
   // reduce the owner's net worth. Tracked separately so they move the owner line,
   // not the renter line. Decoupled from renterYear0Investment below.
   const ownerYear0ClosingCosts =
-    ltt.total + legalFeesAtPurchase + cmhcPST + ownerMovingCostPerMove;
+    ltt.total + legalFeesAtPurchase + cmhcPST + ownerMovingCostPerMove + closingMiscFees;
 
   // First + last month deposit paid by renter at move-in.
   const firstLastDeposit = 2 * monthlyRent;
@@ -192,7 +199,10 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
   // moving) are owner-specific — they are not available for the renter to invest and are
   // instead deducted from the owner's wealth every year via ownerYear0ClosingCosts.
   const priorEquity = inputs.ownerPriorEquity ?? 0;
-  const renterYear0InvestmentBase = priorEquity > 0 ? priorEquity : downPayment;
+  // Textbook NPV: renter invests the owner's full year-0 cash-out (down payment +
+  // closing costs) minus their own deposit and moving cost. This captures the
+  // compounding opportunity cost of every dollar the owner deploys at closing.
+  const renterYear0InvestmentBase = priorEquity > 0 ? priorEquity : ownerYear0CashOut;
   const renterYear0Investment =
     renterYear0InvestmentBase - firstLastDeposit - renterMovingCostPerMove;
 
@@ -360,7 +370,7 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
   let breakEvenYear: number | null = null;
 
   const insuranceEscalationPct =
-    inflationPct + INSURANCE_ESCALATION_OVER_INFLATION_PCT;
+    inflationPct + (inputs.insuranceEscalationOverInflationPct ?? DEFAULT_INSURANCE_ESCALATION_OVER_INFLATION_PCT);
 
   let cumulativeOwnerMoveCosts = 0;
   let cumulativeOwnerPropertyTax = 0;
@@ -444,10 +454,10 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
     // Owner move transaction costs are friction losses, not investable savings for the renter.
     // Excluding them keeps the renter line flat when only the owner's move frequency changes.
     // Suite income is also excluded from the baseline so it only benefits the invest-the-difference calc.
-    // Property tax is excluded from annualDifference because it is modeled as a direct owner wealth
-    // reduction (cumulativeOwnerPropertyTax) rather than an investable gap for the renter.
+    // Property tax stays in ownerBaselineCashOut and flows through as a normal investable difference
+    // (textbook NPV: the renter invests the compounded equivalent each year, not a nominal deduction).
     const ownerBaselineCashOut = ownerAnnualCashOut - ownerMoveTransactionCost - annualRentalIncome;
-    const annualDifference = ownerBaselineCashOut - ownerAnnualPropertyTax - renterAnnualCashOut;
+    const annualDifference = ownerBaselineCashOut - renterAnnualCashOut;
     const renterContribution =
       annualDifference > 0
         ? annualDifference * renterDiscipline
@@ -555,7 +565,7 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
     // minus cumulative property tax (a direct, non-recoverable owner cost).
     const ownerRrspNetThisYear = ownerSurplusRrspBal * (1 - marginalTaxRatePct);
     const ownerHbpRrspNetThisYear = ownerHbpRrspBal * (1 - marginalTaxRatePct);
-    const ownerWealthThisYear = ownerEquity + ownerPortfolioEnd + ownerRrspNetThisYear + ownerSurplusTfsaBal + ownerHbpRrspNetThisYear - cumulativeOwnerPropertyTax - ownerYear0ClosingCosts;
+    const ownerWealthThisYear = ownerEquity + ownerPortfolioEnd + ownerRrspNetThisYear + ownerSurplusTfsaBal + ownerHbpRrspNetThisYear;
     const renterWealthThisYear = renterPortfolioEnd + renterRrspBalance + currentDeposit;
     const wealthDelta = ownerWealthThisYear - renterWealthThisYear;
     if (breakEvenYear === null && wealthDelta >= 0 && y > 0) {
@@ -670,7 +680,7 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
   const renterNetProceeds =
     renterPortfolioValue - renterCapGainsTax + renterDepositReturned + renterRrspNetProceeds;
 
-  const finalOwnerWealth = ownerHomeNetProceeds + ownerPortfolioNetProceeds + ownerSurplusRrspNet + ownerSurplusTfsaNet + ownerHbpRrspNet - cumulativeOwnerMoveCosts - cumulativeOwnerPropertyTax - ownerYear0ClosingCosts;
+  const finalOwnerWealth = ownerHomeNetProceeds + ownerPortfolioNetProceeds + ownerSurplusRrspNet + ownerSurplusTfsaNet + ownerHbpRrspNet - cumulativeOwnerMoveCosts;
   const finalRenterWealth = renterNetProceeds;
   const netAdvantageToOwner = finalOwnerWealth - finalRenterWealth;
 
@@ -714,6 +724,20 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
     ownerStartingPortfolio: ownerStartingEquity,
   };
 
+  // ─── Derived analysis flags ────────────────────────────────────────────────
+  const priceToRentRatio = monthlyRent > 0 ? homePrice / (monthlyRent * 12) : 0;
+  // P/R above 25 in the Canadian context signals stretched valuations relative
+  // to historical norms, per Jordà et al. (2019) and Himmelberg et al. (2005).
+  const priceToRentRatioFlagged = priceToRentRatio > 25;
+
+  const netWorth = inputs.estimatedNetWorth;
+  const portfolioConcentrationPct = (netWorth !== undefined && netWorth > 0)
+    ? homePrice / netWorth
+    : null;
+  const portfolioConcentrationFlagged = portfolioConcentrationPct !== null
+    ? portfolioConcentrationPct > 0.5
+    : false;
+
   return {
     inputs,
     fivePercentRule: fivePercentRule(homePrice, monthlyRent, {
@@ -725,5 +749,9 @@ export function simulate(inputs: CalculatorInputs): SimulationResult {
     commitment,
     breakEvenYear,
     renewalBoundaries,
+    priceToRentRatio,
+    priceToRentRatioFlagged,
+    portfolioConcentrationPct,
+    portfolioConcentrationFlagged,
   };
 }

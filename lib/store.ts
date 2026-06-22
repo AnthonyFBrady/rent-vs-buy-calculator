@@ -3,7 +3,7 @@
 // only holds what the result page needs to render without re-running the engine.
 
 import { create } from 'zustand';
-import type { CalculatorInputs, SimulationResult } from '@/engine';
+import type { CalculatorInputs, SimulationResult, LifestyleAnswers } from '@/engine';
 
 export interface SensitivityScenario {
   id: 'base' | 'rate+1' | 'rate-1' | 'growth+2' | 'growth-2';
@@ -17,12 +17,15 @@ interface CalculatorStore {
   result: SimulationResult | null;
   sensitivity: SensitivityScenario[];
   activeSensitivity: SensitivityScenario['id'];
+  /** Lifestyle answers persist across recalculate round-trips as the user's financial personality. */
+  lifestyleAnswers: LifestyleAnswers;
   setResult: (
     inputs: CalculatorInputs,
     result: SimulationResult,
     sensitivity: SensitivityScenario[],
   ) => void;
   setActiveSensitivity: (id: SensitivityScenario['id']) => void;
+  setLifestyleAnswers: (answers: LifestyleAnswers) => void;
   reset: () => void;
 }
 
@@ -31,11 +34,14 @@ export const useCalculatorStore = create<CalculatorStore>((set) => ({
   result: null,
   sensitivity: [],
   activeSensitivity: 'base',
+  lifestyleAnswers: {},
 
   setResult: (inputs, result, sensitivity) =>
     set({ inputs, result, sensitivity, activeSensitivity: 'base' }),
 
   setActiveSensitivity: (id) => set({ activeSensitivity: id }),
+
+  setLifestyleAnswers: (lifestyleAnswers) => set({ lifestyleAnswers }),
 
   reset: () =>
     set({ inputs: null, result: null, sensitivity: [], activeSensitivity: 'base' }),

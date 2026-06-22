@@ -1,7 +1,9 @@
 'use client';
 
 import type { CalculatorInputs } from '@/engine';
-import { RangeInput, StepAdvanced } from '../components';
+import { fivePercentRule } from '@/engine';
+import { FactorSlider, StepAdvanced } from '../components';
+import { FACTORS } from '../config/factors';
 
 interface Props {
   inputs: CalculatorInputs;
@@ -13,71 +15,30 @@ const fmtCAD = new Intl.NumberFormat('en-CA', {
 });
 
 export function StepRentHorizon({ inputs, patch }: Props) {
-  const annualRent = inputs.monthlyRent * 12;
-  const rentGrowthPct = Math.round((inputs.rentEscalationPct ?? 0.05) * 100 * 10) / 10;
+  // Contextual cue: Felix's 5% rule break-even rent for this home.
+  const breakEvenRent = Math.round(
+    fivePercentRule(inputs.homePrice, inputs.monthlyRent, {
+      propertyTaxPct: inputs.propertyTaxPct,
+      maintenancePct: inputs.maintenancePct,
+    }).monthlyBreakEvenRent,
+  );
+  const diff = Math.round(inputs.monthlyRent - breakEvenRent);
+  const rentCue = diff <= 0
+    ? `5% break-even rent ${fmtCAD.format(breakEvenRent)}/mo. You're ${fmtCAD.format(Math.abs(diff))} below it, so renting keeps more to invest.`
+    : `5% break-even rent ${fmtCAD.format(breakEvenRent)}/mo. You're ${fmtCAD.format(diff)} above it, so owning starts to look better.`;
 
   return (
     <div>
-      {/* Monthly rent */}
       <div style={{ marginBottom: '28px' }}>
-        <RangeInput
-          label="Monthly rent"
-          value={Math.round(inputs.monthlyRent / 100) * 100}
-          min={500}
-          max={8000}
-          step={100}
-          onChange={(v) => patch({ monthlyRent: v })}
-          formatValue={(v) => `$${v.toLocaleString('en-CA')}/mo`}
-          color="var(--color-renter)"
-          minLabel="$500"
-          maxLabel="$8k"
-          description={`${fmtCAD.format(annualRent)}/yr — this is what renting costs instead of buying`}
-        />
+        <FactorSlider factor={FACTORS.monthlyRent} inputs={inputs} patch={patch} description={rentCue} />
       </div>
 
-      {/* Holding period */}
-      <RangeInput
-        label="Years you plan to stay"
-        value={inputs.holdingPeriodYears}
-        min={1}
-        max={30}
-        step={1}
-        onChange={(v) => patch({ holdingPeriodYears: v })}
-        formatValue={(v) => `${v} yr`}
-        color="var(--color-renter)"
-        minLabel="1 yr"
-        maxLabel="30 yr"
-        description="The chart ends here. Shorter horizons almost always favour renting."
-      />
+      <FactorSlider factor={FACTORS.timeHorizon} inputs={inputs} patch={patch} />
 
-      {/* Advanced */}
       <StepAdvanced label="Advanced">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <RangeInput
-            label="Annual rent growth"
-            value={rentGrowthPct}
-            min={0}
-            max={10}
-            step={0.5}
-            onChange={(v) => patch({ rentEscalationPct: v / 100 })}
-            formatValue={(v) => `${v.toFixed(1)}%`}
-            color="var(--color-renter)"
-            minLabel="0%"
-            maxLabel="10%"
-            description="CMHC asking-rent growth averaged ~5%/yr in major cities 2019–2024."
-          />
-          <RangeInput
-            label="Renter's insurance"
-            value={inputs.rentInsuranceMonthly ?? 25}
-            min={0}
-            max={100}
-            step={5}
-            onChange={(v) => patch({ rentInsuranceMonthly: v })}
-            formatValue={(v) => `$${v}/mo`}
-            color="var(--color-renter)"
-            minLabel="$0"
-            maxLabel="$100"
-          />
+          <FactorSlider factor={FACTORS.rentGrowth} inputs={inputs} patch={patch} />
+          <FactorSlider factor={FACTORS.renterInsurance} inputs={inputs} patch={patch} />
         </div>
       </StepAdvanced>
     </div>

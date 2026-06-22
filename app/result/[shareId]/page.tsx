@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { simulate, simulateSensitivity } from '@/engine';
+import { simulate, simulateSensitivity, buildWealthSeries } from '@/engine';
 import { decodeShare } from '@/lib/share';
 import { SharedResultClient } from './SharedResultClient';
 
@@ -48,24 +48,12 @@ export default function SharedResultPage({ params }: Props) {
   const sensitivity = simulateSensitivity(snapshot.i);
 
   // Build scenario data matching the Zustand format
-  const toPoints = (r: typeof result) => {
-    const closingCosts = r.commitment.ownerStartingCashOut - r.inputs.homePrice * r.inputs.downPaymentPct;
-    let cum = 0;
-    return [
-      { year: 0, ownerValue: r.inputs.homePrice * r.inputs.downPaymentPct - closingCosts, renterValue: r.yearByYear[0]?.renterPortfolioStart ?? 0 },
-      ...r.yearByYear.map((y) => {
-        cum += y.ownerMoveTransactionCost;
-        return { year: y.year, ownerValue: y.ownerEquity + y.ownerPortfolioEnd - cum - y.ownerCumulativePropertyTax - closingCosts, renterValue: y.renterPortfolioEnd + y.renterRrspBalance };
-      }),
-    ];
-  };
-
   const scenarios = [
-    { id: 'base' as const,     label: 'Base case',          ownerData: toPoints(sensitivity.base).map(p => ({ year: p.year, value: p.ownerValue })),      renterData: toPoints(sensitivity.base).map(p => ({ year: p.year, value: p.renterValue })) },
-    { id: 'growth+2' as const, label: 'Home prices +2%/yr', ownerData: toPoints(sensitivity.ownerHigh).map(p => ({ year: p.year, value: p.ownerValue })), renterData: toPoints(sensitivity.ownerHigh).map(p => ({ year: p.year, value: p.renterValue })) },
-    { id: 'growth-2' as const, label: 'Home prices -2%/yr', ownerData: toPoints(sensitivity.ownerLow).map(p => ({ year: p.year, value: p.ownerValue })),  renterData: toPoints(sensitivity.ownerLow).map(p => ({ year: p.year, value: p.renterValue })) },
-    { id: 'rate+1' as const,   label: 'Returns +2%/yr',     ownerData: toPoints(sensitivity.renterHigh).map(p => ({ year: p.year, value: p.ownerValue })), renterData: toPoints(sensitivity.renterHigh).map(p => ({ year: p.year, value: p.renterValue })) },
-    { id: 'rate-1' as const,   label: 'Returns -2%/yr',     ownerData: toPoints(sensitivity.renterLow).map(p => ({ year: p.year, value: p.ownerValue })),  renterData: toPoints(sensitivity.renterLow).map(p => ({ year: p.year, value: p.renterValue })) },
+    { id: 'base' as const,     label: 'Base case',          ...buildWealthSeries(sensitivity.base) },
+    { id: 'growth+2' as const, label: 'Home prices +2%/yr', ...buildWealthSeries(sensitivity.ownerHigh) },
+    { id: 'growth-2' as const, label: 'Home prices -2%/yr', ...buildWealthSeries(sensitivity.ownerLow) },
+    { id: 'rate+1' as const,   label: 'Returns +2%/yr',     ...buildWealthSeries(sensitivity.renterHigh) },
+    { id: 'rate-1' as const,   label: 'Returns -2%/yr',     ...buildWealthSeries(sensitivity.renterLow) },
   ];
 
   return (

@@ -1,7 +1,8 @@
 'use client';
 
 import type { CalculatorInputs } from '@/engine';
-import { RangeInput, StepAdvanced } from '../components';
+import { FactorSlider, StepAdvanced } from '../components';
+import { FACTORS } from '../config/factors';
 
 interface Props {
   inputs: CalculatorInputs;
@@ -22,38 +23,19 @@ export function StepMortgage({ inputs, patch }: Props) {
   const totalInterest = monthly * inputs.amortizationYears * 12
     - inputs.homePrice * (1 - inputs.downPaymentPct);
 
+  const rateDescription = monthly > 0
+    ? `$${Math.round(monthly).toLocaleString('en-CA')}/mo — $${Math.round(totalInterest / 1_000)}k total interest over ${inputs.amortizationYears} years`
+    : 'First 5-year term. Renewals use Bank of Canada forward curve defaults.';
+
   return (
     <div>
-      <RangeInput
-        label="Mortgage rate"
-        value={inputs.mortgageRatePct * 100}
-        min={2}
-        max={10}
-        step={0.25}
-        onChange={(v) => patch({ mortgageRatePct: v / 100 })}
-        formatValue={(v) => `${v.toFixed(2)}%`}
-        color="var(--color-owner)"
-        minLabel="2%"
-        maxLabel="10%"
-        description={
-          monthly > 0
-            ? `$${Math.round(monthly).toLocaleString('en-CA')}/mo — $${Math.round(totalInterest / 1_000)}k total interest over ${inputs.amortizationYears} years`
-            : 'First 5-year term. Renewals use Bank of Canada forward curve defaults.'
-        }
-      />
+      <FactorSlider factor={FACTORS.mortgageRate} inputs={inputs} patch={patch} description={rateDescription} />
 
       <StepAdvanced label="Advanced">
-        <RangeInput
-          label="Amortization"
-          value={inputs.amortizationYears}
-          min={5}
-          max={30}
-          step={5}
-          onChange={(v) => patch({ amortizationYears: v })}
-          formatValue={(v) => `${v} yr`}
-          color="var(--color-owner)"
-          minLabel="5 yr"
-          maxLabel="30 yr"
+        <FactorSlider
+          factor={FACTORS.amortization}
+          inputs={inputs}
+          patch={patch}
           description="Longer amortization lowers monthly payments but increases total interest paid."
         />
       </StepAdvanced>

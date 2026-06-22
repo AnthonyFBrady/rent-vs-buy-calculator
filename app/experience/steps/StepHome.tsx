@@ -3,7 +3,8 @@
 import { motion, AnimatePresence } from 'motion/react';
 import type { CalculatorInputs, HomeType } from '@/engine';
 import { homeTypeDefaults, HOME_TYPES } from '@/engine';
-import { RangeInput } from '../components';
+import { RangeInput, ChoiceGroup, FactorSlider } from '../components';
+import { FACTORS } from '../config/factors';
 
 interface Props {
   inputs: CalculatorInputs;
@@ -21,15 +22,8 @@ const HOME_TYPE_SHORT: Record<HomeType, string> = {
 const fmtCAD = new Intl.NumberFormat('en-CA', {
   style: 'currency', currency: 'CAD', maximumFractionDigits: 0,
 });
-const fmtCompact = new Intl.NumberFormat('en-CA', {
-  style: 'currency', currency: 'CAD',
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 2,
-  notation: 'compact',
-});
 
 export function StepHome({ inputs, patch }: Props) {
-  const priceK = Math.round(inputs.homePrice / 1_000);
   const selectedType = inputs.homeType;
   const selectedDefaults = selectedType ? homeTypeDefaults(selectedType) : null;
 
@@ -52,17 +46,10 @@ export function StepHome({ inputs, patch }: Props) {
     <div>
       {/* Home price */}
       <div style={{ marginBottom: '28px' }}>
-        <RangeInput
-          label="Home price"
-          value={priceK}
-          min={200}
-          max={3000}
-          step={25}
-          onChange={(v) => patch({ homePrice: v * 1_000 })}
-          formatValue={(v) => `${fmtCompact.format(v * 1_000)}`}
-          color="var(--color-owner)"
-          minLabel="$200k"
-          maxLabel="$3M"
+        <FactorSlider
+          factor={FACTORS.homePrice}
+          inputs={inputs}
+          patch={patch}
           description={fmtCAD.format(inputs.homePrice)}
         />
       </div>
@@ -81,47 +68,15 @@ export function StepHome({ inputs, patch }: Props) {
         >
           Home type
         </p>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: '6px',
-          }}
-        >
-          {HOME_TYPES.map((ht) => {
-            const selected = inputs.homeType === ht;
-            return (
-              <button
-                key={ht}
-                type="button"
-                onClick={() => handleHomeType(ht)}
-                style={{
-                  padding: '9px 8px',
-                  borderRadius: '8px',
-                  textAlign: 'center',
-                  border: `1px solid ${selected ? 'var(--color-owner)' : 'var(--color-outline)'}`,
-                  backgroundColor: selected
-                    ? 'color-mix(in srgb, var(--color-owner) 8%, transparent)'
-                    : 'var(--color-bg-elevated)',
-                  cursor: 'pointer',
-                  transition: 'border-color 0.15s, background-color 0.15s',
-                }}
-              >
-                <p
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: 500,
-                    color: selected ? 'var(--color-owner)' : 'var(--color-text)',
-                    fontFamily: 'var(--font-sans), system-ui, sans-serif',
-                    lineHeight: 1.2,
-                  }}
-                >
-                  {HOME_TYPE_SHORT[ht]}
-                </p>
-              </button>
-            );
-          })}
-        </div>
+        <ChoiceGroup
+          ariaLabel="Home type"
+          columns={3}
+          variant="chip"
+          align="center"
+          options={HOME_TYPES.map((ht) => ({ value: ht, label: HOME_TYPE_SHORT[ht] }))}
+          value={selectedType}
+          onChange={handleHomeType}
+        />
 
         {/* Contextual description — updates when type changes */}
         <AnimatePresence mode="wait">
@@ -144,7 +99,7 @@ export function StepHome({ inputs, patch }: Props) {
               Defaults to {(maintenancePct * 100).toFixed(1)}% annual maintenance
               {hasStrata ? `, $${strataFee.toLocaleString('en-CA')}/mo strata` : ', no strata fee'},
               and {(appreciation * 100).toFixed(1)}%/yr appreciation.
-              Adjust below if yours differs.
+              Maintenance and any strata fee adjust below. You set appreciation in the market step.
             </motion.p>
           )}
         </AnimatePresence>
@@ -152,17 +107,10 @@ export function StepHome({ inputs, patch }: Props) {
 
       {/* Sliders — always visible, update immediately when type changes */}
       <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        <RangeInput
-          label="Annual maintenance"
-          value={Math.round(maintenancePct * 100 * 10) / 10}
-          min={0.5}
-          max={3.0}
-          step={0.1}
-          onChange={(v) => patch({ maintenancePct: v / 100 })}
-          formatValue={(v) => `${v.toFixed(1)}%`}
-          color="var(--color-owner)"
-          minLabel="0.5%"
-          maxLabel="3.0%"
+        <FactorSlider
+          factor={FACTORS.maintenance}
+          inputs={inputs}
+          patch={patch}
           description="Annual reserve for repairs and replacements, as a % of home value."
         />
         <AnimatePresence>
@@ -189,19 +137,6 @@ export function StepHome({ inputs, patch }: Props) {
             </motion.div>
           )}
         </AnimatePresence>
-        <RangeInput
-          label="Home appreciation"
-          value={Math.round(appreciation * 100 * 2) / 2}
-          min={0}
-          max={8}
-          step={0.5}
-          onChange={(v) => patch({ homeAppreciationPct: v / 100 })}
-          formatValue={(v) => `${v.toFixed(1)}%`}
-          color="var(--color-owner)"
-          minLabel="0%"
-          maxLabel="8%"
-          description="Nominal annual home price growth. Canadian long-run average is ~3%."
-        />
       </div>
     </div>
   );

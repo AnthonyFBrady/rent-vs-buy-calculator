@@ -37,6 +37,25 @@ export { PROVINCIAL_DEFAULTS, defaultInputsFor } from './defaults';
 
 export { simulate } from './simulate';
 
+export { normalizeInputs } from './normalizeInputs';
+
+export { buildWealthSeries } from './wealthSeries';
+export type { WealthPoint, WealthSeries } from './wealthSeries';
+
+export {
+  scoreLifestyle,
+  applyLifestyleToInputs,
+  deriveCashFlowComfort,
+} from './lifestyle';
+export type {
+  LifestyleDimension,
+  LifestyleAnswers,
+  LifestyleScore,
+  DimensionScore,
+  LeanLabel,
+  OverallLean,
+} from './lifestyle';
+
 export { CITATIONS } from './citations';
 export type { Citation } from './citations';
 

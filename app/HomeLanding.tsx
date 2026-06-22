@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useId } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'motion/react';
 import { MethodologyContent } from '@/components/MethodologyContent';
@@ -61,7 +61,7 @@ function CityPriceChart({ visible }: { visible: boolean }) {
     <div style={{ width: '100%', marginTop: '24px' }}>
       {CITY_PRICES.map((city, i) => (
         <div key={city.name} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: i < CITY_PRICES.length - 1 ? '10px' : 0 }}>
-          <span style={{ fontSize: '12px', color: '#A1A1AA', width: '80px', flexShrink: 0, textAlign: 'right' }}>
+          <span style={{ fontSize: '12px', color: 'var(--color-text-faint)', width: '80px', flexShrink: 0, textAlign: 'right' }}>
             {city.name}
           </span>
           <div style={{ flex: 1, height: '28px', backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: '4px', overflow: 'hidden' }}>
@@ -78,7 +78,7 @@ function CityPriceChart({ visible }: { visible: boolean }) {
           </div>
           <span style={{
             fontSize: '13px', fontWeight: 600,
-            color: city.highlight ? 'var(--color-owner)' : '#A1A1AA',
+            color: city.highlight ? 'var(--color-owner)' : 'var(--color-text-faint)',
             width: '52px', flexShrink: 0, fontVariantNumeric: 'tabular-nums',
           }}>
             {city.label}
@@ -136,8 +136,8 @@ function CostPieChart({ visible }: { visible: boolean }) {
             style={{ transformOrigin: `${cx}px ${cy}px` }}
           />
         ))}
-        <text x={cx} y={cy - 5} textAnchor="middle" fill="#FAFAFA" fontSize="17" fontWeight="700" fontFamily="var(--font-sans), system-ui, sans-serif">5%</text>
-        <text x={cx} y={cy + 11} textAnchor="middle" fill="#71717A" fontSize="8.5" fontFamily="var(--font-sans), system-ui, sans-serif">per year</text>
+        <text x={cx} y={cy - 5} textAnchor="middle" style={{ fill: 'var(--color-text)' }} fontSize="17" fontWeight="700" fontFamily="var(--font-sans), system-ui, sans-serif">5%</text>
+        <text x={cx} y={cy + 11} textAnchor="middle" style={{ fill: 'var(--color-text-dim)' }} fontSize="8.5" fontFamily="var(--font-sans), system-ui, sans-serif">per year</text>
       </svg>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {PIE_SLICES.map((slice, i) => (
@@ -150,8 +150,8 @@ function CostPieChart({ visible }: { visible: boolean }) {
           >
             <div style={{ width: '10px', height: '10px', borderRadius: '2px', backgroundColor: slice.color, flexShrink: 0, marginTop: '2px' }} />
             <div>
-              <p style={{ fontSize: '13px', color: '#D4D4D8', fontWeight: 500, lineHeight: 1.2 }}>{slice.desc}</p>
-              <p style={{ fontSize: '11px', color: '#71717A', marginTop: '1px' }}>{slice.label}</p>
+              <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', fontWeight: 500, lineHeight: 1.2 }}>{slice.desc}</p>
+              <p style={{ fontSize: '11px', color: 'var(--color-text-dim)', marginTop: '1px' }}>{slice.label}</p>
             </div>
           </motion.div>
         ))}
@@ -184,8 +184,8 @@ function CompoundGrowthLine({ visible }: { visible: boolean }) {
           transition={{ delay: 1.7, type: 'spring', stiffness: 260, damping: 18 }}
           style={{ transformOrigin: '410px 8px' }}
         />
-        <text x="10" y="118" fill="#52525B" fontSize="9" fontFamily="var(--font-sans), system-ui, sans-serif">Year 0</text>
-        <text x="410" y="118" textAnchor="end" fill="#52525B" fontSize="9" fontFamily="var(--font-sans), system-ui, sans-serif">Year 25</text>
+        <text x="10" y="118" style={{ fill: 'var(--color-text-dimmer)' }} fontSize="9" fontFamily="var(--font-sans), system-ui, sans-serif">Year 0</text>
+        <text x="410" y="118" textAnchor="end" style={{ fill: 'var(--color-text-dimmer)' }} fontSize="9" fontFamily="var(--font-sans), system-ui, sans-serif">Year 25</text>
       </svg>
     </div>
   );
@@ -245,7 +245,7 @@ const CANADA_OUTLINE = `
 function CanadaCityMap({ visible }: { visible: boolean }) {
   return (
     <div style={{ width: '100%', marginTop: '16px' }}>
-      <svg viewBox="0 0 600 250" width="100%" height="auto" aria-hidden="true" style={{ display: 'block' }}>
+      <svg viewBox="-50 0 650 250" width="100%" height="auto" aria-hidden="true" style={{ display: 'block' }}>
         {/* Faint Canada silhouette */}
         <path d={CANADA_OUTLINE} fill="rgba(255,255,255,0.025)" stroke="rgba(255,255,255,0.07)" strokeWidth="1" strokeLinejoin="round" />
         {CANADA_CITIES.map((city, i) => {
@@ -265,7 +265,7 @@ function CanadaCityMap({ visible }: { visible: boolean }) {
               <motion.text
                 x={lbl.dx} y={lbl.dy}
                 textAnchor={lbl.anchor}
-                fill="#71717A"
+                style={{ fill: 'var(--color-text-dim)' }}
                 fontSize="9.5"
                 fontFamily="var(--font-sans), system-ui, sans-serif"
                 initial={{ opacity: 0 }}
@@ -279,10 +279,10 @@ function CanadaCityMap({ visible }: { visible: boolean }) {
         })}
       </svg>
       <div style={{ display: 'flex', gap: '20px', marginTop: '6px' }}>
-        <span style={{ fontSize: '11px', color: '#A1A1AA' }}>
+        <span style={{ fontSize: '11px', color: 'var(--color-text-faint)' }}>
           <span style={{ color: 'var(--color-renter)', fontWeight: 600 }}>7 cities</span> renter ahead
         </span>
-        <span style={{ fontSize: '11px', color: '#A1A1AA' }}>
+        <span style={{ fontSize: '11px', color: 'var(--color-text-faint)' }}>
           <span style={{ color: 'var(--color-owner)', fontWeight: 600 }}>5 cities</span> owner ahead
         </span>
       </div>
@@ -320,20 +320,14 @@ const BEATS: Beat[] = [
     headline: 'The average Canadian home costs $716,000.',
     body: 'Toronto: $1.1M. Vancouver: $1.25M. Even mid-sized cities have seen prices double in a decade.',
     source: 'CREA, February 2025',
-    stat: null, statAccent: 'owner', visual: 'cityPriceChart', layout: 'B', pauseMs: 2800,
+    stat: null, statAccent: 'owner', visual: 'cityPriceChart', layout: 'B', pauseMs: 3600,
   },
   {
     eyebrow: 'The entry cost',
     headline: "At 20% down, that's $143,000 before you move in.",
     body: 'Before closing costs, land transfer tax, legal fees, and moving expenses. Most Canadians do not have it in liquid savings.',
     stat: { raw: 143000, label: 'Minimum 20% down payment', fmt: 'dollars-k' },
-    statAccent: 'owner', visual: null, layout: 'B', pauseMs: 2800,
-  },
-  {
-    eyebrow: 'The hidden cost',
-    headline: 'But the mortgage payment is not the full story.',
-    body: 'Property tax, maintenance, and insurance are unrecoverable. They build no equity. They leave every year and do not come back.',
-    stat: null, visual: null, layout: 'A', pauseMs: 2200,
+    statAccent: 'owner', visual: null, layout: 'B', pauseMs: 3200,
   },
   {
     eyebrow: 'The 5% rule',
@@ -341,13 +335,7 @@ const BEATS: Beat[] = [
     body: 'On a $1M home, that is $50,000 per year in unrecoverable costs. Property tax alone in Toronto runs $6,000 to $9,000 annually.',
     source: 'PWL Capital, 2023',
     stat: { raw: 50000, label: 'Annual unrecoverable cost on a $1M home', fmt: 'dollars-k-yr' },
-    statAccent: 'owner', visual: 'costPieChart', layout: 'B', pauseMs: 2800,
-  },
-  {
-    eyebrow: 'The other side',
-    headline: "That $143,000 does not disappear for a renter. They invest it.",
-    body: 'The down payment goes into a diversified portfolio. Then the annual cash-flow savings go in on top, every year.',
-    stat: null, visual: null, layout: 'A', pauseMs: 2200,
+    statAccent: 'owner', visual: 'costPieChart', layout: 'B', pauseMs: 3800,
   },
   {
     eyebrow: 'The number',
@@ -355,32 +343,20 @@ const BEATS: Beat[] = [
     body: 'The 20-year nominal return on a blended Canadian index was 8.19%. The invested down payment compounds the entire time.',
     source: 'Rational Reminder ep. 323, September 2024 — 8.19% nominal, 2005-2024',
     stat: { raw: 1_000_000, label: 'Invested down payment after 25 years', fmt: 'dollars-m' },
-    statAccent: 'renter', visual: 'compoundGrowthLine', layout: 'B', pauseMs: 2800,
+    statAccent: 'renter', visual: 'compoundGrowthLine', layout: 'B', pauseMs: 3800,
   },
   {
     eyebrow: 'The research',
     headline: 'Renters came out ahead in 7 of 12 Canadian cities over 20 years.',
     body: 'Owners won in 5. The margin was rarely large. Savings discipline, home type, mortgage rate, and tax shelters shifted the outcome.',
     source: 'PWL Capital, 2024 — 12-city Canadian study, 20-year hold',
-    stat: null, visual: 'canadaCityMap', layout: 'C', pauseMs: 3200,
-  },
-  {
-    eyebrow: 'The ownership case',
-    headline: 'Owners won in 5 cities. And ownership has real advantages.',
-    body: 'The Principal Residence Exemption shields your entire home gain from capital gains tax. No investment account matches that. Leverage and forced savings also matter.',
-    stat: null, visual: null, layout: 'A', pauseMs: 2200,
-  },
-  {
-    eyebrow: 'The variable',
-    headline: 'Savings discipline, mortgage rate, and tax shelters shifted the outcome more than prices.',
-    body: 'A renter with 80% savings discipline and no TFSA often loses to the owner. A renter with full TFSA and FHSA use often wins by a wide margin.',
-    stat: null, visual: null, layout: 'A', pauseMs: 2200,
+    stat: null, visual: 'canadaCityMap', layout: 'C', pauseMs: 4000,
   },
   {
     eyebrow: 'Why reckon',
     headline: 'The explicit costs of renting are obvious. The implicit costs of owning are not.',
     body: 'We built reckon to make both visible. Every assumption editable. Every formula cited. Canadian tax code built in. LTT, CMHC, PRE, TFSA, FHSA, RRSP.',
-    stat: null, visual: null, layout: 'A', pauseMs: 800,
+    stat: null, visual: null, layout: 'A', pauseMs: 1400,
   },
 ];
 
@@ -442,10 +418,11 @@ function StatDisplay({ stat, accent, visible: _visible }: { stat: NonNullable<St
       style={{
         display: 'inline-block',
         marginTop: '24px',
-        backgroundColor: '#FAFAFA',
+        backgroundColor: 'var(--color-bg-subtle)',
+        border: '1px solid var(--color-outline)',
         borderRadius: '12px',
         padding: '18px 22px 16px',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.22)',
+        boxShadow: '0 4px 24px rgba(0,0,0,0.5)',
       }}
     >
       <span style={{ display: 'inline-grid' }}>
@@ -472,7 +449,7 @@ function StatDisplay({ stat, accent, visible: _visible }: { stat: NonNullable<St
           </span>
         )}
       </span>
-      <p style={{ fontSize: '11px', color: '#71717A', marginTop: '8px', lineHeight: 1.4 }}>
+      <p style={{ fontSize: '11px', color: 'var(--color-text-dim)', marginTop: '8px', lineHeight: 1.4 }}>
         {stat.label}
       </p>
     </motion.div>
@@ -553,6 +530,8 @@ export function HomeLanding() {
   const [isPaused, setIsPaused] = useState(false);
   const [methodologyOpen, setMethodologyOpen] = useState(false);
   const [faqOpen, setFaqOpen] = useState(false);
+  const [postalCode, setPostalCode] = useState('');
+  const pcInputId = useId();
 
   useEffect(() => {
     if (typeof window !== 'undefined' && sessionStorage.getItem('reckon_loaded')) {
@@ -560,12 +539,23 @@ export function HomeLanding() {
     }
   }, []);
 
+  // Preload map bundle while user reads the story — avoids cold-load delay on experience page
+  useEffect(() => {
+    import('./experience/map/MapPanel');
+  }, []);
+
   const handleLoaderComplete = useCallback(() => setLoaderDone(true), []);
 
-  const handleNavigate = useCallback(() => {
+  const handleNavigate = useCallback((pc?: string) => {
     setIsExiting(true);
-    setTimeout(() => router.push('/experience'), 230);
+    const dest = pc ? `/experience?pc=${encodeURIComponent(pc.trim().toUpperCase())}` : '/experience';
+    setTimeout(() => router.push(dest), 230);
   }, [router]);
+
+  const handlePostalSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    handleNavigate(postalCode);
+  }, [postalCode, handleNavigate]);
 
   const advanceBeat = useCallback(() => {
     const next = currentBeat + 1;
@@ -638,37 +628,39 @@ export function HomeLanding() {
 
 
       {loaderDone && (
-        <motion.div
-          animate={{ opacity: isExiting ? 0 : 1, scale: isExiting ? 0.97 : 1 }}
-          transition={{ duration: 0.22, ease: [0.4, 0, 1, 1] }}
-          style={{
-            minHeight: '100dvh', backgroundColor: '#0F0F11',
-            color: '#FAFAFA', fontFamily: 'var(--font-sans), system-ui, sans-serif',
-            display: 'flex', flexDirection: 'column',
-            transformOrigin: 'center',
-          }}
-        >
-          {/* Nav */}
+        <>
+          {/* Nav — outside the exit animation so it persists through navigation */}
           <nav style={{
             height: '52px', display: 'flex', alignItems: 'center',
             justifyContent: 'space-between', padding: '0 24px',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
-            position: 'sticky', top: 0, backgroundColor: '#0F0F11',
+            borderBottom: '1px solid var(--color-outline)',
+            position: 'sticky', top: 0, backgroundColor: 'var(--color-bg)',
             zIndex: 20, flexShrink: 0,
           }}>
-            <ReckonSignature color="#FAFAFA" width={72} />
+            <ReckonSignature color="var(--color-text)" width={72} />
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-              <button onClick={() => setMethodologyOpen(true)} style={{ fontSize: '13px', color: '#A1A1AA', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.01em', textDecoration: 'underline', textUnderlineOffset: '2px', textDecorationColor: 'rgba(255,255,255,0.12)' }}>
+              <button onClick={() => setMethodologyOpen(true)} style={{ fontSize: '13px', color: 'var(--color-text-dim)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.01em', textDecoration: 'underline', textUnderlineOffset: '2px', textDecorationColor: 'var(--color-outline)' }}>
                 How this works
               </button>
-              <button onClick={() => setFaqOpen(true)} style={{ fontSize: '13px', color: '#A1A1AA', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.01em', textDecoration: 'underline', textUnderlineOffset: '2px', textDecorationColor: 'rgba(255,255,255,0.12)' }}>
+              <button onClick={() => setFaqOpen(true)} style={{ fontSize: '13px', color: 'var(--color-text-dim)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-sans), system-ui, sans-serif', letterSpacing: '-0.01em', textDecoration: 'underline', textUnderlineOffset: '2px', textDecorationColor: 'var(--color-outline)' }}>
                 FAQ
               </button>
-              <button onClick={handleNavigate} style={{ height: '34px', padding: '0 16px', display: 'inline-flex', alignItems: 'center', backgroundColor: '#FAFAFA', color: '#0F0F11', borderRadius: '9999px', fontSize: '13px', fontWeight: 500, letterSpacing: '-0.01em', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
+              <button onClick={() => handleNavigate()} style={{ height: '34px', padding: '0 16px', display: 'inline-flex', alignItems: 'center', backgroundColor: 'var(--color-outline)', color: 'var(--color-text)', borderRadius: '9999px', fontSize: '13px', fontWeight: 500, letterSpacing: '-0.01em', border: '1px solid var(--color-outline-active)', cursor: 'pointer', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
                 Calculator
               </button>
             </div>
           </nav>
+
+          <motion.div
+            animate={{ opacity: isExiting ? 0 : 1, scale: isExiting ? 0.97 : 1 }}
+            transition={{ duration: 0.22, ease: [0.4, 0, 1, 1] }}
+            style={{
+              minHeight: 'calc(100dvh - 52px)', backgroundColor: 'var(--color-bg)',
+              color: 'var(--color-text)', fontFamily: 'var(--font-sans), system-ui, sans-serif',
+              display: 'flex', flexDirection: 'column',
+              transformOrigin: 'center',
+            }}
+          >
 
           {/* Story area */}
           <div
@@ -683,8 +675,8 @@ export function HomeLanding() {
                 style={{
                   position: 'absolute', left: 'clamp(24px, 4vw, 56px)', top: '50%', transform: 'translateY(-50%)',
                   width: '40px', height: '40px', borderRadius: '50%',
-                  border: '1px solid rgba(255,255,255,0.10)', background: 'none',
-                  cursor: 'pointer', color: '#FAFAFA', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  border: '1px solid var(--color-outline)', background: 'none',
+                  cursor: 'pointer', color: 'var(--color-text)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                   opacity: 0.35, zIndex: 10, transition: 'opacity 0.2s',
                 }}
                 onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
@@ -702,8 +694,8 @@ export function HomeLanding() {
                 style={{
                   position: 'absolute', right: 'clamp(24px, 4vw, 56px)', top: '50%', transform: 'translateY(-50%)',
                   width: '40px', height: '40px', borderRadius: '50%',
-                  border: '1px solid rgba(255,255,255,0.10)', background: 'none',
-                  cursor: 'pointer', color: '#FAFAFA', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  border: '1px solid var(--color-outline)', background: 'none',
+                  cursor: 'pointer', color: 'var(--color-text)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                   opacity: 0.35, zIndex: 10, transition: 'opacity 0.2s',
                 }}
                 onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
@@ -731,7 +723,7 @@ export function HomeLanding() {
                   boxSizing: 'border-box', minHeight: 0,
                 }}
               >
-                <p style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#A1A1AA', marginBottom: '20px', fontWeight: 500 }}>
+                <p style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-text-faint)', marginBottom: '20px', fontWeight: 500 }}>
                   {beat.eyebrow}
                 </p>
 
@@ -739,7 +731,7 @@ export function HomeLanding() {
                   fontFamily: 'var(--font-serif), Georgia, serif',
                   fontSize: headlineFontSize(beat.layout),
                   fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.1,
-                  color: '#FAFAFA', marginBottom: '28px', minHeight: '1.1em',
+                  color: 'var(--color-text)', marginBottom: '28px', minHeight: '1.1em',
                   maxWidth: beat.layout === 'C' ? '480px' : undefined,
                 }}>
                   {phase === 'typing' ? (
@@ -758,11 +750,11 @@ export function HomeLanding() {
                       onClick={e => e.stopPropagation()}
                     >
                       <div style={{ maxWidth: beat.layout === 'A' ? '560px' : '480px' }}>
-                        <p style={{ fontSize: 'clamp(15px, 1.8vw, 18px)', color: '#D4D4D8', lineHeight: 1.65, letterSpacing: '-0.01em', marginBottom: beat.source ? '12px' : 0 }}>
+                        <p style={{ fontSize: 'clamp(15px, 1.8vw, 18px)', color: 'var(--color-text-muted)', lineHeight: 1.65, letterSpacing: '-0.01em', marginBottom: beat.source ? '12px' : 0 }}>
                           {beat.body}
                         </p>
                         {beat.source && (
-                          <p style={{ fontSize: '11px', color: '#71717A', fontStyle: 'italic' }}>{beat.source}</p>
+                          <p style={{ fontSize: '11px', color: 'var(--color-text-dim)', fontStyle: 'italic' }}>{beat.source}</p>
                         )}
                       </div>
 
@@ -804,37 +796,79 @@ export function HomeLanding() {
                     display: 'flex', flexDirection: 'column',
                     justifyContent: 'center', alignItems: 'center',
                     textAlign: 'center', padding: 'clamp(32px, 6vw, 80px) 24px',
-                    backgroundColor: '#FAFAFA',
+                    backgroundColor: 'var(--color-bg)',
                   }}
                 >
                   <div style={{ marginBottom: '28px' }}>
-                    <ReckonSignature color="#A1A1AA" width={64} />
+                    <ReckonSignature color="var(--color-text-dimmer)" width={64} />
                   </div>
                   <h2 style={{
                     fontFamily: 'var(--font-serif), Georgia, serif',
                     fontSize: 'clamp(32px, 6vw, 68px)',
                     fontWeight: 700, letterSpacing: '-0.04em', lineHeight: 1.05,
-                    color: '#0F0F11', marginBottom: '40px', maxWidth: '600px',
+                    color: 'var(--color-text)', marginBottom: '40px', maxWidth: '600px',
                   }}>
                     Know your number.
                   </h2>
+
+                  {/* Postal code entry — pre-fills regional defaults */}
+                  <form
+                    onSubmit={handlePostalSubmit}
+                    style={{ display: 'flex', gap: '10px', alignItems: 'stretch', maxWidth: '360px', width: '100%' }}
+                  >
+                    <div style={{ flex: 1, position: 'relative' }}>
+                      <label htmlFor={pcInputId} style={{
+                        position: 'absolute', top: '-22px', left: '2px',
+                        fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase',
+                        color: 'var(--color-text-faint)', fontWeight: 500,
+                      }}>
+                        Your postal code
+                      </label>
+                      <input
+                        id={pcInputId}
+                        type="text"
+                        placeholder="M5V, K2G, V6B…"
+                        value={postalCode}
+                        onChange={e => setPostalCode(e.target.value)}
+                        maxLength={7}
+                        autoComplete="postal-code"
+                        style={{
+                          width: '100%', height: '52px', padding: '0 16px',
+                          backgroundColor: 'var(--color-bg-elevated)',
+                          border: '1px solid var(--color-outline-active)',
+                          borderRadius: '12px', color: 'var(--color-text)',
+                          fontSize: '16px', fontFamily: 'var(--font-sans), system-ui, sans-serif',
+                          letterSpacing: '0.08em', textTransform: 'uppercase',
+                          outline: 'none', boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      style={{
+                        height: '52px', padding: '0 24px', flexShrink: 0,
+                        backgroundColor: 'var(--color-text)', color: 'var(--color-bg)',
+                        borderRadius: '12px', fontSize: '15px', fontWeight: 600,
+                        letterSpacing: '-0.01em', border: 'none', cursor: 'pointer',
+                        fontFamily: 'var(--font-sans), system-ui, sans-serif',
+                      }}
+                    >
+                      Calculate
+                    </button>
+                  </form>
+
                   <button
-                    onClick={handleNavigate}
+                    onClick={() => handleNavigate()}
                     style={{
-                      display: 'inline-flex', alignItems: 'center',
-                      height: '60px', padding: '0 44px',
-                      backgroundColor: '#0F0F11', color: '#FAFAFA',
-                      borderRadius: '9999px', fontSize: '17px', fontWeight: 600,
-                      letterSpacing: '-0.02em', border: 'none', cursor: 'pointer',
-                      fontFamily: 'var(--font-sans), system-ui, sans-serif',
-                      boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
+                      marginTop: '14px', background: 'none', border: 'none',
+                      fontSize: '12px', color: 'var(--color-text-dimmer)',
+                      cursor: 'pointer', fontFamily: 'var(--font-sans), system-ui, sans-serif',
+                      textDecoration: 'underline', textUnderlineOffset: '2px',
+                      textDecorationColor: 'var(--color-outline)',
                     }}
                   >
-                    Start the calculator
+                    Skip — enter manually
                   </button>
-                  <p style={{ marginTop: '16px', fontSize: '12px', color: '#71717A' }}>
-                    Free. No account. 3 minutes.
-                  </p>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -848,9 +882,9 @@ export function HomeLanding() {
                   aria-label={isPaused ? 'Play' : 'Pause'}
                   style={{
                     width: '36px', height: '36px', borderRadius: '50%',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    backgroundColor: 'rgba(255,255,255,0.06)',
-                    cursor: 'pointer', color: '#FAFAFA',
+                    border: '1px solid var(--color-outline-active)',
+                    backgroundColor: 'var(--color-outline)',
+                    cursor: 'pointer', color: 'var(--color-text)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     flexShrink: 0,
                   }}
@@ -870,14 +904,14 @@ export function HomeLanding() {
                       display: 'inline-flex', alignItems: 'center',
                       height: '36px', padding: '0 16px',
                       borderRadius: '9999px',
-                      backgroundColor: '#FAFAFA',
-                      color: '#0F0F11', fontSize: '13px', fontWeight: 600,
+                      backgroundColor: 'var(--color-text)',
+                      color: 'var(--color-bg)', fontSize: '13px', fontWeight: 600,
                       border: 'none', cursor: 'pointer',
                       fontFamily: 'var(--font-sans), system-ui, sans-serif',
                       letterSpacing: '-0.01em', whiteSpace: 'nowrap',
                     }}
                   >
-                    Just show me my number
+                    Skip to calculator
                   </button>
                 )}
               </div>
@@ -902,6 +936,7 @@ export function HomeLanding() {
             <FaqContent />
           </BottomSheet>
         </motion.div>
+        </>
       )}
     </>
   );
