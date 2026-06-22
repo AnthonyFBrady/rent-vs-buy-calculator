@@ -83,16 +83,14 @@ function buildProvinceMetrics(): Map<Province, ProvinceMetric> {
 
 const PROVINCE_METRICS = buildProvinceMetrics();
 
-// Module-level GeoJSON cache
+// Module-level GeoJSON cache — local file, served with gzip by Netlify
 let cachedGeoJSON: FeatureCollection | null = null;
 let inFlight: Promise<FeatureCollection | null> | null = null;
 
 async function fetchProvinceGeoJSON(): Promise<FeatureCollection | null> {
   if (cachedGeoJSON) return cachedGeoJSON;
   if (inFlight) return inFlight;
-  inFlight = fetch(
-    'https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/canada.geojson'
-  )
+  inFlight = fetch('/data/canada-provinces.geojson')
     .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() as Promise<FeatureCollection>; })
     .then(data => { cachedGeoJSON = data; return data; })
     .catch(() => null);

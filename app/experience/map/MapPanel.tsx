@@ -89,7 +89,7 @@ export function MapPanel({ step, inputs, onPatch, onAdvance }: Props) {
     mapRef.current.flyTo({
       center: [viewState.longitude, viewState.latitude],
       zoom: viewState.zoom,
-      duration: 1800,
+      duration: 1000,
       essential: true,
       easing: easeInOutQuad,
     });

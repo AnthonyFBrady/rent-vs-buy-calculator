@@ -47,23 +47,38 @@ export function fsaToBoroughId(fsa: string): string | null {
   return FSA_TO_BOROUGH[prefix] ?? null;
 }
 
+// Module-level cache — fetch once per session, shared across all CityAreaLayer mounts
+let cachedBoroughGeometry: Record<string, Geometry> | null = null;
+let boroughFetch: Promise<Record<string, Geometry>> | null = null;
+
+function loadBoroughGeometry(): Promise<Record<string, Geometry>> {
+  if (cachedBoroughGeometry) return Promise.resolve(cachedBoroughGeometry);
+  if (boroughFetch) return boroughFetch;
+  boroughFetch = fetch('/data/toronto-boroughs.geojson')
+    .then(r => r.json())
+    .then((fc: FeatureCollection) => {
+      const map: Record<string, Geometry> = {};
+      fc.features.forEach(f => {
+        const id = f.properties?.id as string | undefined;
+        if (id && f.geometry) map[id] = f.geometry;
+      });
+      cachedBoroughGeometry = map;
+      return map;
+    });
+  return boroughFetch;
+}
+
 export function CityAreaLayer({ metric, homeType, buyBedMult, rentBedMult, hoveredId, selectedFSA }: Props) {
   const selectedBoroughId = selectedFSA ? fsaToBoroughId(selectedFSA) : null;
 
-  // Load accurate FSA boundaries from StatCan-derived file in public/.
-  // Start with empty object so Source/Layer mount immediately; update once fetch lands.
-  const [baseGeometry, setBaseGeometry] = useState<Record<string, Geometry>>({});
+  // Load accurate FSA boundaries — module-level cache means single fetch per session
+  const [baseGeometry, setBaseGeometry] = useState<Record<string, Geometry>>(
+    cachedBoroughGeometry ?? {}
+  );
   useEffect(() => {
-    fetch('/data/toronto-boroughs.geojson')
-      .then(r => r.json())
-      .then((fc: FeatureCollection) => {
-        const map: Record<string, Geometry> = {};
-        fc.features.forEach(f => {
-          const id = f.properties?.id as string | undefined;
-          if (id && f.geometry) map[id] = f.geometry;
-        });
-        setBaseGeometry(map);
-      })
+    if (cachedBoroughGeometry) return;
+    loadBoroughGeometry()
+      .then(map => setBaseGeometry(map))
       .catch(err => console.error('[CityAreaLayer] failed to load toronto-boroughs.geojson:', err));
   }, []);
 
