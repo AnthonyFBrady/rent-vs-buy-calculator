@@ -253,21 +253,27 @@ export function useMapState(step: number, inputs: CalculatorInputs): MapState {
         }
 
         case STEP.HOME_COMPARE: {
-          if (!inputs.isFirstTimeBuyer || !inputs.homePrice) return null;
-          const lttFTB = landTransferTax(inputs.homePrice, inputs.province, {
+          if (!inputs.homePrice) return null;
+          const ltt = landTransferTax(inputs.homePrice, inputs.province, {
             isTorontoMunicipalLTT: inputs.isTorontoMunicipalLTT,
-            isFirstTimeBuyer: true,
+            isFirstTimeBuyer: inputs.isFirstTimeBuyer,
           });
-          const lttNone = landTransferTax(inputs.homePrice, inputs.province, {
-            isTorontoMunicipalLTT: inputs.isTorontoMunicipalLTT,
-            isFirstTimeBuyer: false,
-          });
-          const rebate = lttNone.total - lttFTB.total;
-          if (rebate <= 0) return null;
+          if (inputs.isFirstTimeBuyer) {
+            const lttFull = landTransferTax(inputs.homePrice, inputs.province, {
+              isTorontoMunicipalLTT: inputs.isTorontoMunicipalLTT,
+              isFirstTimeBuyer: false,
+            });
+            const rebate = lttFull.total - ltt.total;
+            if (rebate > 0) return {
+              title: 'First-time buyer rebate',
+              body: `Saves ${fmtCAD.format(rebate)} at closing`,
+              accent: 'var(--color-renter)',
+            };
+          }
           return {
-            title: 'First-time buyer rebate',
-            body: `Saves you ${fmtCAD.format(rebate)} at closing`,
-            accent: 'var(--color-renter)',
+            title: 'Land transfer tax',
+            body: `${fmtCAD.format(ltt.total)} due at closing in ${PROVINCE_LABELS[inputs.province]}`,
+            accent: 'var(--color-text-faint)',
           };
         }
 
@@ -304,17 +310,19 @@ export function useMapState(step: number, inputs: CalculatorInputs): MapState {
 
         case STEP.HORIZON: {
           if (!inputs.homePrice || !inputs.monthlyRent) return null;
-          const rule = fivePercentRule(inputs.homePrice, inputs.monthlyRent, {
-            propertyTaxPct: inputs.propertyTaxPct,
-            maintenancePct: inputs.maintenancePct,
-          });
+          const years = inputs.holdingPeriodYears ?? 10;
+          const band =
+            years < 5  ? 'Transaction costs barely started amortizing.' :
+            years < 10 ? 'Getting into the range where buying can compete.' :
+                         'Long enough for ownership costs to fully amortize.';
+          const accent =
+            years < 5  ? 'var(--color-renter)' :
+            years < 10 ? 'var(--color-cross)'  :
+                         'var(--color-owner)';
           return {
-            title: `${inputs.holdingPeriodYears}-year horizon`,
-            body:
-              rule.verdict === 'rent-favored'
-                ? 'Renting likely favored — transaction costs still fresh'
-                : 'Buying gains edge as transaction costs amortize',
-            accent: rule.verdict === 'rent-favored' ? 'var(--color-renter)' : 'var(--color-owner)',
+            title: `${years}-year horizon`,
+            body: band,
+            accent,
           };
         }
 
@@ -343,6 +351,42 @@ export function useMapState(step: number, inputs: CalculatorInputs): MapState {
             title: 'Monthly ownership cost',
             body: `${fmtCAD.format(pith)}/mo (P+I ${fmtCAD.format(Math.round(pmt))} + tax + heat)`,
             accent: 'var(--color-owner)',
+          };
+        }
+
+        case STEP.FINANCES: {
+          const currentYear = new Date().getFullYear();
+          const birthYear = inputs.birthYear ?? (currentYear - 30);
+          const age = currentYear - birthYear;
+          const income = inputs.annualIncome ?? 80000;
+          const yearsEligible = Math.max(0, Math.min(age - 18, currentYear - 2009));
+          const tfsaRoom = yearsEligible * 6000;
+          const rrspAnnual = Math.min(Math.round(income * 0.18), 31560);
+          return {
+            title: `Account room at age ${age}`,
+            body: `~${fmtCAD.format(tfsaRoom)} TFSA lifetime · ${fmtCAD.format(rrspAnnual)}/yr RRSP`,
+            accent: 'var(--color-text-faint)',
+          };
+        }
+
+        case STEP.SHELTERS: {
+          const marginalRate = inputs.marginalTaxRatePct ?? 0.40;
+          const fhsaDeduction = Math.round(8000 * marginalRate);
+          return {
+            title: 'First-year FHSA deduction',
+            body: `~${fmtCAD.format(fhsaDeduction)} back at your income. TFSA shields all investment growth tax-free.`,
+            accent: 'var(--color-renter)',
+          };
+        }
+
+        case STEP.MOBILITY: {
+          if (!inputs.homePrice) return null;
+          const ownerCost = Math.round(inputs.homePrice * 0.09);
+          const renterCost = Math.round((inputs.monthlyRent ?? 2000) * 2);
+          return {
+            title: 'Cost per move',
+            body: `Owner: ~${fmtCAD.format(ownerCost)} (9% of home). Renter: ~${fmtCAD.format(renterCost)} (2 months rent).`,
+            accent: 'var(--color-text-faint)',
           };
         }
 

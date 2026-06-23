@@ -264,24 +264,31 @@ function ExperiencePageInner() {
       animate={{ opacity: isNavigating ? 0 : 1, scale: isNavigating ? 0.97 : 1 }}
       transition={{ duration: isNavigating ? 0.22 : 0.30, ease: isNavigating ? [0.4, 0, 1, 1] : [0.0, 0.0, 0.2, 1] }}
       style={{
-        display: 'flex',
-        flexDirection: 'row',
+        position: 'relative',
+        overflow: 'hidden',
         height: '100dvh',
-        backgroundColor: 'var(--color-bg)',
         color: 'var(--color-text)',
         fontFamily: 'var(--font-sans), system-ui, sans-serif',
         transformOrigin: 'center',
       } as React.CSSProperties}
     >
 
-      {/* Left rail — nav + progress + step card + button bar, all in one column */}
+      {/* Left rail — glass panel floating over the full-bleed map */}
       <div
-        className="w-full lg:w-[380px] lg:flex-shrink-0"
+        className="w-full lg:w-[400px]"
         style={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          zIndex: 10,
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          borderRight: '1px solid var(--color-outline)',
+          backgroundColor: 'rgba(250,250,249,0.88)',
+          backdropFilter: 'blur(20px) saturate(1.4)',
+          WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
+          boxShadow: '4px 0 32px rgba(0,0,0,0.10)',
         }}
       >
 
@@ -294,8 +301,8 @@ function ExperiencePageInner() {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '0 20px',
-            borderBottom: '1px solid var(--color-outline)',
-            backgroundColor: 'var(--color-bg)',
+            borderBottom: '1px solid rgba(0,0,0,0.07)',
+            backgroundColor: 'transparent',
           }}
         >
           <a href="/" style={{ textDecoration: 'none' }}>
@@ -338,8 +345,8 @@ function ExperiencePageInner() {
         {/* Scrollable body — absorbs progress pips, heading, input glass, verdict */}
         <div className="thin-scroll" style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', display: 'flex', flexDirection: 'column' }}>
 
-          {/* Progress pips — sticky inside scroll, no bottom border */}
-          <div style={{ flexShrink: 0, padding: '10px 20px 8px', position: 'sticky', top: 0, zIndex: 1, backgroundColor: 'var(--color-bg)', display: 'flex', gap: '8px' }}>
+          {/* Progress pips — sticky inside scroll, frosted */}
+          <div style={{ flexShrink: 0, padding: '10px 20px 8px', position: 'sticky', top: 0, zIndex: 1, backgroundColor: 'rgba(250,250,249,0.80)', backdropFilter: 'blur(8px)', display: 'flex', gap: '8px' }}>
             {ACTS.map((act) => (
               <div key={act.label} style={{ flex: act.steps.length, display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <span style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-text-dimmer)', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
@@ -430,8 +437,8 @@ function ExperiencePageInner() {
         <div
           style={{
             flexShrink: 0,
-            borderTop: '1px solid var(--color-outline)',
-            backgroundColor: 'var(--color-bg)',
+            borderTop: '1px solid rgba(0,0,0,0.07)',
+            backgroundColor: 'transparent',
             padding: '12px 16px calc(12px + env(safe-area-inset-bottom))',
           }}
         >
@@ -555,13 +562,12 @@ function ExperiencePageInner() {
 
       </div>{/* end left rail */}
 
-      {/* Map — desktop only, fills remaining space top-to-bottom */}
+      {/* Map — fills full viewport behind the glass card */}
       <div
         className="hidden lg:block"
         style={{
-          flex: 1,
-          position: 'relative',
-          overflow: 'hidden',
+          position: 'absolute',
+          inset: 0,
         }}
       >
         <LazyMapPanel step={phase} inputs={inputs} onPatch={patch} onAdvance={advance} pendingSelection={mapPending} onPendingSelect={setMapPending} />

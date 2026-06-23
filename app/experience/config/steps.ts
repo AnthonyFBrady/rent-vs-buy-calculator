@@ -117,7 +117,7 @@ export const STEP_MAP_CONFIG: Record<number, StepMapConfig> = {
   [STEP.HORIZON]:      { mode: 'city-rent-signal',  interactive: false, label: 'How the verdict shifts over time' },
   [STEP.DOWN_PAYMENT]: { mode: 'stable',            interactive: false, label: 'Closing costs for your market' },
   [STEP.MORTGAGE]:     { mode: 'city-prices',       interactive: false, label: 'Monthly ownership cost by area' },
-  [STEP.FINANCES]:     { mode: 'stable',            interactive: false, label: 'Your registered account room' },
-  [STEP.SHELTERS]:     { mode: 'stable',            interactive: false, label: 'Shelter-adjusted comparison' },
+  [STEP.FINANCES]:     { mode: 'city-rent-signal',  interactive: false, label: 'Registered account room' },
+  [STEP.SHELTERS]:     { mode: 'city-rent-signal',  interactive: false, label: 'Shelter-adjusted comparison' },
   [STEP.MOBILITY]:     { mode: 'city-rent-signal',  interactive: false, label: 'Move friction by area' },
 };
