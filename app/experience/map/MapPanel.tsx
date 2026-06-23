@@ -5,6 +5,7 @@ import Map, { NavigationControl } from 'react-map-gl/maplibre';
 import type { MapRef, MapLayerMouseEvent } from 'react-map-gl/maplibre';
 import type { CalculatorInputs, Province } from '@/engine';
 import { defaultInputsFor, suggestPriceAndRent } from '@/engine';
+import { metrosForProvince } from '@/engine/data/regions/coordinates';
 import type { MetroMarker } from './useMapState';
 import { useMapState } from './useMapState';
 import { STEP } from '../config/steps';
@@ -125,6 +126,24 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
     }
     rawMap?.setMaxBounds(bounds);
 
+    // On CITY step with no city selected yet, fit the viewport to all province cities
+    // so every market option is visible without any manual panning.
+    if (step === STEP.CITY && !inputs.postalCode) {
+      const metros = metrosForProvince(inputs.province);
+      if (metros.length > 0) {
+        const lngs = metros.map(m => m.lng);
+        const lats = metros.map(m => m.lat);
+        ref.fitBounds(
+          [
+            [Math.min(...lngs) - 0.05, Math.min(...lats) - 0.05],
+            [Math.max(...lngs) + 0.05, Math.max(...lats) + 0.05],
+          ],
+          { padding: 60, maxZoom: 8.5, duration: 1200, essential: true, easing: easeInOutQuad },
+        );
+        return;
+      }
+    }
+
     ref.flyTo({
       center: [viewState.longitude, viewState.latitude],
       zoom: viewState.zoom,
@@ -133,7 +152,7 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
       easing: easeInOutQuad,
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewState.longitude, viewState.latitude, viewState.zoom, step, selectionCenter, inputs.province, showCityAreaLayer]);
+  }, [viewState.longitude, viewState.latitude, viewState.zoom, step, selectionCenter, inputs.province, showCityAreaLayer, inputs.postalCode]);
 
   const handleProvinceClick = useCallback(
     (province: Province) => {

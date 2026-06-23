@@ -1,6 +1,7 @@
 'use client';
 
-import { Marker } from 'react-map-gl/maplibre';
+import { useState } from 'react';
+import { Marker, Popup } from 'react-map-gl/maplibre';
 import type { MetroMarker } from '../useMapState';
 
 interface Props {
@@ -9,6 +10,8 @@ interface Props {
   /** FSA of the city the user has tapped but not yet confirmed. */
   pendingFSA?: string | null;
 }
+
+const fmtCAD = new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 });
 
 // Vivid amber — higher contrast than --color-owner (#92400E) on CartoDB Positron light basemap
 const MARKER_COLOR = '#D97706';
@@ -23,6 +26,8 @@ function markerRadius(price: number, maxPrice: number): number {
 const TEXT_HALO = '0 0 3px #fff, 0 0 6px #fff, 0 0 10px rgba(255,255,255,0.7)';
 
 export function PriceMarkerLayer({ markers, onCityClick, pendingFSA }: Props) {
+  const [hovered, setHovered] = useState<MetroMarker | null>(null);
+
   const validMarkers = markers.filter(m => m.medianPrice > 0);
   const maxPrice = Math.max(...validMarkers.map(m => m.medianPrice), 1);
   const hasPending = !!pendingFSA;
@@ -38,6 +43,8 @@ export function PriceMarkerLayer({ markers, onCityClick, pendingFSA }: Props) {
         return (
           <Marker key={m.id} longitude={m.lng} latitude={m.lat} anchor="center">
             <div
+              onMouseEnter={() => setHovered(m)}
+              onMouseLeave={() => setHovered(null)}
               onClick={onCityClick ? () => onCityClick(m) : undefined}
               style={{
                 display: 'flex',
@@ -91,6 +98,48 @@ export function PriceMarkerLayer({ markers, onCityClick, pendingFSA }: Props) {
           </Marker>
         );
       })}
+
+      {/* Dark tooltip on hover — no white box */}
+      {hovered && (
+        <Popup
+          longitude={hovered.lng}
+          latitude={hovered.lat}
+          anchor="bottom"
+          offset={28}
+          closeButton={false}
+          closeOnClick={false}
+          style={{ zIndex: 10 }}
+        >
+          <div style={{
+            background: 'rgba(16,16,16,0.84)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            borderRadius: '8px',
+            boxShadow: '0 4px 18px rgba(0,0,0,0.30)',
+            padding: '10px 14px',
+            fontFamily: 'var(--font-sans), system-ui, sans-serif',
+            minWidth: '165px',
+          }}>
+            <div style={{ fontWeight: 700, fontSize: '12px', color: '#fff', marginBottom: '6px', letterSpacing: '-0.01em' }}>
+              {hovered.metro}
+            </div>
+            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.60)', lineHeight: 1.7 }}>
+              <span style={{ color: '#fff', fontWeight: 600 }}>{fmtCAD.format(hovered.medianPrice)}</span>
+              {' '}median price
+            </div>
+            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.60)', lineHeight: 1.7 }}>
+              <span style={{ color: '#fff', fontWeight: 600 }}>{fmtCAD.format(hovered.monthlyRent)}/mo</span>
+              {' '}est. rent
+            </div>
+            {hovered.propertyTaxPct != null && (
+              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.60)', lineHeight: 1.7 }}>
+                Property tax:{' '}
+                <span style={{ color: '#fff', fontWeight: 600 }}>{(hovered.propertyTaxPct * 100).toFixed(2)}%</span>
+              </div>
+            )}
+          </div>
+        </Popup>
+      )}
     </>
   );
 }

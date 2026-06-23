@@ -90,14 +90,16 @@ export function RentBuySignalLayer({ markers }: Props) {
           style={{ zIndex: 10 }}
         >
           <div style={{
-            background: 'var(--color-surface-raised)',
-            border: '1px solid var(--color-outline)',
+            background: 'rgba(16,16,16,0.84)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
             borderRadius: '8px',
+            boxShadow: '0 4px 18px rgba(0,0,0,0.30)',
             padding: '10px 14px',
             fontFamily: 'var(--font-sans), system-ui, sans-serif',
             minWidth: '190px',
           }}>
-            <div style={{ fontWeight: 600, fontSize: '13px', color: 'var(--color-text)', marginBottom: '6px' }}>
+            <div style={{ fontWeight: 700, fontSize: '12px', color: '#fff', marginBottom: '6px', letterSpacing: '-0.01em' }}>
               {hovered.metro}
             </div>
             <div style={{
@@ -107,18 +109,18 @@ export function RentBuySignalLayer({ markers }: Props) {
               fontSize: '11px',
               fontWeight: 700,
               marginBottom: '8px',
-              backgroundColor: `${VERDICT_COLOR[hovered.verdict]}22`,
+              backgroundColor: `${VERDICT_COLOR[hovered.verdict]}38`,
               color: VERDICT_COLOR[hovered.verdict],
             }}>
               {VERDICT_LABEL[hovered.verdict]}
             </div>
-            <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', lineHeight: 1.7 }}>
-              Break-even rent: <span style={{ color: 'var(--color-text)' }}>
+            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.60)', lineHeight: 1.7 }}>
+              Break-even rent: <span style={{ color: '#fff' }}>
                 {hovered.breakEvenRent != null ? fmtCAD.format(hovered.breakEvenRent) + '/mo' : '—'}
               </span>
             </div>
-            <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', lineHeight: 1.7 }}>
-              Actual rent: <span style={{ color: 'var(--color-text)' }}>{fmtCAD.format(hovered.monthlyRent)}/mo</span>
+            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.60)', lineHeight: 1.7 }}>
+              Actual rent: <span style={{ color: '#fff' }}>{fmtCAD.format(hovered.monthlyRent)}/mo</span>
             </div>
           </div>
         </Popup>
