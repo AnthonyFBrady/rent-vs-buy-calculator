@@ -60,31 +60,31 @@ export const STEP_SECTION: Record<number, Section> = {
 };
 
 export const STEP_HEADINGS: Record<number, string> = {
-  [STEP.PROVINCE]:     'Where are you buying?',
-  [STEP.CITY]:         'Which city?',
-  [STEP.HOME_COMPARE]: 'What are you comparing?',
-  [STEP.HOME_PRICE]:   "What's the home worth?",
-  [STEP.RENT]:         "What's the rental alternative?",
-  [STEP.HORIZON]:      'How long are you deciding for?',
-  [STEP.DOWN_PAYMENT]: 'How are you funding the purchase?',
-  [STEP.MORTGAGE]:     "What's the mortgage rate?",
-  [STEP.FINANCES]:     'A bit about your finances.',
-  [STEP.SHELTERS]:     'Which tax shelters do you use?',
-  [STEP.MOBILITY]:     'How often will each of you move?',
+  [STEP.PROVINCE]:     'Where in Canada?',
+  [STEP.CITY]:         'Which city are you targeting?',
+  [STEP.HOME_COMPARE]: 'What types of home are you weighing?',
+  [STEP.HOME_PRICE]:   'How much does the home cost?',
+  [STEP.RENT]:         'What would you pay in rent instead?',
+  [STEP.HORIZON]:      'How long is your time horizon?',
+  [STEP.DOWN_PAYMENT]: 'How are you funding it?',
+  [STEP.MORTGAGE]:     'What rate can you get?',
+  [STEP.FINANCES]:     'Tell us about your finances.',
+  [STEP.SHELTERS]:     'Which registered accounts do you use?',
+  [STEP.MOBILITY]:     'How often would each of you move?',
 };
 
 export const STEP_WHY: Record<number, string> = {
-  [STEP.PROVINCE]:     'Province sets land transfer tax, rent control, and property tax defaults.',
-  [STEP.CITY]:         'City determines price and rent benchmarks used throughout the comparison.',
-  [STEP.HOME_COMPARE]: 'Comparable units make the comparison honest. Buying a 2BR condo should be weighed against renting a 2BR unit.',
-  [STEP.HOME_PRICE]:   'Home price sets land transfer tax, CMHC premium, and total closing costs.',
+  [STEP.PROVINCE]:     'Determines your land transfer tax, rent control rules, and property tax rate.',
+  [STEP.CITY]:         'Sets the price and rent benchmarks used throughout the comparison.',
+  [STEP.HOME_COMPARE]: 'Comparable units make the analysis honest. Buying a 2BR condo should be weighed against renting a 2BR unit.',
+  [STEP.HOME_PRICE]:   'Drives your land transfer tax, CMHC premium, mortgage balance, and closing costs.',
   [STEP.RENT]:         'Rent is what you pay instead of owning. The break-even rent is the fulcrum of this comparison.',
-  [STEP.HORIZON]:      'Transaction costs amortize over time. Short horizons almost always favour renting.',
-  [STEP.DOWN_PAYMENT]: 'Under 20% triggers CMHC insurance — a 2.8–4.0% upfront cost on the borrowed amount.',
-  [STEP.MORTGAGE]:     'Each 0.5% rate increase adds roughly $50k in interest on a $700k mortgage.',
-  [STEP.FINANCES]:     'Age sets your accumulated TFSA room. Income determines your RRSP room and marginal tax bracket.',
+  [STEP.HORIZON]:      'Under 5 years almost always favours renting. Transaction costs take years to amortize.',
+  [STEP.DOWN_PAYMENT]: 'Under 20% triggers CMHC insurance — a 2.8–4.0% premium added to your mortgage balance.',
+  [STEP.MORTGAGE]:     'Each 0.5% increase adds roughly $50k in interest on a $700k mortgage over 25 years.',
+  [STEP.FINANCES]:     'Age determines your TFSA room. Income sets your RRSP room and marginal tax bracket.',
   [STEP.SHELTERS]:     'Maximizing TFSA and FHSA can shift the advantage by tens of thousands over 10 years.',
-  [STEP.MOBILITY]:     'Each owner move costs about 9% of the home value in friction. Renter moves are cheap but reset any rent-control discount.',
+  [STEP.MOBILITY]:     'Each owner move costs roughly 9% of home value in friction. Renter moves are cheap but reset any rent-control discount.',
 };
 
 export const CONTINUE_LABEL: Record<number, string> = {

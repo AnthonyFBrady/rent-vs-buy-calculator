@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
+
 interface Props {
   label: string;
   value: number;
@@ -12,6 +14,8 @@ interface Props {
   minLabel?: string;
   maxLabel?: string;
   description?: React.ReactNode;
+  /** Optional benchmark annotation shown below the slider. */
+  benchmark?: React.ReactNode;
 }
 
 export function RangeInput({
@@ -26,9 +30,19 @@ export function RangeInput({
   minLabel,
   maxLabel,
   description,
+  benchmark,
 }: Props) {
   const display = formatValue ? formatValue(value) : String(value);
   const fillPct = ((value - min) / (max - min)) * 100;
+  const displayRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const el = displayRef.current;
+    if (!el) return;
+    el.classList.remove('value-pulse');
+    void el.offsetWidth;
+    el.classList.add('value-pulse');
+  }, [value]);
 
   return (
     <div>
@@ -37,6 +51,7 @@ export function RangeInput({
           {label}
         </p>
         <span
+          ref={displayRef}
           className="tabular"
           style={{
             fontFamily: 'var(--font-sans), system-ui, sans-serif',
@@ -68,6 +83,11 @@ export function RangeInput({
         <div className="mt-1 flex justify-between text-xs" style={{ color: 'var(--color-text-muted)', opacity: 0.6 }}>
           {minLabel && <span>{minLabel}</span>}
           {maxLabel && <span>{maxLabel}</span>}
+        </div>
+      )}
+      {benchmark && (
+        <div className="mt-2">
+          {benchmark}
         </div>
       )}
       {description && (

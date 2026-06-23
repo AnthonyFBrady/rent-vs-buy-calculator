@@ -13,6 +13,8 @@ interface Props {
   description?: string;
   /** Suppress helper copy entirely (used in the compact result sidebar). */
   hideDescription?: boolean;
+  /** Optional benchmark annotation rendered below the slider track. */
+  benchmark?: React.ReactNode;
 }
 
 /**
@@ -20,7 +22,7 @@ interface Props {
  * sidebar always share one definition (range, step, format, accent, copy).
  * Do not hand-roll a RangeInput for a registered factor — extend the registry.
  */
-export function FactorSlider({ factor, inputs, patch, description, hideDescription }: Props) {
+export function FactorSlider({ factor, inputs, patch, description, hideDescription, benchmark }: Props) {
   const desc = hideDescription
     ? undefined
     : description ?? (typeof factor.description === 'function' ? factor.description(inputs) : factor.description);
@@ -38,6 +40,7 @@ export function FactorSlider({ factor, inputs, patch, description, hideDescripti
       minLabel={factor.minLabel}
       maxLabel={factor.maxLabel}
       description={desc}
+      benchmark={benchmark}
     />
   );
 }

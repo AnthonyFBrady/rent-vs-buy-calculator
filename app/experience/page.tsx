@@ -385,15 +385,36 @@ function ExperiencePageInner() {
           ))}
         </div>
 
+        {/* Live verdict signal — appears once rent is answered */}
+        {phase >= STEP.RENT && inputs.homePrice > 0 && inputs.monthlyRent > 0 && (() => {
+          const verdict = liveSim.fivePercentRule.verdict;
+          const adv = liveSim.exit.netAdvantageToOwner;
+          const absDollars = Math.abs(adv);
+          const fmt = absDollars >= 1000 ? `$${Math.round(absDollars / 1000)}k` : `$${Math.round(absDollars)}`;
+          const color = verdict === 'rent-favored' ? 'var(--color-renter)' : verdict === 'buy-favored' ? 'var(--color-owner)' : '#A78BFA';
+          const label = verdict === 'rent-favored' ? `Renting ahead by ~${fmt}` : verdict === 'buy-favored' ? `Buying ahead by ~${fmt}` : 'Roughly even';
+          return (
+            <div style={{ padding: '7px 16px', borderBottom: '1px solid var(--color-outline)', display: 'flex', alignItems: 'center', gap: '7px', flexShrink: 0, backgroundColor: 'var(--color-bg)' }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, backgroundColor: color }} />
+              <span style={{ fontSize: '11px', color, fontWeight: 600, lineHeight: 1, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
+                {label}
+              </span>
+              <span style={{ fontSize: '11px', color: 'var(--color-text-faint)', lineHeight: 1, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
+                — updates live
+              </span>
+            </div>
+          );
+        })()}
+
         {/* Scrollable step content */}
         <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '16px 16px 0' }}>
           {/* Step card */}
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={`card-${phase}`}
-              initial={{ opacity: 0, y: direction * 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: direction * -12 }}
+              initial={{ opacity: 0, x: direction * 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: direction * -20 }}
               transition={{ duration: 0.3, ease: [0.0, 0.0, 0.2, 1] }}
               style={{
                 backgroundColor: 'var(--color-surface-raised)',
@@ -502,15 +523,16 @@ function ExperiencePageInner() {
                   width: '100%',
                   height: '52px',
                   borderRadius: '9999px',
-                  backgroundColor: 'var(--color-btn-primary-bg)',
-                  color: 'var(--color-btn-primary-text)',
+                  backgroundColor: pastEssentials ? '#F59E0B' : 'var(--color-btn-primary-bg)',
+                  color: pastEssentials ? '#FFFFFF' : 'var(--color-btn-primary-text)',
                   border: 'none',
                   fontSize: '15px',
-                  fontWeight: 500,
+                  fontWeight: pastEssentials ? 600 : 500,
                   cursor: 'pointer',
                   fontFamily: 'var(--font-sans), system-ui, sans-serif',
                   letterSpacing: '-0.01em',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                  boxShadow: pastEssentials ? '0 2px 16px rgba(245,158,11,0.35)' : '0 2px 8px rgba(0,0,0,0.12)',
+                  transition: 'background-color 0.3s, box-shadow 0.3s',
                 }}
               >
                 {mapPending ? `Use ${mapPending.label} →` : `${primaryLabel} →`}
