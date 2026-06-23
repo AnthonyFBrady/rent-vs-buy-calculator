@@ -101,11 +101,9 @@ interface Props {
   hoveredCode: Province | null;
   /** When true, render dim context layer only (non-province steps). */
   contextOnly?: boolean;
-  /** Province the user has tapped but not yet confirmed — shows a distinct highlight. */
-  pendingProvince?: Province | null;
 }
 
-export function ProvinceChoroplethLayer({ selectedProvince, hoveredCode, contextOnly = false, pendingProvince }: Props) {
+export function ProvinceChoroplethLayer({ selectedProvince, hoveredCode, contextOnly = false }: Props) {
   const [rawGeoJSON, setRawGeoJSON] = useState<FeatureCollection | null>(cachedGeoJSON);
 
   useEffect(() => {
@@ -150,16 +148,15 @@ export function ProvinceChoroplethLayer({ selectedProvince, hoveredCode, context
         'case',
         ['==', ['get', 'verdict'], 'rent-favored'], VERDICT_COLOR['rent-favored'],
         ['==', ['get', 'verdict'], 'buy-favored'],  VERDICT_COLOR['buy-favored'],
-        ['==', ['get', 'verdict'], 'tie'],           VERDICT_COLOR['tie'],
+        ['==', ['get', 'verdict'], 'tie'],          VERDICT_COLOR['tie'],
         VERDICT_COLOR[''],
       ] as unknown as string,
       'fill-opacity': [
         'case',
-        ['==', ['get', 'code'], pendingProvince ?? ''],  0.60,
-        ['==', ['get', 'code'], hoveredCode ?? ''],      0.42,
-        ['==', ['get', 'code'], selectedProvince],       0.32,
-        ['==', ['get', 'hasData'], true],                0.18,
-        0.06,
+        ['==', ['get', 'code'], selectedProvince],       0.65,  // selected — vivid
+        ['==', ['get', 'code'], hoveredCode ?? ''],      0.40,  // hovered — visible
+        ['==', ['get', 'hasData'], true],                0.08,  // unselected — dimmed
+        0.03,                                                    // territories — barely visible
       ] as unknown as number,
     };
   }, [contextOnly, selectedProvince, hoveredCode]);
@@ -183,19 +180,17 @@ export function ProvinceChoroplethLayer({ selectedProvince, hoveredCode, context
     return {
       'line-color': [
         'case',
-        ['==', ['get', 'code'], pendingProvince ?? ''],  'rgba(0,0,0,0.90)',
-        ['==', ['get', 'code'], selectedProvince],       'rgba(0,0,0,0.7)',
-        ['==', ['get', 'code'], hoveredCode ?? ''],      'rgba(0,0,0,0.5)',
-        'rgba(0,0,0,0.15)',
+        ['==', ['get', 'code'], selectedProvince],  'rgba(0,0,0,0.80)',
+        ['==', ['get', 'code'], hoveredCode ?? ''], 'rgba(0,0,0,0.45)',
+        'rgba(0,0,0,0.12)',
       ] as unknown as string,
       'line-width': [
         'case',
-        ['==', ['get', 'code'], pendingProvince ?? ''],  2.5,
-        ['==', ['get', 'code'], selectedProvince],       2.5,
-        ['==', ['get', 'code'], hoveredCode ?? ''],      1.8,
-        0.7,
+        ['==', ['get', 'code'], selectedProvince],  2.5,
+        ['==', ['get', 'code'], hoveredCode ?? ''], 1.5,
+        0.5,
       ] as unknown as number,
-      'line-opacity': 0.9,
+      'line-opacity': 1,
     };
   }, [contextOnly, selectedProvince, hoveredCode]);
 

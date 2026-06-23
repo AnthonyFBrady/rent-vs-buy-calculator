@@ -37,6 +37,9 @@ const PROVINCE_BOUNDS: Record<string, [[number, number], [number, number]]> = {
 // GTA overview bounds — wide enough to show all 6 Toronto borough polygons
 const GTA_BOUNDS: [[number, number], [number, number]] = [[-79.68, 43.57], [-79.13, 43.80]];
 
+// Canada extents — prevents panning deep into the US or polar regions
+const CANADA_BOUNDS: [[number, number], [number, number]] = [[-145, 41.5], [-52, 84]];
+
 // Steps that show the Toronto borough choropleth
 const CITY_AREA_STEPS = new Set<number>([STEP.HOME_COMPARE, STEP.HOME_PRICE, STEP.RENT]);
 
@@ -100,16 +103,37 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
   const [hoveredCityAreaData, setHoveredCityAreaData] = useState<CityAreaData | null>(null);
   const [cityAreaHoverPoint, setCityAreaHoverPoint] = useState<{ x: number; y: number } | null>(null);
 
+  // Merged effect: set maxBounds BEFORE flyTo to avoid the race condition where
+  // a stale tight-bounds constraint prevents flying to a wider Canada view on back-navigation.
   useEffect(() => {
-    if (!mapRef.current) return;
-    mapRef.current.flyTo({
+    const ref = mapRef.current;
+    if (!ref) return;
+    const rawMap = ref.getMap();
+
+    let bounds: [[number, number], [number, number]] | null = null;
+    if (step === STEP.PROVINCE) {
+      bounds = CANADA_BOUNDS;
+    } else if (showCityAreaLayer) {
+      bounds = GTA_BOUNDS;
+    } else if (step > STEP.CITY && selectionCenter) {
+      const { lat, lng, radiusKm } = selectionCenter;
+      const latPad = (radiusKm / 111.32) * 2.2;
+      const lngPad = (radiusKm / (111.32 * Math.cos((lat * Math.PI) / 180))) * 2.2;
+      bounds = [[lng - lngPad, lat - latPad], [lng + lngPad, lat + latPad]];
+    } else if (step > STEP.PROVINCE) {
+      bounds = (PROVINCE_BOUNDS[inputs.province] as [[number, number], [number, number]]) ?? null;
+    }
+    rawMap?.setMaxBounds(bounds);
+
+    ref.flyTo({
       center: [viewState.longitude, viewState.latitude],
       zoom: viewState.zoom,
       duration: 1000,
       essential: true,
       easing: easeInOutQuad,
     });
-  }, [viewState.longitude, viewState.latitude, viewState.zoom]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewState.longitude, viewState.latitude, viewState.zoom, step, selectionCenter, inputs.province, showCityAreaLayer]);
 
   const handleProvinceClick = useCallback(
     (province: Province) => {
@@ -127,6 +151,15 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
     },
     [interactive, onPatch],
   );
+
+  const handleMapClick = useCallback((e: MapLayerMouseEvent) => {
+    if (!isProvinceMode || !interactive) return;
+    const feature = e.features?.[0];
+    if (feature?.layer?.id === 'province-choropleth-fill') {
+      const code = feature.properties?.code as Province | undefined;
+      if (code) handleProvinceClick(code);
+    }
+  }, [isProvinceMode, interactive, handleProvinceClick]);
 
   const handleCityMarkerClick = useCallback(
     (marker: MetroMarker) => {
@@ -146,28 +179,6 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
     [inputs.homeType, inputs.province, onPendingSelect],
   );
 
-  // Restrict pan/zoom bounds after province → city → borough drill-in
-  useEffect(() => {
-    const map = mapRef.current?.getMap();
-    if (!map) return;
-    let bounds: [[number, number], [number, number]] | null = null;
-
-    if (showCityAreaLayer) {
-      // Toronto choropleth steps — use GTA-wide bounds so all 6 boroughs are pannable
-      bounds = GTA_BOUNDS;
-    } else if (step > STEP.CITY && selectionCenter) {
-      // City selected — derive bounds from the selection radius with generous padding
-      const { lat, lng, radiusKm } = selectionCenter;
-      const latPad = (radiusKm / 111.32) * 2.2;
-      const lngPad = (radiusKm / (111.32 * Math.cos((lat * Math.PI) / 180))) * 2.2;
-      bounds = [[lng - lngPad, lat - latPad], [lng + lngPad, lat + latPad]];
-    } else if (step > STEP.PROVINCE) {
-      // Province selected — restrict to province bounding box
-      bounds = (PROVINCE_BOUNDS[inputs.province] as [[number, number], [number, number]]) ?? null;
-    }
-
-    map.setMaxBounds(bounds ?? null);
-  }, [selectionCenter, step, inputs.province]);
 
   // Clear province hover when leaving province step
   useEffect(() => {
@@ -278,6 +289,7 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
           ...(isProvinceMode   ? ['province-choropleth-fill'] : []),
           ...(showCityAreaLayer ? ['city-area-fill'] : []),
         ]}
+        onClick={isProvinceMode ? handleMapClick : undefined}
         onMouseMove={isProvinceMode || showCityAreaLayer ? handleMouseMove : undefined}
         onMouseLeave={isProvinceMode || showCityAreaLayer ? handleMouseLeave : undefined}
         cursor={
@@ -294,7 +306,6 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
             selectedProvince={inputs.province}
             hoveredCode={hoveredProvinceCode}
             contextOnly={!isProvinceMode}
-            pendingProvince={pendingSelection?.kind === 'province' ? pendingSelection.province : null}
           />
         )}
 

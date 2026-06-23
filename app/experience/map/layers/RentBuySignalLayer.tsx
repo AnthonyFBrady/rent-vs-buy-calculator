@@ -11,9 +11,9 @@ interface Props {
 const fmtCAD = new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 });
 
 const VERDICT_COLOR: Record<string, string> = {
-  'rent-favored': '#0E7490',
-  'buy-favored':  '#92400E',
-  'tie':          '#6B7280',
+  'rent-favored': '#0891B2',  // cyan-600 — matches ProvinceChoroplethLayer
+  'buy-favored':  '#D97706',  // amber-600
+  'tie':          '#6B7280',  // slate
 };
 
 const VERDICT_LABEL: Record<string, string> = {
@@ -38,27 +38,45 @@ export function RentBuySignalLayer({ markers }: Props) {
               onMouseEnter={() => setHovered(m)}
               onMouseLeave={() => setHovered(null)}
               style={{
-                width: isHovered ? 28 : 20,
-                height: isHovered ? 28 : 20,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '4px',
+                pointerEvents: 'all',
+                cursor: 'default',
+              }}
+            >
+              {/* City name label */}
+              <div style={{
+                background: 'rgba(255,255,255,0.88)',
+                border: `1px solid ${color}60`,
+                borderRadius: '3px',
+                padding: '1px 5px',
+                fontSize: '9px',
+                fontWeight: 600,
+                color,
+                whiteSpace: 'nowrap',
+                letterSpacing: '0.02em',
+                fontFamily: 'var(--font-sans), system-ui, sans-serif',
+                lineHeight: 1.4,
+              }}>
+                {m.metro}
+              </div>
+              {/* Verdict dot */}
+              <div style={{
+                width: isHovered ? 26 : 18,
+                height: isHovered ? 26 : 18,
                 borderRadius: '50%',
                 backgroundColor: `${color}28`,
                 border: `2px solid ${color}`,
-                cursor: 'default',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 transition: 'all 0.15s ease',
                 boxShadow: isHovered ? `0 0 14px ${color}80` : 'none',
-              }}
-            >
-              <div
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  backgroundColor: color,
-                }}
-              />
+              }}>
+                <div style={{ width: 7, height: 7, borderRadius: '50%', backgroundColor: color }} />
+              </div>
             </div>
           </Marker>
         );

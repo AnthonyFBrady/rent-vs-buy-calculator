@@ -39,31 +39,56 @@ export function PriceMarkerLayer({ markers, onCityClick, pendingFSA }: Props) {
               onMouseLeave={() => setHovered(null)}
               onClick={onCityClick ? () => onCityClick(m) : undefined}
               style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '4px',
+                cursor: onCityClick ? 'pointer' : 'default',
+                pointerEvents: 'all',
+                transition: 'opacity 0.25s ease',
+                opacity: dimmed ? 0.35 : 1,
+              }}
+            >
+              {/* City name label */}
+              <div style={{
+                background: (m.isSelected || isPending) ? 'var(--color-owner)' : 'rgba(255,255,255,0.88)',
+                color: (m.isSelected || isPending) ? '#fff' : 'var(--color-owner)',
+                border: `1px solid ${(m.isSelected || isPending) ? 'transparent' : 'rgba(var(--brand-owner-rgb),0.40)'}`,
+                borderRadius: '3px',
+                padding: '1px 5px',
+                fontSize: '9px',
+                fontWeight: 700,
+                whiteSpace: 'nowrap',
+                letterSpacing: '0.02em',
+                fontFamily: 'var(--font-sans), system-ui, sans-serif',
+                lineHeight: 1.4,
+                boxShadow: (m.isSelected || isPending) ? '0 1px 6px rgba(var(--brand-owner-rgb),0.45)' : 'none',
+              }}>
+                {m.metro}
+              </div>
+              {/* Price bubble */}
+              <div style={{
                 width: isPending ? (r * 2 + 16) : m.isSelected ? (r * 2 + 8) : r * 2,
                 height: isPending ? (r * 2 + 16) : m.isSelected ? (r * 2 + 8) : r * 2,
                 borderRadius: '50%',
                 backgroundColor: 'var(--color-owner-tint)',
                 border: `${isPending ? 3 : m.isSelected ? 3 : 2}px solid var(--color-owner)`,
-                cursor: onCityClick ? 'pointer' : 'default',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 transition: 'all 0.25s ease',
-                opacity: dimmed ? 0.45 : 1,
                 boxShadow: isPending
                   ? '0 0 0 4px rgba(var(--brand-owner-rgb),0.20), 0 0 24px rgba(var(--brand-owner-rgb),0.55)'
                   : isActive ? '0 0 20px rgba(var(--brand-owner-rgb),0.6)' : 'none',
-              }}
-            >
-              <div
-                style={{
+              }}>
+                <div style={{
                   width: Math.max(r * 0.5, 4),
                   height: Math.max(r * 0.5, 4),
                   borderRadius: '50%',
                   backgroundColor: 'var(--color-owner)',
                   opacity: (m.isSelected || isPending) ? 1 : 0.85,
-                }}
-              />
+                }} />
+              </div>
             </div>
           </Marker>
         );
