@@ -46,19 +46,16 @@ export function RentBuySignalLayer({ markers }: Props) {
                 cursor: 'default',
               }}
             >
-              {/* City name label */}
+              {/* City name — halo only, no pill box */}
               <div style={{
-                background: 'rgba(255,255,255,0.88)',
-                border: `1px solid ${color}60`,
-                borderRadius: '3px',
-                padding: '1px 5px',
                 fontSize: '9px',
-                fontWeight: 600,
+                fontWeight: 700,
                 color,
                 whiteSpace: 'nowrap',
-                letterSpacing: '0.02em',
+                letterSpacing: '0.03em',
                 fontFamily: 'var(--font-sans), system-ui, sans-serif',
-                lineHeight: 1.4,
+                lineHeight: 1.3,
+                textShadow: '0 0 3px #fff, 0 0 6px #fff, 0 0 10px rgba(255,255,255,0.7)',
               }}>
                 {m.metro}
               </div>

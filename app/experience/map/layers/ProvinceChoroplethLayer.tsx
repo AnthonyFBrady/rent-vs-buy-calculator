@@ -135,11 +135,13 @@ export function ProvinceChoroplethLayer({ selectedProvince, hoveredCode, context
   const fillPaint = useMemo(() => {
     if (contextOnly) {
       return {
-        'fill-color': '#888888',
+        // Selected province: transparent (map shows through fully).
+        // All others: medium gray overlay — "fog of war" effect that pulls focus to the selected province.
+        'fill-color': '#444444',
         'fill-opacity': [
           'case',
-          ['==', ['get', 'code'], selectedProvince], 0.06,
-          0.02,
+          ['==', ['get', 'code'], selectedProvince], 0.0,
+          0.28,
         ] as unknown as number,
       };
     }
@@ -166,15 +168,15 @@ export function ProvinceChoroplethLayer({ selectedProvince, hoveredCode, context
       return {
         'line-color': [
           'case',
-          ['==', ['get', 'code'], selectedProvince], 'rgb(146,64,14)',
-          'rgba(0,0,0,0.12)',
+          ['==', ['get', 'code'], selectedProvince], 'rgba(0,0,0,0.65)',
+          'rgba(0,0,0,0.10)',
         ] as unknown as string,
         'line-width': [
           'case',
-          ['==', ['get', 'code'], selectedProvince], 1.5,
-          0.5,
+          ['==', ['get', 'code'], selectedProvince], 2.0,
+          0.4,
         ] as unknown as number,
-        'line-opacity': 0.8,
+        'line-opacity': 1,
       };
     }
     return {
