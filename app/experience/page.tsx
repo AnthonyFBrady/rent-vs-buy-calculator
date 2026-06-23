@@ -249,6 +249,14 @@ function ExperiencePageInner() {
   const showRefine     = pastEssentials && !isLastStep;
   const refineCount    = TOTAL_STEPS - 1 - phase;
 
+  // Verdict signal — computed unconditionally, rendered below the input glass
+  const showVerdict  = phase >= STEP.RENT && inputs.homePrice > 0 && inputs.monthlyRent > 0;
+  const verdictKind  = liveSim.fivePercentRule.verdict;
+  const verdictAdv   = liveSim.exit.netAdvantageToOwner;
+  const verdictFmt   = (() => { const a = Math.abs(verdictAdv); return a >= 1000 ? `$${Math.round(a / 1000)}k` : `$${Math.round(a)}`; })();
+  const verdictColor = verdictKind === 'rent-favored' ? 'var(--color-renter)' : verdictKind === 'buy-favored' ? 'var(--color-owner)' : 'var(--color-cross)';
+  const verdictLabel = verdictKind === 'rent-favored' ? `Renting ahead by ~${verdictFmt}` : verdictKind === 'buy-favored' ? `Buying ahead by ~${verdictFmt}` : 'Roughly even';
+
   return (
     <>
     <motion.div
@@ -277,7 +285,7 @@ function ExperiencePageInner() {
         }}
       >
 
-        {/* Nav — inside the rail so the map fills full viewport height */}
+        {/* Nav */}
         <nav
           style={{
             height: '44px',
@@ -285,7 +293,7 @@ function ExperiencePageInner() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '0 16px',
+            padding: '0 20px',
             borderBottom: '1px solid var(--color-outline)',
             backgroundColor: 'var(--color-bg)',
           }}
@@ -293,17 +301,16 @@ function ExperiencePageInner() {
           <a href="/" style={{ textDecoration: 'none' }}>
             <ReckonSignature color="var(--color-text)" width={68} />
           </a>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <button
               onClick={() => setMethodologyOpen(true)}
               style={{
                 fontSize: '12px',
                 color: 'var(--color-text-muted)',
-                background: 'transparent',
-                border: '1px solid var(--color-outline)',
-                borderRadius: '9999px',
+                background: 'none',
+                border: 'none',
                 cursor: 'pointer',
-                padding: '3px 10px',
+                padding: 0,
                 fontFamily: 'var(--font-sans), system-ui, sans-serif',
                 letterSpacing: '-0.01em',
               }}
@@ -315,138 +322,82 @@ function ExperiencePageInner() {
               style={{
                 fontSize: '12px',
                 color: 'var(--color-text-muted)',
-                background: 'transparent',
-                border: '1px solid var(--color-outline)',
-                borderRadius: '9999px',
+                background: 'none',
+                border: 'none',
                 cursor: 'pointer',
-                padding: '3px 10px',
+                padding: 0,
                 fontFamily: 'var(--font-sans), system-ui, sans-serif',
                 letterSpacing: '-0.01em',
               }}
             >
               FAQ
             </button>
-            <span
-              style={{
-                fontSize: '12px',
-                color: 'var(--color-text-dimmer)',
-                letterSpacing: '-0.01em',
-                marginLeft: '2px',
-              }}
-            >
-              {phase + 1}/{TOTAL_STEPS}
-            </span>
           </div>
         </nav>
 
-        {/* Segmented act progress — clickable pips, grouped by act */}
-        <div
-          style={{
-            flexShrink: 0,
-            padding: '8px 16px 10px',
-            borderBottom: '1px solid var(--color-outline)',
-            display: 'flex',
-            gap: '8px',
-          }}
-        >
-          {ACTS.map((act) => (
-            <div key={act.label} style={{ flex: act.steps.length, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <span style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-text-dimmer)', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
-                {act.label}
-              </span>
-              <div style={{ display: 'flex', gap: '3px' }}>
-                {act.steps.map((i) => {
-                  const isCompleted = i < phase;
-                  const isCurrent   = i === phase;
-                  return (
-                    <button
-                      key={i}
-                      title={STEP_HEADINGS[i] ?? `Step ${i + 1}`}
-                      onClick={() => { if (isCompleted) goto(i); }}
-                      style={{
-                        flex: 1,
-                        height: '3px',
-                        borderRadius: '9999px',
-                        border: 'none',
-                        padding: 0,
-                        cursor: isCompleted ? 'pointer' : 'default',
-                        backgroundColor: isCurrent
-                          ? accentColor
-                          : isCompleted
-                            ? 'rgba(245,158,11,0.45)'
-                            : 'var(--color-outline)',
-                        transition: 'background-color 0.3s',
-                      }}
-                    />
-                  );
-                })}
+        {/* Scrollable body — absorbs progress pips, heading, input glass, verdict */}
+        <div className="thin-scroll" style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', display: 'flex', flexDirection: 'column' }}>
+
+          {/* Progress pips — sticky inside scroll, no bottom border */}
+          <div style={{ flexShrink: 0, padding: '10px 20px 8px', position: 'sticky', top: 0, zIndex: 1, backgroundColor: 'var(--color-bg)', display: 'flex', gap: '8px' }}>
+            {ACTS.map((act) => (
+              <div key={act.label} style={{ flex: act.steps.length, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <span style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-text-dimmer)', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
+                  {act.label}
+                </span>
+                <div style={{ display: 'flex', gap: '3px' }}>
+                  {act.steps.map((i) => {
+                    const isCompleted = i < phase;
+                    const isCurrent   = i === phase;
+                    return (
+                      <button
+                        key={i}
+                        title={STEP_HEADINGS[i] ?? `Step ${i + 1}`}
+                        onClick={() => { if (isCompleted) goto(i); }}
+                        style={{
+                          flex: 1,
+                          height: '3px',
+                          borderRadius: '9999px',
+                          border: 'none',
+                          padding: 0,
+                          cursor: isCompleted ? 'pointer' : 'default',
+                          backgroundColor: isCurrent
+                            ? accentColor
+                            : isCompleted
+                              ? 'rgba(245,158,11,0.45)'
+                              : 'var(--color-outline)',
+                          transition: 'background-color 0.3s',
+                        }}
+                      />
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
-        {/* Live verdict signal — appears once rent is answered */}
-        {phase >= STEP.RENT && inputs.homePrice > 0 && inputs.monthlyRent > 0 && (() => {
-          const verdict = liveSim.fivePercentRule.verdict;
-          const adv = liveSim.exit.netAdvantageToOwner;
-          const absDollars = Math.abs(adv);
-          const fmt = absDollars >= 1000 ? `$${Math.round(absDollars / 1000)}k` : `$${Math.round(absDollars)}`;
-          const color = verdict === 'rent-favored' ? 'var(--color-renter)' : verdict === 'buy-favored' ? 'var(--color-owner)' : '#A78BFA';
-          const label = verdict === 'rent-favored' ? `Renting ahead by ~${fmt}` : verdict === 'buy-favored' ? `Buying ahead by ~${fmt}` : 'Roughly even';
-          return (
-            <div style={{ padding: '7px 16px', borderBottom: '1px solid var(--color-outline)', display: 'flex', alignItems: 'center', gap: '7px', flexShrink: 0, backgroundColor: 'var(--color-bg)' }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, backgroundColor: color }} />
-              <span style={{ fontSize: '11px', color, fontWeight: 600, lineHeight: 1, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
-                {label}
-              </span>
-              <span style={{ fontSize: '11px', color: 'var(--color-text-faint)', lineHeight: 1, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
-                — updates live
-              </span>
-            </div>
-          );
-        })()}
-
-        {/* Scrollable step content */}
-        <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '16px 16px 0' }}>
-          {/* Step card */}
+          {/* Animated step content: heading + input glass + verdict slide together */}
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
-              key={`card-${phase}`}
+              key={`step-${phase}`}
               initial={{ opacity: 0, x: direction * 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: direction * -20 }}
               transition={{ duration: 0.3, ease: [0.0, 0.0, 0.2, 1] }}
-              style={{
-                backgroundColor: 'var(--color-surface-raised)',
-                border: '1px solid rgba(0,0,0,0.06)',
-                borderRadius: '20px',
-                overflow: 'hidden',
-                boxShadow: '0 0 0 1px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.04), 0 12px 40px rgba(0,0,0,0.08)',
-                marginBottom: '16px',
-              }}
+              style={{ padding: '24px 20px 0', display: 'flex', flexDirection: 'column' }}
             >
-              {/* Header zone */}
-              <div style={{ padding: '20px 20px 14px' }}>
-                <div style={{ marginBottom: '8px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: accentColor, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
-                    {sectionLabel}
-                  </span>
-                </div>
-                <h1 style={{ fontFamily: 'var(--font-serif), Georgia, serif', fontSize: 'clamp(22px, 3.2vw, 28px)', fontWeight: 700, letterSpacing: '-0.035em', lineHeight: 1.15, color: 'var(--color-text)', margin: 0 }}>
-                  {stepLabel}
-                </h1>
+              {/* Heading block — on the bg surface, not inside the white card */}
+              <div style={{ marginBottom: '20px' }}>
+                <h1 className="step-heading-xl">{stepLabel}</h1>
                 {whyCopy && (
-                  <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', lineHeight: 1.5, margin: '6px 0 0' }}>
+                  <p style={{ marginTop: '8px', fontSize: '14px', lineHeight: 1.55, color: 'var(--color-text-muted)', margin: '8px 0 0', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
                     {whyCopy}
                   </p>
                 )}
               </div>
 
-              {/* Divider */}
-              <div style={{ height: '1px', backgroundColor: 'rgba(0,0,0,0.05)' }} />
-
-              {/* Input zone */}
-              <div style={{ padding: '16px 20px 24px' }}>
+              {/* Input glass — white card with inputs only, no internal header */}
+              <div className="input-glass">
                 {phase === STEP.PROVINCE     && <StepProvince    inputs={inputs} patch={patch} onAdvance={advance} />}
                 {phase === STEP.CITY         && <StepCity        inputs={inputs} patch={patch} onAdvance={advance} />}
                 {phase === STEP.HOME_COMPARE && <StepHomeCompare inputs={inputs} patch={patch} />}
@@ -459,8 +410,20 @@ function ExperiencePageInner() {
                 {phase === STEP.SHELTERS     && <StepShelters    inputs={inputs} patch={patch} />}
                 {phase === STEP.MOBILITY     && <StepMobility    inputs={inputs} patch={patch} />}
               </div>
+
+              {/* Verdict signal — below inputs, only when live data is available */}
+              {showVerdict && (
+                <div className="verdict-signal">
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, backgroundColor: verdictColor }} />
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: verdictColor, lineHeight: 1 }}>{verdictLabel}</span>
+                  <span style={{ fontSize: '12px', color: 'var(--color-text-faint)', lineHeight: 1 }}>— updates live</span>
+                </div>
+              )}
+
+              <div style={{ height: '24px', flexShrink: 0 }} />
             </motion.div>
           </AnimatePresence>
+
         </div>
 
         {/* Button bar — anchored to bottom of rail */}
@@ -482,22 +445,26 @@ function ExperiencePageInner() {
             <button
               onClick={back}
               disabled={isFirstStep}
+              aria-label="Go back"
               style={{
-                height: '48px',
-                padding: '0 16px',
-                fontSize: '14px',
-                color: isFirstStep ? 'var(--color-text-dimmer)' : 'var(--color-text-muted)',
-                background: 'transparent',
-                border: isFirstStep ? '1px solid var(--color-outline)' : '1px solid var(--color-outline-active)',
-                borderRadius: '9999px',
-                cursor: isFirstStep ? 'default' : 'pointer',
-                fontFamily: 'var(--font-sans), system-ui, sans-serif',
-                transition: 'color 0.15s, border-color 0.15s',
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
                 flexShrink: 0,
-                opacity: isFirstStep ? 0.4 : 1,
+                border: isFirstStep ? '1px solid var(--color-outline)' : '1px solid var(--color-outline-active)',
+                backgroundColor: 'transparent',
+                color: isFirstStep ? 'var(--color-text-dimmer)' : 'var(--color-text-muted)',
+                cursor: isFirstStep ? 'default' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '16px',
+                opacity: isFirstStep ? 0.3 : 1,
+                transition: 'opacity 0.15s, border-color 0.15s',
+                fontFamily: 'var(--font-sans), system-ui, sans-serif',
               }}
             >
-              ← Back
+              ←
             </button>
 
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
