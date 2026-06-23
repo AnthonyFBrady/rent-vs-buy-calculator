@@ -42,8 +42,8 @@ export function PriceMarkerLayer({ markers, onCityClick, pendingFSA }: Props) {
                 width: isPending ? (r * 2 + 16) : m.isSelected ? (r * 2 + 8) : r * 2,
                 height: isPending ? (r * 2 + 16) : m.isSelected ? (r * 2 + 8) : r * 2,
                 borderRadius: '50%',
-                backgroundColor: 'rgba(245,158,11,0.22)',
-                border: `${isPending ? 3 : m.isSelected ? 3 : 2}px solid #F59E0B`,
+                backgroundColor: 'var(--color-owner-tint)',
+                border: `${isPending ? 3 : m.isSelected ? 3 : 2}px solid var(--color-owner)`,
                 cursor: onCityClick ? 'pointer' : 'default',
                 display: 'flex',
                 alignItems: 'center',
@@ -51,8 +51,8 @@ export function PriceMarkerLayer({ markers, onCityClick, pendingFSA }: Props) {
                 transition: 'all 0.25s ease',
                 opacity: dimmed ? 0.45 : 1,
                 boxShadow: isPending
-                  ? '0 0 0 4px rgba(245,158,11,0.20), 0 0 24px rgba(245,158,11,0.55)'
-                  : isActive ? '0 0 20px rgba(245,158,11,0.6)' : 'none',
+                  ? '0 0 0 4px rgba(var(--brand-owner-rgb),0.20), 0 0 24px rgba(var(--brand-owner-rgb),0.55)'
+                  : isActive ? '0 0 20px rgba(var(--brand-owner-rgb),0.6)' : 'none',
               }}
             >
               <div
@@ -60,7 +60,7 @@ export function PriceMarkerLayer({ markers, onCityClick, pendingFSA }: Props) {
                   width: Math.max(r * 0.5, 4),
                   height: Math.max(r * 0.5, 4),
                   borderRadius: '50%',
-                  backgroundColor: '#F59E0B',
+                  backgroundColor: 'var(--color-owner)',
                   opacity: (m.isSelected || isPending) ? 1 : 0.85,
                 }}
               />
@@ -80,30 +80,30 @@ export function PriceMarkerLayer({ markers, onCityClick, pendingFSA }: Props) {
           style={{ zIndex: 10 }}
         >
           <div style={{
-            background: 'rgba(255,255,255,0.97)',
+            background: 'var(--color-surface-raised)',
             backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(245,158,11,0.30)',
-            borderLeft: '3px solid #F59E0B',
+            border: '1px solid rgba(var(--brand-owner-rgb),0.30)',
+            borderLeft: '3px solid var(--color-owner)',
             borderRadius: '8px',
             boxShadow: '0 2px 12px rgba(0,0,0,0.10)',
             padding: '10px 14px',
-            fontFamily: 'system-ui, sans-serif',
+            fontFamily: 'var(--font-sans), system-ui, sans-serif',
             minWidth: '180px',
           }}>
-            <div style={{ fontWeight: 700, fontSize: '12px', color: '#0F0F0E', marginBottom: '6px', letterSpacing: '-0.01em' }}>
+            <div style={{ fontWeight: 700, fontSize: '12px', color: 'var(--color-text)', marginBottom: '6px', letterSpacing: '-0.01em' }}>
               {hovered.metro}
             </div>
-            <div style={{ fontSize: '12px', color: '#71717A', lineHeight: 1.7 }}>
-              <span style={{ color: '#F59E0B', fontWeight: 600 }}>{fmtCAD.format(hovered.medianPrice)}</span>
+            <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', lineHeight: 1.7 }}>
+              <span style={{ color: 'var(--color-owner)', fontWeight: 600 }}>{fmtCAD.format(hovered.medianPrice)}</span>
               {' '}median price
             </div>
-            <div style={{ fontSize: '12px', color: '#71717A', lineHeight: 1.7 }}>
-              <span style={{ color: '#0F0F0E', fontWeight: 600 }}>{fmtCAD.format(hovered.monthlyRent)}/mo</span>
+            <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', lineHeight: 1.7 }}>
+              <span style={{ color: 'var(--color-text)', fontWeight: 600 }}>{fmtCAD.format(hovered.monthlyRent)}/mo</span>
               {' '}est. rent
             </div>
             {hovered.propertyTaxPct != null && (
-              <div style={{ fontSize: '12px', color: '#71717A', lineHeight: 1.7 }}>
-                Property tax: <span style={{ color: '#0F0F0E', fontWeight: 600 }}>{(hovered.propertyTaxPct * 100).toFixed(2)}%</span>
+              <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', lineHeight: 1.7 }}>
+                Property tax: <span style={{ color: 'var(--color-text)', fontWeight: 600 }}>{(hovered.propertyTaxPct * 100).toFixed(2)}%</span>
               </div>
             )}
           </div>

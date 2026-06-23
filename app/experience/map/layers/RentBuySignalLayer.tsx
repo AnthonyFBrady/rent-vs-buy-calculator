@@ -75,14 +75,14 @@ export function RentBuySignalLayer({ markers }: Props) {
           style={{ zIndex: 10 }}
         >
           <div style={{
-            background: '#18181B',
-            border: '1px solid #27272A',
+            background: 'var(--color-surface-raised)',
+            border: '1px solid var(--color-outline)',
             borderRadius: '8px',
             padding: '10px 14px',
-            fontFamily: 'system-ui, sans-serif',
+            fontFamily: 'var(--font-sans), system-ui, sans-serif',
             minWidth: '190px',
           }}>
-            <div style={{ fontWeight: 600, fontSize: '13px', color: '#FAFAFA', marginBottom: '6px' }}>
+            <div style={{ fontWeight: 600, fontSize: '13px', color: 'var(--color-text)', marginBottom: '6px' }}>
               {hovered.metro}
             </div>
             <div style={{
@@ -97,13 +97,13 @@ export function RentBuySignalLayer({ markers }: Props) {
             }}>
               {VERDICT_LABEL[hovered.verdict]}
             </div>
-            <div style={{ fontSize: '12px', color: '#A1A1AA', lineHeight: 1.7 }}>
-              Break-even rent: <span style={{ color: '#FAFAFA' }}>
+            <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', lineHeight: 1.7 }}>
+              Break-even rent: <span style={{ color: 'var(--color-text)' }}>
                 {hovered.breakEvenRent != null ? fmtCAD.format(hovered.breakEvenRent) + '/mo' : '—'}
               </span>
             </div>
-            <div style={{ fontSize: '12px', color: '#A1A1AA', lineHeight: 1.7 }}>
-              Actual rent: <span style={{ color: '#FAFAFA' }}>{fmtCAD.format(hovered.monthlyRent)}/mo</span>
+            <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', lineHeight: 1.7 }}>
+              Actual rent: <span style={{ color: 'var(--color-text)' }}>{fmtCAD.format(hovered.monthlyRent)}/mo</span>
             </div>
           </div>
         </Popup>

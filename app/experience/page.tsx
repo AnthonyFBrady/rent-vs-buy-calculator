@@ -19,8 +19,6 @@ import {
   STEP_HEADINGS,
   STEP_WHY,
   CONTINUE_LABEL,
-  STEP_SECTION,
-  SECTION_LABELS,
 } from './config/steps';
 import { StepProvince }    from './steps/StepProvince';
 import { StepCity }        from './steps/StepCity';
@@ -233,14 +231,12 @@ function ExperiencePageInner() {
     return () => { document.body.style.overflow = ''; };
   }, [methodologyOpen, faqOpen]);
 
-  const stepLabel    = STEP_HEADINGS[phase] ?? '';
-  const whyCopy      = STEP_WHY[phase] ?? '';
-  const isFirstStep  = phase === 0;
-  const isLastStep   = phase === TOTAL_STEPS - 1;
-  const progress     = (phase + 1) / TOTAL_STEPS;
-  const accent       = STEP_ACCENT[phase] ?? 'neutral';
-  const accentColor  = ACCENT_COLOR[accent];
-  const sectionLabel = SECTION_LABELS[STEP_SECTION[phase] ?? 'you'];
+  const stepLabel   = STEP_HEADINGS[phase] ?? '';
+  const whyCopy     = STEP_WHY[phase] ?? '';
+  const isFirstStep = phase === 0;
+  const isLastStep  = phase === TOTAL_STEPS - 1;
+  const accent      = STEP_ACCENT[phase] ?? 'neutral';
+  const accentColor = ACCENT_COLOR[accent];
 
   // Express lane: from EXPRESS_LAST_STEP the primary action is "see my result",
   // and continuing to refine becomes an opt-in secondary action.
@@ -273,22 +269,13 @@ function ExperiencePageInner() {
       } as React.CSSProperties}
     >
 
-      {/* Left rail — glass panel floating over the full-bleed map */}
+      {/* Left rail — solid card floating over the full-bleed map */}
       <div
-        className="w-full lg:w-[400px]"
+        className="absolute left-0 top-0 bottom-0 w-full lg:w-[400px] lg:top-4 lg:bottom-4 z-10 flex flex-col overflow-hidden"
         style={{
-          position: 'absolute',
-          left: 0,
-          top: 0,
-          bottom: 0,
-          zIndex: 10,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          backgroundColor: 'rgba(250,250,249,0.88)',
-          backdropFilter: 'blur(20px) saturate(1.4)',
-          WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
-          boxShadow: '4px 0 32px rgba(0,0,0,0.10)',
+          backgroundColor: 'var(--color-bg)',
+          borderRadius: '0 12px 12px 0',
+          boxShadow: 'var(--shadow-float)',
         }}
       >
 
@@ -300,8 +287,8 @@ function ExperiencePageInner() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '0 20px',
-            borderBottom: '1px solid rgba(0,0,0,0.07)',
+            padding: '0 28px 0 20px',
+            borderBottom: '1px solid var(--color-outline)',
             backgroundColor: 'transparent',
           }}
         >
@@ -346,7 +333,7 @@ function ExperiencePageInner() {
         <div className="thin-scroll" style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', display: 'flex', flexDirection: 'column' }}>
 
           {/* Progress pips — sticky inside scroll, frosted */}
-          <div style={{ flexShrink: 0, padding: '10px 20px 8px', position: 'sticky', top: 0, zIndex: 1, backgroundColor: 'rgba(250,250,249,0.80)', backdropFilter: 'blur(8px)', display: 'flex', gap: '8px' }}>
+          <div style={{ flexShrink: 0, padding: '10px 20px 8px 28px', position: 'sticky', top: 0, zIndex: 1, backgroundColor: 'var(--color-bg)', backdropFilter: 'blur(8px)', display: 'flex', gap: '8px' }}>
             {ACTS.map((act) => (
               <div key={act.label} style={{ flex: act.steps.length, display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <span style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-text-dimmer)', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
@@ -371,7 +358,7 @@ function ExperiencePageInner() {
                           backgroundColor: isCurrent
                             ? accentColor
                             : isCompleted
-                              ? 'rgba(245,158,11,0.45)'
+                              ? 'rgba(var(--brand-owner-rgb),0.45)'
                               : 'var(--color-outline)',
                           transition: 'background-color 0.3s',
                         }}
@@ -391,7 +378,7 @@ function ExperiencePageInner() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: direction * -20 }}
               transition={{ duration: 0.3, ease: [0.0, 0.0, 0.2, 1] }}
-              style={{ padding: '24px 20px 0', display: 'flex', flexDirection: 'column' }}
+              style={{ padding: '24px 20px 0 28px', display: 'flex', flexDirection: 'column' }}
             >
               {/* Heading block — on the bg surface, not inside the white card */}
               <div style={{ marginBottom: '20px' }}>
@@ -437,7 +424,7 @@ function ExperiencePageInner() {
         <div
           style={{
             flexShrink: 0,
-            borderTop: '1px solid rgba(0,0,0,0.07)',
+            borderTop: '1px solid var(--color-outline)',
             backgroundColor: 'transparent',
             padding: '12px 16px calc(12px + env(safe-area-inset-bottom))',
           }}
@@ -497,15 +484,15 @@ function ExperiencePageInner() {
                   width: '100%',
                   height: '52px',
                   borderRadius: '9999px',
-                  backgroundColor: pastEssentials ? '#F59E0B' : 'var(--color-btn-primary-bg)',
-                  color: pastEssentials ? '#FFFFFF' : 'var(--color-btn-primary-text)',
+                  backgroundColor: pastEssentials ? 'var(--color-owner)' : 'var(--color-btn-primary-bg)',
+                  color: pastEssentials ? 'var(--color-surface-raised)' : 'var(--color-btn-primary-text)',
                   border: 'none',
                   fontSize: '15px',
                   fontWeight: pastEssentials ? 600 : 500,
                   cursor: 'pointer',
                   fontFamily: 'var(--font-sans), system-ui, sans-serif',
                   letterSpacing: '-0.01em',
-                  boxShadow: pastEssentials ? '0 2px 16px rgba(245,158,11,0.35)' : '0 2px 8px rgba(0,0,0,0.12)',
+                  boxShadow: pastEssentials ? '0 2px 16px rgba(var(--brand-owner-rgb),0.35)' : '0 2px 8px rgba(0,0,0,0.12)',
                   transition: 'background-color 0.3s, box-shadow 0.3s',
                 }}
               >

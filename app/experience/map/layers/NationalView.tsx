@@ -27,10 +27,10 @@ export function NationalView({ markers, interactive, onProvinceClick }: Props) {
               width: m.isSelected ? 18 : 10,
               height: m.isSelected ? 18 : 10,
               borderRadius: '50%',
-              backgroundColor: m.isSelected ? '#F59E0B' : 'rgba(250,250,250,0.45)',
-              border: m.isSelected ? '2px solid #FAFAFA' : '1.5px solid rgba(250,250,250,0.3)',
+              backgroundColor: m.isSelected ? 'var(--color-owner)' : 'rgba(250,250,250,0.45)',
+              border: m.isSelected ? '2px solid var(--color-surface-raised)' : '1.5px solid rgba(250,250,250,0.3)',
               cursor: interactive ? 'pointer' : 'default',
-              boxShadow: m.isSelected ? '0 0 12px rgba(245,158,11,0.6)' : 'none',
+              boxShadow: m.isSelected ? '0 0 12px rgba(var(--brand-owner-rgb),0.6)' : 'none',
               transition: 'all 0.2s ease',
               flexShrink: 0,
             }}

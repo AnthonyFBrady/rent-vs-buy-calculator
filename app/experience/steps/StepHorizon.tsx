@@ -20,7 +20,7 @@ const ZONES = [
   {
     range: '5 to 10 years',
     verdict: 'Math starts to shift',
-    color: '#A78BFA',
+    color: 'var(--color-cross)',
     min: 5,
     max: 9,
   },
@@ -55,7 +55,7 @@ export function StepHorizon({ inputs, patch }: Props) {
                 flex: 1,
                 padding: '10px 12px',
                 borderRadius: '12px',
-                border: `1px solid ${active ? z.color : 'rgba(0,0,0,0.07)'}`,
+                border: `1px solid ${active ? z.color : 'var(--color-outline)'}`,
                 background: active ? `color-mix(in srgb, ${z.color} 10%, transparent)` : 'transparent',
                 transition: 'border-color 0.25s, background 0.25s',
               }}

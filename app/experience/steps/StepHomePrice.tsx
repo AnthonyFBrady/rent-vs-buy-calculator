@@ -41,10 +41,10 @@ export function StepHomePrice({ inputs, patch }: Props) {
               color: delta > 0.05 ? 'var(--color-owner)' : delta < -0.05 ? 'var(--color-renter)' : 'var(--color-text-muted)',
               background:
                 delta > 0.05
-                  ? 'rgba(245,158,11,0.10)'
+                  ? 'var(--color-owner-tint)'
                   : delta < -0.05
-                  ? 'rgba(16,185,129,0.10)'
-                  : 'rgba(0,0,0,0.05)',
+                  ? 'var(--color-renter-tint)'
+                  : 'var(--color-outline)',
               padding: '2px 7px',
               borderRadius: '999px',
             }}

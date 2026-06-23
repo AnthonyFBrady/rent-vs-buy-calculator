@@ -303,7 +303,7 @@
   /* Left rail — white input container, no header zone inside */
   .input-glass {
     background-color: var(--color-surface-raised);
-    border: 1px solid rgba(0, 0, 0, 0.06);
+    border: 1px solid var(--color-outline);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-card);
     padding: 20px;
