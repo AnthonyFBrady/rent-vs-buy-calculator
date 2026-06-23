@@ -269,65 +269,62 @@ function ExperiencePageInner() {
       } as React.CSSProperties}
     >
 
-      {/* Left rail — solid card floating over the full-bleed map */}
+      {/* Full-width top nav */}
+      <nav
+        className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between"
+        style={{
+          height: '52px',
+          padding: '0 24px',
+          backgroundColor: 'var(--color-bg)',
+          borderBottom: '1px solid var(--color-outline)',
+        }}
+      >
+        <a href="/" style={{ textDecoration: 'none' }}>
+          <ReckonSignature color="var(--color-text)" width={68} />
+        </a>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <button
+            onClick={() => setMethodologyOpen(true)}
+            style={{
+              fontSize: '12px',
+              color: 'var(--color-text-muted)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+              fontFamily: 'var(--font-sans), system-ui, sans-serif',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            How this works
+          </button>
+          <button
+            onClick={() => setFaqOpen(true)}
+            style={{
+              fontSize: '12px',
+              color: 'var(--color-text-muted)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+              fontFamily: 'var(--font-sans), system-ui, sans-serif',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            FAQ
+          </button>
+        </div>
+      </nav>
+
+      {/* Left card — form panel, positioned below the top nav */}
       <div
-        className="absolute left-0 top-0 bottom-0 w-full lg:w-[400px] lg:top-4 lg:bottom-4 z-10 flex flex-col overflow-hidden"
+        className="absolute left-0 top-[52px] bottom-0 w-full lg:w-[400px] lg:top-[68px] lg:bottom-4 z-10 flex flex-col overflow-hidden"
         style={{
           backgroundColor: 'var(--color-bg)',
           borderRadius: '0 12px 12px 0',
           boxShadow: 'var(--shadow-float)',
         }}
       >
-
-        {/* Nav */}
-        <nav
-          style={{
-            height: '44px',
-            flexShrink: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 28px 0 20px',
-            borderBottom: '1px solid var(--color-outline)',
-            backgroundColor: 'transparent',
-          }}
-        >
-          <a href="/" style={{ textDecoration: 'none' }}>
-            <ReckonSignature color="var(--color-text)" width={68} />
-          </a>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <button
-              onClick={() => setMethodologyOpen(true)}
-              style={{
-                fontSize: '12px',
-                color: 'var(--color-text-muted)',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: 0,
-                fontFamily: 'var(--font-sans), system-ui, sans-serif',
-                letterSpacing: '-0.01em',
-              }}
-            >
-              How this works
-            </button>
-            <button
-              onClick={() => setFaqOpen(true)}
-              style={{
-                fontSize: '12px',
-                color: 'var(--color-text-muted)',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: 0,
-                fontFamily: 'var(--font-sans), system-ui, sans-serif',
-                letterSpacing: '-0.01em',
-              }}
-            >
-              FAQ
-            </button>
-          </div>
-        </nav>
 
         {/* Scrollable body — absorbs progress pips, heading, input glass, verdict */}
         <div className="thin-scroll" style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', display: 'flex', flexDirection: 'column' }}>
@@ -549,13 +546,10 @@ function ExperiencePageInner() {
 
       </div>{/* end left rail */}
 
-      {/* Map — fills full viewport behind the glass card */}
+      {/* Map — fills viewport below the top nav */}
       <div
-        className="hidden lg:block"
-        style={{
-          position: 'absolute',
-          inset: 0,
-        }}
+        className="hidden lg:block absolute left-0 right-0 bottom-0"
+        style={{ top: '52px', zIndex: 0 }}
       >
         <LazyMapPanel step={phase} inputs={inputs} onPatch={patch} onAdvance={advance} pendingSelection={mapPending} onPendingSelect={setMapPending} />
       </div>
