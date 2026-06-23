@@ -256,13 +256,8 @@ function ExperiencePageInner() {
   // CTA click handler — shared between footer (mobile) and inline (desktop scroll area)
   const handleCtaClick = useCallback(() => {
     setKbHintSeen(true);
-    if (mapPending) {
-      if (mapPending.kind === 'province') {
-        const next = defaultInputsFor(mapPending.province);
-        patch({ province: mapPending.province, postalCode: undefined as unknown as string, propertyTaxPct: next.propertyTaxPct, rentControlCapPct: next.rentControlCapPct, marginalTaxRatePct: next.marginalTaxRatePct, isTorontoMunicipalLTT: false });
-      } else {
-        patch({ postalCode: mapPending.fsa, homePrice: mapPending.homePrice, monthlyRent: mapPending.monthlyRent, propertyTaxPct: mapPending.propertyTaxPct, isTorontoMunicipalLTT: false });
-      }
+    if (mapPending?.kind === 'city') {
+      patch({ postalCode: mapPending.fsa, homePrice: mapPending.homePrice, monthlyRent: mapPending.monthlyRent, propertyTaxPct: mapPending.propertyTaxPct, isTorontoMunicipalLTT: false });
       setMapPending(null);
       advance();
     } else {
@@ -405,7 +400,7 @@ function ExperiencePageInner() {
 
               {/* Input glass — white card with inputs only, no internal header */}
               <div className="input-glass">
-                {phase === STEP.PROVINCE     && <StepProvince    inputs={inputs} patch={patch} onAdvance={advance} />}
+                {phase === STEP.PROVINCE     && <StepProvince    inputs={inputs} patch={patch} />}
                 {phase === STEP.CITY         && <StepCity        inputs={inputs} patch={patch} onAdvance={advance} />}
                 {phase === STEP.HOME_COMPARE && <StepHomeCompare inputs={inputs} patch={patch} />}
                 {phase === STEP.HOME_PRICE   && <StepHomePrice   inputs={inputs} patch={patch} />}

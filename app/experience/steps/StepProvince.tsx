@@ -7,8 +7,6 @@ import { ChoiceGroup } from '../components';
 interface Props {
   inputs: CalculatorInputs;
   patch: (p: Partial<CalculatorInputs>) => void;
-  /** Called after province is selected — auto-advances to city step. */
-  onAdvance?: () => void;
 }
 
 const PROVINCES: { value: Province; label: string }[] = [
@@ -24,7 +22,7 @@ const PROVINCES: { value: Province; label: string }[] = [
   { value: 'PE', label: 'PEI' },
 ];
 
-export function StepProvince({ inputs, patch, onAdvance }: Props) {
+export function StepProvince({ inputs, patch }: Props) {
   function selectProvince(p: Province) {
     const next = defaultInputsFor(p);
     patch({
@@ -35,7 +33,6 @@ export function StepProvince({ inputs, patch, onAdvance }: Props) {
       marginalTaxRatePct: next.marginalTaxRatePct,
       isTorontoMunicipalLTT: false,
     });
-    onAdvance?.();
   }
 
   return (

@@ -33,12 +33,11 @@ const fmtCAD = new Intl.NumberFormat('en-CA', {
   maximumFractionDigits: 0,
 });
 
-// Verdict → fill color — calibrated for dark basemap
 const VERDICT_COLOR: Record<string, string> = {
-  'rent-favored': '#34D399',  // emerald — pops on dark
-  'buy-favored':  '#FBBF24',  // amber — warm, legible on dark
-  'tie':          '#C4B5FD',  // violet — muted purple
-  '':             '#52525B',  // neutral gray
+  'rent-favored': '#0891B2',  // cyan-600
+  'buy-favored':  '#D97706',  // amber-600
+  'tie':          '#6B7280',  // slate
+  '':             '#A1A1AA',
 };
 
 // Province metrics — computed once at module level (static data)

@@ -114,10 +114,18 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
   const handleProvinceClick = useCallback(
     (province: Province) => {
       if (!interactive) return;
-      // Set pending — user must confirm via the button bar before patch + advance
-      onPendingSelect?.({ kind: 'province', province, label: PROVINCE_LABELS[province] ?? province });
+      // Patch immediately so the chip in the card updates; advance is triggered by the Continue button
+      const next = defaultInputsFor(province);
+      onPatch({
+        province,
+        postalCode: undefined as unknown as string,
+        propertyTaxPct: next.propertyTaxPct,
+        rentControlCapPct: next.rentControlCapPct,
+        marginalTaxRatePct: next.marginalTaxRatePct,
+        isTorontoMunicipalLTT: false,
+      });
     },
-    [interactive, onPendingSelect],
+    [interactive, onPatch],
   );
 
   const handleCityMarkerClick = useCallback(
@@ -357,7 +365,7 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
             {hoveredMetric.label}
           </div>
           <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', lineHeight: 1.7 }}>
-            <span style={{ color: 'var(--color-owner)', fontWeight: 600 }}>{fmtChoroplethCAD.format(hoveredMetric.medianPrice)}</span>
+            <span style={{ color: 'var(--color-text)', fontWeight: 600 }}>{fmtChoroplethCAD.format(hoveredMetric.medianPrice)}</span>
             {' '}median (condo)
           </div>
           <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', lineHeight: 1.7 }}>
@@ -403,11 +411,11 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
             {hoveredCityAreaData.label}
           </div>
           <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', lineHeight: 1.7 }}>
-            <span style={{ color: 'var(--color-owner)', fontWeight: 600 }}>{fmtCADShort.format(hoveredCityAreaData.price)}</span>
+            <span style={{ color: 'var(--color-text)', fontWeight: 600 }}>{fmtCADShort.format(hoveredCityAreaData.price)}</span>
             {' '}est. price
           </div>
           <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', lineHeight: 1.7 }}>
-            <span style={{ color: 'var(--color-renter)', fontWeight: 600 }}>{fmtCADShort.format(hoveredCityAreaData.rent)}/mo</span>
+            <span style={{ color: 'var(--color-text)', fontWeight: 600 }}>{fmtCADShort.format(hoveredCityAreaData.rent)}/mo</span>
             {' '}est. rent
           </div>
         </div>
