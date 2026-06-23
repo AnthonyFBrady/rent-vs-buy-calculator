@@ -16,8 +16,8 @@ import { SelectedAreaLayer } from './layers/SelectedAreaLayer';
 import { CityAreaLayer, type CityAreaData, fsaToBoroughId } from './layers/CityAreaLayer';
 import { BED_PRICE_MULT, BED_RENT_MULT } from '../steps/StepHomeCompare';
 
-// CartoDB Dark Matter — clean dark base with subtle roads, no busy POI clutter
-const MAP_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
+// CartoDB Positron — clean light base, pairs with the light UI
+const MAP_STYLE = 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
 
 // Approximate bounding boxes per province [SW, NE] in [lng, lat].
 // Used to restrict pan/zoom after the user drills into a province or city.
@@ -232,14 +232,14 @@ export function MapPanel({ step, inputs, onPatch, onAdvance }: Props) {
             left: '50%',
             transform: 'translateX(-50%)',
             zIndex: 10,
-            background: 'rgba(15,15,17,0.85)',
+            background: 'rgba(250,250,249,0.90)',
             backdropFilter: 'blur(8px)',
-            border: '1px solid rgba(255,255,255,0.1)',
+            border: '1px solid rgba(0,0,0,0.09)',
             borderRadius: '9999px',
             padding: '5px 14px',
             fontSize: '12px',
             fontWeight: 500,
-            color: 'rgba(250,250,250,0.8)',
+            color: 'rgba(15,15,14,0.75)',
             letterSpacing: '-0.01em',
             fontFamily: 'system-ui, sans-serif',
             whiteSpace: 'nowrap',
@@ -334,26 +334,27 @@ export function MapPanel({ step, inputs, onPatch, onAdvance }: Props) {
             left: hoverPoint.x + 14,
             top: Math.max(8, hoverPoint.y - 60),
             zIndex: 20,
-            background: 'rgba(12,12,14,0.93)',
+            background: 'rgba(255,255,255,0.95)',
             backdropFilter: 'blur(12px)',
-            border: `1px solid ${VERDICT_COLOR[hoveredMetric.verdict] ?? '#555'}40`,
-            borderLeft: `3px solid ${VERDICT_COLOR[hoveredMetric.verdict] ?? '#555'}`,
+            border: `1px solid ${VERDICT_COLOR[hoveredMetric.verdict] ?? '#ccc'}50`,
+            borderLeft: `3px solid ${VERDICT_COLOR[hoveredMetric.verdict] ?? '#ccc'}`,
             borderRadius: '8px',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.10)',
             padding: '10px 14px',
             fontFamily: 'system-ui, sans-serif',
             pointerEvents: 'none',
             minWidth: '170px',
           }}
         >
-          <div style={{ fontSize: '12px', fontWeight: 700, color: '#FAFAFA', marginBottom: '6px', letterSpacing: '-0.01em' }}>
+          <div style={{ fontSize: '12px', fontWeight: 700, color: '#0F0F0E', marginBottom: '6px', letterSpacing: '-0.01em' }}>
             {hoveredMetric.label}
           </div>
-          <div style={{ fontSize: '12px', color: 'rgba(250,250,250,0.6)', lineHeight: 1.7 }}>
-            <span style={{ color: '#F59E0B', fontWeight: 600 }}>{fmtChoroplethCAD.format(hoveredMetric.medianPrice)}</span>
+          <div style={{ fontSize: '12px', color: '#71717A', lineHeight: 1.7 }}>
+            <span style={{ color: 'rgb(245,158,11)', fontWeight: 600 }}>{fmtChoroplethCAD.format(hoveredMetric.medianPrice)}</span>
             {' '}median (condo)
           </div>
-          <div style={{ fontSize: '12px', color: 'rgba(250,250,250,0.6)', lineHeight: 1.7 }}>
-            <span style={{ color: 'rgba(250,250,250,0.85)' }}>{fmtChoroplethCAD.format(hoveredMetric.monthlyRent)}/mo</span>
+          <div style={{ fontSize: '12px', color: '#71717A', lineHeight: 1.7 }}>
+            <span style={{ color: '#0F0F0E', fontWeight: 600 }}>{fmtChoroplethCAD.format(hoveredMetric.monthlyRent)}/mo</span>
             {' '}est. rent
           </div>
           {hoveredMetric.verdict && (
@@ -379,26 +380,27 @@ export function MapPanel({ step, inputs, onPatch, onAdvance }: Props) {
             left: cityAreaHoverPoint.x + 14,
             top: Math.max(8, cityAreaHoverPoint.y - 80),
             zIndex: 20,
-            background: 'rgba(12,12,14,0.93)',
+            background: 'rgba(255,255,255,0.95)',
             backdropFilter: 'blur(12px)',
             border: `1px solid ${cityAreaMetric === 'price' ? 'rgba(245,158,11,0.35)' : 'rgba(16,185,129,0.35)'}`,
-            borderLeft: `3px solid ${cityAreaMetric === 'price' ? '#F59E0B' : '#10B981'}`,
+            borderLeft: `3px solid ${cityAreaMetric === 'price' ? 'rgb(245,158,11)' : 'rgb(16,185,129)'}`,
             borderRadius: '8px',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.10)',
             padding: '10px 14px',
             fontFamily: 'system-ui, sans-serif',
             pointerEvents: 'none',
             minWidth: '160px',
           }}
         >
-          <div style={{ fontSize: '12px', fontWeight: 700, color: '#FAFAFA', marginBottom: '6px', letterSpacing: '-0.01em' }}>
+          <div style={{ fontSize: '12px', fontWeight: 700, color: '#0F0F0E', marginBottom: '6px', letterSpacing: '-0.01em' }}>
             {hoveredCityAreaData.label}
           </div>
-          <div style={{ fontSize: '12px', color: 'rgba(250,250,250,0.6)', lineHeight: 1.7 }}>
-            <span style={{ color: '#F59E0B', fontWeight: 600 }}>{fmtCADShort.format(hoveredCityAreaData.price)}</span>
+          <div style={{ fontSize: '12px', color: '#71717A', lineHeight: 1.7 }}>
+            <span style={{ color: 'rgb(245,158,11)', fontWeight: 600 }}>{fmtCADShort.format(hoveredCityAreaData.price)}</span>
             {' '}est. price
           </div>
-          <div style={{ fontSize: '12px', color: 'rgba(250,250,250,0.6)', lineHeight: 1.7 }}>
-            <span style={{ color: '#10B981', fontWeight: 600 }}>{fmtCADShort.format(hoveredCityAreaData.rent)}/mo</span>
+          <div style={{ fontSize: '12px', color: '#71717A', lineHeight: 1.7 }}>
+            <span style={{ color: 'rgb(16,185,129)', fontWeight: 600 }}>{fmtCADShort.format(hoveredCityAreaData.rent)}/mo</span>
             {' '}est. rent
           </div>
         </div>
@@ -412,11 +414,12 @@ export function MapPanel({ step, inputs, onPatch, onAdvance }: Props) {
             bottom: '28px',
             left: '12px',
             zIndex: 10,
-            background: 'rgba(12,12,14,0.90)',
+            background: 'rgba(255,255,255,0.95)',
             backdropFilter: 'blur(10px)',
             border: `1px solid ${annotation.accent}40`,
             borderLeft: `3px solid ${annotation.accent}`,
             borderRadius: '8px',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.10)',
             padding: '10px 14px',
             fontFamily: 'system-ui, sans-serif',
             maxWidth: '280px',
@@ -426,7 +429,7 @@ export function MapPanel({ step, inputs, onPatch, onAdvance }: Props) {
           <div style={{ fontSize: '10px', fontWeight: 700, color: annotation.accent, marginBottom: '4px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
             {annotation.title}
           </div>
-          <div style={{ fontSize: '13px', color: 'rgba(250,250,250,0.88)', lineHeight: 1.5 }}>
+          <div style={{ fontSize: '13px', color: '#0F0F0E', lineHeight: 1.5 }}>
             {annotation.body}
           </div>
         </div>

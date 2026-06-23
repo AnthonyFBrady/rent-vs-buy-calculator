@@ -147,9 +147,9 @@ export function CityAreaLayer({ metric, homeType, buyBedMult, rentBedMult, hover
   const linePaint = {
     'line-color': [
       'case',
-      ['==', ['get', 'id'], hoveredId ?? ''],         'rgba(255,255,255,0.85)',
+      ['==', ['get', 'id'], hoveredId ?? ''],         'rgba(0,0,0,0.55)',
       ['==', ['get', 'id'], selectedBoroughId ?? ''], `${accent}CC`,
-      `${accent}50`,
+      `${accent}60`,
     ] as unknown as string,
     'line-width': [
       'case',
