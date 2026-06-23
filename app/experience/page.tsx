@@ -253,6 +253,23 @@ function ExperiencePageInner() {
   const verdictColor = verdictKind === 'rent-favored' ? 'var(--color-renter)' : verdictKind === 'buy-favored' ? 'var(--color-owner)' : 'var(--color-cross)';
   const verdictLabel = verdictKind === 'rent-favored' ? `Renting ahead by ~${verdictFmt}` : verdictKind === 'buy-favored' ? `Buying ahead by ~${verdictFmt}` : 'Roughly even';
 
+  // CTA click handler — shared between footer (mobile) and inline (desktop scroll area)
+  const handleCtaClick = useCallback(() => {
+    setKbHintSeen(true);
+    if (mapPending) {
+      if (mapPending.kind === 'province') {
+        const next = defaultInputsFor(mapPending.province);
+        patch({ province: mapPending.province, postalCode: undefined as unknown as string, propertyTaxPct: next.propertyTaxPct, rentControlCapPct: next.rentControlCapPct, marginalTaxRatePct: next.marginalTaxRatePct, isTorontoMunicipalLTT: false });
+      } else {
+        patch({ postalCode: mapPending.fsa, homePrice: mapPending.homePrice, monthlyRent: mapPending.monthlyRent, propertyTaxPct: mapPending.propertyTaxPct, isTorontoMunicipalLTT: false });
+      }
+      setMapPending(null);
+      advance();
+    } else {
+      handleContinue();
+    }
+  }, [mapPending, patch, advance, handleContinue]);
+
   return (
     <>
     <motion.div
@@ -316,17 +333,16 @@ function ExperiencePageInner() {
         </div>
       </nav>
 
-      {/* Left card — form panel, positioned below the top nav */}
+      {/* Left card — floats off left edge on desktop (lg:left-4), full-bleed on mobile */}
       <div
-        className="absolute left-0 top-[52px] bottom-0 w-full lg:w-[400px] lg:top-[68px] lg:bottom-4 z-10 flex flex-col overflow-hidden"
+        className="absolute left-0 top-[52px] bottom-0 w-full lg:left-4 lg:w-[400px] lg:top-[68px] lg:bottom-4 z-10 flex flex-col overflow-hidden rounded-none lg:rounded-xl"
         style={{
           backgroundColor: 'var(--color-bg)',
-          borderRadius: '0 12px 12px 0',
           boxShadow: 'var(--shadow-float)',
         }}
       >
 
-        {/* Scrollable body — absorbs progress pips, heading, input glass, verdict */}
+        {/* Scrollable body — absorbs progress pips, heading, input glass, verdict, CTA */}
         <div className="thin-scroll" style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', display: 'flex', flexDirection: 'column' }}>
 
           {/* Progress pips — sticky inside scroll, frosted */}
@@ -367,7 +383,7 @@ function ExperiencePageInner() {
             ))}
           </div>
 
-          {/* Animated step content: heading + input glass + verdict slide together */}
+          {/* Animated step content: heading + input glass + verdict + CTA, all inline */}
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={`step-${phase}`}
@@ -411,137 +427,111 @@ function ExperiencePageInner() {
                 </div>
               )}
 
-              <div style={{ height: '24px', flexShrink: 0 }} />
+              {/* CTA block — inline, directly below inputs/verdict */}
+              <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                {/* Back button — small ghost circle, left of CTA */}
+                <button
+                  onClick={back}
+                  disabled={isFirstStep}
+                  aria-label="Go back"
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '50%',
+                    flexShrink: 0,
+                    border: isFirstStep ? '1px solid var(--color-outline)' : '1px solid var(--color-outline-active)',
+                    backgroundColor: 'transparent',
+                    color: isFirstStep ? 'var(--color-text-dimmer)' : 'var(--color-text-muted)',
+                    cursor: isFirstStep ? 'default' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '16px',
+                    opacity: isFirstStep ? 0.3 : 1,
+                    transition: 'opacity 0.15s, border-color 0.15s',
+                    fontFamily: 'var(--font-sans), system-ui, sans-serif',
+                  }}
+                >
+                  ←
+                </button>
+
+                {/* Primary CTA + secondary actions */}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <motion.button
+                    onClick={handleCtaClick}
+                    whileHover={{ y: -1, boxShadow: '0 4px 16px rgba(0,0,0,0.20)' }}
+                    whileTap={{ scale: 0.98, y: 0, boxShadow: '0 1px 4px rgba(0,0,0,0.10)' }}
+                    style={{
+                      width: '100%',
+                      height: '52px',
+                      borderRadius: '9999px',
+                      backgroundColor: pastEssentials ? 'var(--color-owner)' : 'var(--color-btn-primary-bg)',
+                      color: pastEssentials ? 'var(--color-surface-raised)' : 'var(--color-btn-primary-text)',
+                      border: 'none',
+                      fontSize: '15px',
+                      fontWeight: pastEssentials ? 600 : 500,
+                      cursor: 'pointer',
+                      fontFamily: 'var(--font-sans), system-ui, sans-serif',
+                      letterSpacing: '-0.01em',
+                      boxShadow: pastEssentials ? '0 2px 16px rgba(var(--brand-owner-rgb),0.35)' : '0 2px 8px rgba(0,0,0,0.12)',
+                      transition: 'background-color 0.3s, box-shadow 0.3s',
+                    }}
+                  >
+                    {mapPending ? `Use ${mapPending.label} →` : `${primaryLabel} →`}
+                  </motion.button>
+                  {mapPending && (
+                    <p style={{ fontSize: '12px', color: 'var(--color-text-dim)', textAlign: 'center', margin: 0, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
+                      Tap a different {mapPending.kind === 'province' ? 'province' : 'city'} to explore
+                    </p>
+                  )}
+                  {!mapPending && showRefine && (
+                    <button
+                      onClick={() => { setKbHintSeen(true); advance(); }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        color: 'var(--color-text-dim)',
+                        fontFamily: 'var(--font-sans), system-ui, sans-serif',
+                        letterSpacing: '-0.01em',
+                        padding: '2px 0',
+                        textDecoration: 'underline',
+                        textUnderlineOffset: '2px',
+                        textDecorationColor: 'var(--color-outline)',
+                      }}
+                    >
+                      Answer {refineCount} more to refine →
+                    </button>
+                  )}
+                  <AnimatePresence>
+                    {!kbHintSeen && !showRefine && !mapPending && (
+                      <motion.p
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="hidden lg:block"
+                        style={{
+                          fontSize: '11px',
+                          color: 'var(--color-text-faint)',
+                          textAlign: 'center',
+                          letterSpacing: '0.01em',
+                          fontFamily: 'var(--font-sans), system-ui, sans-serif',
+                        }}
+                      >
+                        Press ↵ or → to advance · ← to go back
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              {/* Bottom breathing room */}
+              <div style={{ height: 'calc(24px + env(safe-area-inset-bottom))', flexShrink: 0 }} />
             </motion.div>
           </AnimatePresence>
 
-        </div>
-
-        {/* Button bar — anchored to bottom of rail */}
-        <div
-          style={{
-            flexShrink: 0,
-            borderTop: '1px solid var(--color-outline)',
-            backgroundColor: 'transparent',
-            padding: '12px 16px calc(12px + env(safe-area-inset-bottom))',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-            }}
-          >
-            <button
-              onClick={back}
-              disabled={isFirstStep}
-              aria-label="Go back"
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '50%',
-                flexShrink: 0,
-                border: isFirstStep ? '1px solid var(--color-outline)' : '1px solid var(--color-outline-active)',
-                backgroundColor: 'transparent',
-                color: isFirstStep ? 'var(--color-text-dimmer)' : 'var(--color-text-muted)',
-                cursor: isFirstStep ? 'default' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '16px',
-                opacity: isFirstStep ? 0.3 : 1,
-                transition: 'opacity 0.15s, border-color 0.15s',
-                fontFamily: 'var(--font-sans), system-ui, sans-serif',
-              }}
-            >
-              ←
-            </button>
-
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <motion.button
-                onClick={() => {
-                  setKbHintSeen(true);
-                  if (mapPending) {
-                    if (mapPending.kind === 'province') {
-                      const next = defaultInputsFor(mapPending.province);
-                      patch({ province: mapPending.province, postalCode: undefined as unknown as string, propertyTaxPct: next.propertyTaxPct, rentControlCapPct: next.rentControlCapPct, marginalTaxRatePct: next.marginalTaxRatePct, isTorontoMunicipalLTT: false });
-                    } else {
-                      patch({ postalCode: mapPending.fsa, homePrice: mapPending.homePrice, monthlyRent: mapPending.monthlyRent, propertyTaxPct: mapPending.propertyTaxPct, isTorontoMunicipalLTT: false });
-                    }
-                    setMapPending(null);
-                    advance();
-                  } else {
-                    handleContinue();
-                  }
-                }}
-                whileHover={{ y: -1, boxShadow: '0 4px 16px rgba(0,0,0,0.20)' }}
-                whileTap={{ scale: 0.98, y: 0, boxShadow: '0 1px 4px rgba(0,0,0,0.10)' }}
-                style={{
-                  width: '100%',
-                  height: '52px',
-                  borderRadius: '9999px',
-                  backgroundColor: pastEssentials ? 'var(--color-owner)' : 'var(--color-btn-primary-bg)',
-                  color: pastEssentials ? 'var(--color-surface-raised)' : 'var(--color-btn-primary-text)',
-                  border: 'none',
-                  fontSize: '15px',
-                  fontWeight: pastEssentials ? 600 : 500,
-                  cursor: 'pointer',
-                  fontFamily: 'var(--font-sans), system-ui, sans-serif',
-                  letterSpacing: '-0.01em',
-                  boxShadow: pastEssentials ? '0 2px 16px rgba(var(--brand-owner-rgb),0.35)' : '0 2px 8px rgba(0,0,0,0.12)',
-                  transition: 'background-color 0.3s, box-shadow 0.3s',
-                }}
-              >
-                {mapPending ? `Use ${mapPending.label} →` : `${primaryLabel} →`}
-              </motion.button>
-              {mapPending && (
-                <p style={{ fontSize: '12px', color: 'var(--color-text-dim)', textAlign: 'center', margin: 0, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
-                  Tap a different {mapPending.kind === 'province' ? 'province' : 'city'} to explore
-                </p>
-              )}
-              {!mapPending && showRefine && (
-                <button
-                  onClick={() => { setKbHintSeen(true); advance(); }}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                    color: 'var(--color-text-dim)',
-                    fontFamily: 'var(--font-sans), system-ui, sans-serif',
-                    letterSpacing: '-0.01em',
-                    padding: '2px 0',
-                    textDecoration: 'underline',
-                    textUnderlineOffset: '2px',
-                    textDecorationColor: 'var(--color-outline)',
-                  }}
-                >
-                  Answer {refineCount} more to refine →
-                </button>
-              )}
-              <AnimatePresence>
-                {!kbHintSeen && !showRefine && !mapPending && (
-                  <motion.p
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="hidden lg:block"
-                    style={{
-                      fontSize: '11px',
-                      color: 'var(--color-text-faint)',
-                      textAlign: 'center',
-                      letterSpacing: '0.01em',
-                      fontFamily: 'var(--font-sans), system-ui, sans-serif',
-                    }}
-                  >
-                    Press ↵ or → to advance · ← to go back
-                  </motion.p>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
         </div>
 
       </div>{/* end left rail */}
