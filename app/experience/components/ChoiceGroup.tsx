@@ -63,26 +63,28 @@ export function ChoiceGroup<T extends string>({
               justifyContent: 'center',
               alignItems: align === 'center' ? 'center' : 'flex-start',
               gap: opt.sublabel ? '3px' : 0,
-              padding: variant === 'chip' ? '0 12px' : '11px 14px',
-              height: variant === 'chip' ? '40px' : undefined,
-              minHeight: variant === 'card' ? '48px' : undefined,
-              borderRadius: '10px',
+              padding: variant === 'chip' ? '0 12px' : '12px 14px',
+              height: variant === 'chip' ? '44px' : undefined,
+              minHeight: variant === 'card' ? '52px' : undefined,
+              borderRadius: '12px',
               textAlign: align,
-              border: `1px solid ${selected ? accent : 'var(--color-outline)'}`,
-              backgroundColor: selected
-                ? `color-mix(in srgb, ${accent} 8%, transparent)`
+              border: selected
+                ? `1.5px solid ${accent}`
                 : hovered
-                  ? 'var(--color-hover)'
-                  : 'var(--color-surface-raised)',
+                  ? '1px solid rgba(0,0,0,0.20)'
+                  : '1px solid rgba(0,0,0,0.08)',
+              backgroundColor: selected
+                ? `color-mix(in srgb, ${accent} 12%, white)`
+                : '#FFFFFF',
               cursor: 'pointer',
-              transition: 'border-color 0.15s, background-color 0.15s',
+              transition: 'border-color 0.1s, background-color 0.1s',
               fontFamily: 'var(--font-sans), system-ui, sans-serif',
             }}
           >
             <span
               style={{
                 fontSize: variant === 'chip' ? '13px' : '14px',
-                fontWeight: 500,
+                fontWeight: selected ? 600 : 500,
                 color: selected ? accent : 'var(--color-text)',
                 lineHeight: 1.2,
                 letterSpacing: '-0.01em',

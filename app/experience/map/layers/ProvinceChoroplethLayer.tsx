@@ -102,9 +102,11 @@ interface Props {
   hoveredCode: Province | null;
   /** When true, render dim context layer only (non-province steps). */
   contextOnly?: boolean;
+  /** Province the user has tapped but not yet confirmed — shows a distinct highlight. */
+  pendingProvince?: Province | null;
 }
 
-export function ProvinceChoroplethLayer({ selectedProvince, hoveredCode, contextOnly = false }: Props) {
+export function ProvinceChoroplethLayer({ selectedProvince, hoveredCode, contextOnly = false, pendingProvince }: Props) {
   const [rawGeoJSON, setRawGeoJSON] = useState<FeatureCollection | null>(cachedGeoJSON);
 
   useEffect(() => {
@@ -154,9 +156,10 @@ export function ProvinceChoroplethLayer({ selectedProvince, hoveredCode, context
       ] as unknown as string,
       'fill-opacity': [
         'case',
-        ['==', ['get', 'code'], hoveredCode ?? ''],    0.42,
-        ['==', ['get', 'code'], selectedProvince],     0.32,
-        ['==', ['get', 'hasData'], true],              0.18,
+        ['==', ['get', 'code'], pendingProvince ?? ''],  0.60,
+        ['==', ['get', 'code'], hoveredCode ?? ''],      0.42,
+        ['==', ['get', 'code'], selectedProvince],       0.32,
+        ['==', ['get', 'hasData'], true],                0.18,
         0.06,
       ] as unknown as number,
     };
@@ -181,14 +184,16 @@ export function ProvinceChoroplethLayer({ selectedProvince, hoveredCode, context
     return {
       'line-color': [
         'case',
-        ['==', ['get', 'code'], selectedProvince], 'rgba(0,0,0,0.7)',
-        ['==', ['get', 'code'], hoveredCode ?? ''], 'rgba(0,0,0,0.5)',
+        ['==', ['get', 'code'], pendingProvince ?? ''],  'rgba(0,0,0,0.90)',
+        ['==', ['get', 'code'], selectedProvince],       'rgba(0,0,0,0.7)',
+        ['==', ['get', 'code'], hoveredCode ?? ''],      'rgba(0,0,0,0.5)',
         'rgba(0,0,0,0.15)',
       ] as unknown as string,
       'line-width': [
         'case',
-        ['==', ['get', 'code'], selectedProvince], 2.5,
-        ['==', ['get', 'code'], hoveredCode ?? ''], 1.8,
+        ['==', ['get', 'code'], pendingProvince ?? ''],  2.5,
+        ['==', ['get', 'code'], selectedProvince],       2.5,
+        ['==', ['get', 'code'], hoveredCode ?? ''],      1.8,
         0.7,
       ] as unknown as number,
       'line-opacity': 0.9,

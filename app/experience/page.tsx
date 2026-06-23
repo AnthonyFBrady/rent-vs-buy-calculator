@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { AnimatePresence, motion } from 'motion/react';
 import { simulate, simulateSensitivity, defaultInputsFor, buildWealthSeries, provinceFromPostalCode, suggestPriceAndRent } from '@/engine';
-import type { CalculatorInputs } from '@/engine';
+import type { CalculatorInputs, Province } from '@/engine';
 import { useCalculatorStore } from '@/lib/store';
 import type { SensitivityScenario } from '@/lib/store';
 import { MethodologyContent } from '@/components/MethodologyContent';
@@ -72,6 +72,7 @@ interface State {
 type Action =
   | { type: 'ADVANCE' }
   | { type: 'BACK' }
+  | { type: 'GOTO'; phase: number }
   | { type: 'PATCH'; payload: Partial<CalculatorInputs> };
 
 function reducer(state: State, action: Action): State {
@@ -88,12 +89,31 @@ function reducer(state: State, action: Action): State {
         direction: -1,
         phase: Math.max(0, state.phase - 1) as Phase,
       };
+    case 'GOTO':
+      return {
+        ...state,
+        direction: action.phase > state.phase ? 1 : -1,
+        phase: Math.max(0, Math.min(TOTAL_STEPS - 1, action.phase)) as Phase,
+      };
     case 'PATCH':
       return { ...state, inputs: { ...state.inputs, ...action.payload } };
     default:
       return state;
   }
 }
+
+// Act groups for the segmented progress stepper
+const ACTS: Array<{ label: string; steps: number[] }> = [
+  { label: 'WHERE', steps: [0, 1] },
+  { label: 'WHAT',  steps: [2, 3, 4, 5] },
+  { label: 'HOW',   steps: [6, 7] },
+  { label: 'YOU',   steps: [8, 9, 10] },
+];
+
+type MapPending =
+  | { kind: 'province'; province: Province; label: string }
+  | { kind: 'city'; fsa: string; label: string; homePrice?: number; monthlyRent?: number; propertyTaxPct?: number }
+  | null;
 
 function buildInitialInputs(pc: string | null) {
   if (!pc) return defaultInputsFor('ON');
@@ -151,6 +171,11 @@ function ExperiencePageInner() {
     dispatch({ type: 'ADVANCE' });
   }, [state.phase]);
   const back    = useCallback(() => dispatch({ type: 'BACK' }), []);
+  const goto    = useCallback((p: number) => dispatch({ type: 'GOTO', phase: p }), []);
+
+  const [mapPending, setMapPending] = useState<MapPending>(null);
+  // Clear any pending map selection when the user navigates to a different step
+  useEffect(() => { setMapPending(null); }, [phase]);
 
   // Live simulation — drives the per-step contextual cues and the final result.
   const liveSim = useMemo(() => simulate(inputs), [inputs]);
@@ -314,26 +339,50 @@ function ExperiencePageInner() {
           </div>
         </nav>
 
-        {/* Progress bar — spans rail only */}
+        {/* Segmented act progress — clickable pips, grouped by act */}
         <div
           style={{
-            height: '2px',
             flexShrink: 0,
-            backgroundColor: 'var(--color-outline)',
-            position: 'relative',
+            padding: '8px 16px 10px',
+            borderBottom: '1px solid var(--color-outline)',
+            display: 'flex',
+            gap: '8px',
           }}
         >
-          <motion.div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              backgroundColor: 'var(--color-owner)',
-              transformOrigin: 'left',
-              boxShadow: '2px 0 8px var(--color-owner)',
-            }}
-            animate={{ scaleX: progress }}
-            transition={{ duration: 0.4, ease: [0.0, 0.0, 0.2, 1] }}
-          />
+          {ACTS.map((act) => (
+            <div key={act.label} style={{ flex: act.steps.length, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <span style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-text-dimmer)', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
+                {act.label}
+              </span>
+              <div style={{ display: 'flex', gap: '3px' }}>
+                {act.steps.map((i) => {
+                  const isCompleted = i < phase;
+                  const isCurrent   = i === phase;
+                  return (
+                    <button
+                      key={i}
+                      title={STEP_HEADINGS[i] ?? `Step ${i + 1}`}
+                      onClick={() => { if (isCompleted) goto(i); }}
+                      style={{
+                        flex: 1,
+                        height: '3px',
+                        borderRadius: '9999px',
+                        border: 'none',
+                        padding: 0,
+                        cursor: isCompleted ? 'pointer' : 'default',
+                        backgroundColor: isCurrent
+                          ? accentColor
+                          : isCompleted
+                            ? 'rgba(245,158,11,0.45)'
+                            : 'var(--color-outline)',
+                        transition: 'background-color 0.3s',
+                      }}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Scrollable step content */}
@@ -348,24 +397,21 @@ function ExperiencePageInner() {
               transition={{ duration: 0.3, ease: [0.0, 0.0, 0.2, 1] }}
               style={{
                 backgroundColor: 'var(--color-surface-raised)',
-                border: '1px solid var(--color-outline)',
-                borderRadius: '16px',
+                border: '1px solid rgba(0,0,0,0.06)',
+                borderRadius: '20px',
                 overflow: 'hidden',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 6px 24px rgba(0,0,0,0.07)',
+                boxShadow: '0 0 0 1px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.04), 0 12px 40px rgba(0,0,0,0.08)',
                 marginBottom: '16px',
               }}
             >
-              {/* Section accent edge */}
-              <div style={{ height: '3px', backgroundColor: accentColor, opacity: 0.9 }} />
-
               {/* Header zone */}
-              <div style={{ padding: '16px 20px 12px' }}>
-                <div style={{ marginBottom: '10px' }}>
+              <div style={{ padding: '20px 20px 14px' }}>
+                <div style={{ marginBottom: '8px' }}>
                   <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: accentColor, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
                     {sectionLabel}
                   </span>
                 </div>
-                <h1 style={{ fontFamily: 'var(--font-serif), Georgia, serif', fontSize: 'clamp(20px, 3vw, 26px)', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.15, color: 'var(--color-text)', margin: 0 }}>
+                <h1 style={{ fontFamily: 'var(--font-serif), Georgia, serif', fontSize: 'clamp(22px, 3.2vw, 28px)', fontWeight: 700, letterSpacing: '-0.035em', lineHeight: 1.15, color: 'var(--color-text)', margin: 0 }}>
                   {stepLabel}
                 </h1>
                 {whyCopy && (
@@ -376,10 +422,10 @@ function ExperiencePageInner() {
               </div>
 
               {/* Divider */}
-              <div style={{ height: '1px', backgroundColor: 'var(--color-outline)' }} />
+              <div style={{ height: '1px', backgroundColor: 'rgba(0,0,0,0.05)' }} />
 
               {/* Input zone */}
-              <div style={{ padding: '16px 20px 20px' }}>
+              <div style={{ padding: '16px 20px 24px' }}>
                 {phase === STEP.PROVINCE     && <StepProvince    inputs={inputs} patch={patch} onAdvance={advance} />}
                 {phase === STEP.CITY         && <StepCity        inputs={inputs} patch={patch} onAdvance={advance} />}
                 {phase === STEP.HOME_COMPARE && <StepHomeCompare inputs={inputs} patch={patch} />}
@@ -435,7 +481,21 @@ function ExperiencePageInner() {
 
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <motion.button
-                onClick={() => { setKbHintSeen(true); handleContinue(); }}
+                onClick={() => {
+                  setKbHintSeen(true);
+                  if (mapPending) {
+                    if (mapPending.kind === 'province') {
+                      const next = defaultInputsFor(mapPending.province);
+                      patch({ province: mapPending.province, postalCode: undefined as unknown as string, propertyTaxPct: next.propertyTaxPct, rentControlCapPct: next.rentControlCapPct, marginalTaxRatePct: next.marginalTaxRatePct, isTorontoMunicipalLTT: false });
+                    } else {
+                      patch({ postalCode: mapPending.fsa, homePrice: mapPending.homePrice, monthlyRent: mapPending.monthlyRent, propertyTaxPct: mapPending.propertyTaxPct, isTorontoMunicipalLTT: false });
+                    }
+                    setMapPending(null);
+                    advance();
+                  } else {
+                    handleContinue();
+                  }
+                }}
                 whileHover={{ y: -1, boxShadow: '0 4px 16px rgba(0,0,0,0.20)' }}
                 whileTap={{ scale: 0.98, y: 0, boxShadow: '0 1px 4px rgba(0,0,0,0.10)' }}
                 style={{
@@ -453,9 +513,14 @@ function ExperiencePageInner() {
                   boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
                 }}
               >
-                {primaryLabel} →
+                {mapPending ? `Use ${mapPending.label} →` : `${primaryLabel} →`}
               </motion.button>
-              {showRefine && (
+              {mapPending && (
+                <p style={{ fontSize: '12px', color: 'var(--color-text-dim)', textAlign: 'center', margin: 0, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
+                  Tap a different {mapPending.kind === 'province' ? 'province' : 'city'} to explore
+                </p>
+              )}
+              {!mapPending && showRefine && (
                 <button
                   onClick={() => { setKbHintSeen(true); advance(); }}
                   style={{
@@ -476,7 +541,7 @@ function ExperiencePageInner() {
                 </button>
               )}
               <AnimatePresence>
-                {!kbHintSeen && !showRefine && (
+                {!kbHintSeen && !showRefine && !mapPending && (
                   <motion.p
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
@@ -510,7 +575,7 @@ function ExperiencePageInner() {
           overflow: 'hidden',
         }}
       >
-        <LazyMapPanel step={phase} inputs={inputs} onPatch={patch} onAdvance={advance} />
+        <LazyMapPanel step={phase} inputs={inputs} onPatch={patch} onAdvance={advance} pendingSelection={mapPending} onPendingSelect={setMapPending} />
       </div>
 
     </motion.div>

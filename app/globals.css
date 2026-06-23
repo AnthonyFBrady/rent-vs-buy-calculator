@@ -35,9 +35,9 @@
   --color-bg:             var(--brand-bg);
   --color-bg-subtle:      var(--brand-surface);
   --color-bg-elevated:    var(--brand-elevated);
-  --color-hover:          var(--brand-elevated);
+  --color-hover:          rgba(0, 0, 0, 0.04);
   --color-surface:        var(--brand-surface);
-  --color-surface-raised: var(--brand-elevated);
+  --color-surface-raised: #FFFFFF;
 
   --color-text:           var(--brand-ink);
   --color-text-muted:     var(--grey-600);

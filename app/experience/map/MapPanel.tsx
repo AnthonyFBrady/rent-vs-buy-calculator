@@ -46,15 +46,31 @@ function easeInOutQuad(t: number): number {
   return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
 }
 
+// Province labels for the pending selection display
+const PROVINCE_LABELS: Record<string, string> = {
+  ON: 'Ontario', BC: 'British Columbia', AB: 'Alberta', QC: 'Quebec',
+  MB: 'Manitoba', SK: 'Saskatchewan', NS: 'Nova Scotia',
+  NB: 'New Brunswick', NL: 'Newfoundland', PE: 'PEI',
+};
+
+type MapPending =
+  | { kind: 'province'; province: Province; label: string }
+  | { kind: 'city'; fsa: string; label: string; homePrice?: number; monthlyRent?: number; propertyTaxPct?: number }
+  | null;
+
 interface Props {
   step: number;
   inputs: CalculatorInputs;
   onPatch: (p: Partial<CalculatorInputs>) => void;
-  /** Called after a province or city is selected via map tap — auto-advances the step. */
+  /** Called after a province or city is confirmed (via the button bar confirm). */
   onAdvance?: () => void;
+  /** Current pending map selection — used to highlight the tapped province/city. */
+  pendingSelection?: MapPending;
+  /** Called when the user taps a province or city — sets pending state in page.tsx. */
+  onPendingSelect?: (pending: MapPending) => void;
 }
 
-export function MapPanel({ step, inputs, onPatch, onAdvance }: Props) {
+export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, onPendingSelect }: Props) {
   const mapRef = useRef<MapRef>(null);
   const { viewState, markers, mode, label, interactive, annotation, selectionCenter } = useMapState(step, inputs);
 
@@ -98,19 +114,10 @@ export function MapPanel({ step, inputs, onPatch, onAdvance }: Props) {
   const handleProvinceClick = useCallback(
     (province: Province) => {
       if (!interactive) return;
-      const next = defaultInputsFor(province);
-      onPatch({
-        province,
-        postalCode: undefined,
-        propertyTaxPct: next.propertyTaxPct,
-        rentControlCapPct: next.rentControlCapPct,
-        marginalTaxRatePct: next.marginalTaxRatePct,
-        isTorontoMunicipalLTT: false,
-      });
-      // Map tap is a decisive action — advance immediately to city selection
-      onAdvance?.();
+      // Set pending — user must confirm via the button bar before patch + advance
+      onPendingSelect?.({ kind: 'province', province, label: PROVINCE_LABELS[province] ?? province });
     },
-    [interactive, onPatch, onAdvance],
+    [interactive, onPendingSelect],
   );
 
   const handleCityMarkerClick = useCallback(
@@ -118,19 +125,17 @@ export function MapPanel({ step, inputs, onPatch, onAdvance }: Props) {
       const homeType = inputs.homeType ?? 'condo-apt';
       const suggestion = suggestPriceAndRent(marker.id, homeType);
       const provDefaults = defaultInputsFor(inputs.province);
-      onPatch({
-        postalCode: marker.id,
-        isTorontoMunicipalLTT: false,
+      // Set pending — user must confirm via the button bar before patch + advance
+      onPendingSelect?.({
+        kind: 'city',
+        fsa: marker.id,
+        label: marker.metro,
+        homePrice: suggestion?.medianPrice,
+        monthlyRent: suggestion ? Math.round(suggestion.suggestedMonthlyRent) : undefined,
         propertyTaxPct: suggestion?.propertyTaxPct ?? provDefaults.propertyTaxPct,
-        ...(suggestion ? {
-          homePrice: suggestion.medianPrice,
-          monthlyRent: Math.round(suggestion.suggestedMonthlyRent),
-        } : {}),
       });
-      // Map tap is decisive — advance to HOME_COMPARE
-      onAdvance?.();
     },
-    [inputs.homeType, inputs.province, onPatch, onAdvance],
+    [inputs.homeType, inputs.province, onPendingSelect],
   );
 
   // Restrict pan/zoom bounds after province → city → borough drill-in
@@ -281,6 +286,7 @@ export function MapPanel({ step, inputs, onPatch, onAdvance }: Props) {
             selectedProvince={inputs.province}
             hoveredCode={hoveredProvinceCode}
             contextOnly={!isProvinceMode}
+            pendingProvince={pendingSelection?.kind === 'province' ? pendingSelection.province : null}
           />
         )}
 
@@ -297,6 +303,7 @@ export function MapPanel({ step, inputs, onPatch, onAdvance }: Props) {
           <PriceMarkerLayer
             markers={metroMarkers}
             onCityClick={step === STEP.CITY ? handleCityMarkerClick : undefined}
+            pendingFSA={pendingSelection?.kind === 'city' ? pendingSelection.fsa : null}
           />
         )}
 
