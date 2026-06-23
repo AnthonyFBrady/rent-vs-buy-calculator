@@ -35,13 +35,13 @@ export function SelectedAreaLayer({ lat, lng, radiusKm }: Props) {
       <Layer
         id="selected-area-fill"
         type="fill"
-        paint={{ 'fill-color': '#F59E0B', 'fill-opacity': 0.07 }}
+        paint={{ 'fill-color': '#92400E', 'fill-opacity': 0.07 }}
       />
       <Layer
         id="selected-area-line"
         type="line"
         paint={{
-          'line-color': '#F59E0B',
+          'line-color': '#92400E',
           'line-width': 2,
           'line-opacity': 0.55,
           'line-dasharray': [5, 4],

@@ -11,9 +11,9 @@ interface Props {
 const fmtCAD = new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 });
 
 const VERDICT_COLOR: Record<string, string> = {
-  'rent-favored': '#10B981',
-  'buy-favored':  '#F59E0B',
-  'tie':          '#A78BFA',
+  'rent-favored': '#0E7490',
+  'buy-favored':  '#92400E',
+  'tie':          '#6B7280',
 };
 
 const VERDICT_LABEL: Record<string, string> = {
@@ -30,7 +30,7 @@ export function RentBuySignalLayer({ markers }: Props) {
   return (
     <>
       {validMarkers.map(m => {
-        const color = VERDICT_COLOR[m.verdict ?? 'tie'] ?? '#A78BFA';
+        const color = VERDICT_COLOR[m.verdict ?? 'tie'] ?? '#6B7280';
         const isHovered = hovered?.id === m.id;
         return (
           <Marker key={m.id} longitude={m.lng} latitude={m.lat} anchor="center">

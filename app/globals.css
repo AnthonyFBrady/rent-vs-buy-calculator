@@ -17,11 +17,11 @@
   --brand-elevated:  #EAEAE8;   /* raised surfaces, inputs */
   --brand-ink:       #0F0F0E;   /* primary text + primary button */
   /* Owner/renter as rgb triplets so the line, band, and tint all reskin together. */
-  --brand-owner-rgb:  245, 158, 11;  /* buy / owner accent */
-  --brand-renter-rgb: 16, 185, 129;  /* rent / renter accent */
+  --brand-owner-rgb:  146, 64, 14;   /* buy / owner accent */
+  --brand-renter-rgb: 14, 116, 144;  /* rent / renter accent */
   --brand-owner:     rgb(var(--brand-owner-rgb));
   --brand-renter:    rgb(var(--brand-renter-rgb));
-  --brand-cross:     #A78BFA;   /* breakeven / crossover */
+  --brand-cross:     #6B7280;   /* breakeven / crossover */
   --brand-positive:  #4ADE80;
   --brand-negative:  #F87171;
 

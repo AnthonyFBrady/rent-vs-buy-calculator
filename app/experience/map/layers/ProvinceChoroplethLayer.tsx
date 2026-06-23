@@ -170,7 +170,7 @@ export function ProvinceChoroplethLayer({ selectedProvince, hoveredCode, context
       return {
         'line-color': [
           'case',
-          ['==', ['get', 'code'], selectedProvince], 'rgb(245,158,11)',
+          ['==', ['get', 'code'], selectedProvince], 'rgb(146,64,14)',
           'rgba(0,0,0,0.12)',
         ] as unknown as string,
         'line-width': [

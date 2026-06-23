@@ -123,10 +123,10 @@ export function CityAreaLayer({ metric, homeType, buyBedMult, rentBedMult, hover
     };
   }, [areas, metric, baseGeometry]);
 
-  const accent   = metric === 'price' ? '#F59E0B' : '#10B981';
-  const accentHi = metric === 'price' ? 'rgba(245,158,11,0.52)' : 'rgba(16,185,129,0.52)';
-  const accentLo = metric === 'price' ? 'rgba(245,158,11,0.07)' : 'rgba(16,185,129,0.07)';
-  const accentMd = metric === 'price' ? 'rgba(245,158,11,0.30)' : 'rgba(16,185,129,0.30)';
+  const accent   = metric === 'price' ? '#92400E' : '#0E7490';
+  const accentHi = metric === 'price' ? 'rgba(146,64,14,0.52)'  : 'rgba(14,116,144,0.52)';
+  const accentLo = metric === 'price' ? 'rgba(146,64,14,0.07)'  : 'rgba(14,116,144,0.07)';
+  const accentMd = metric === 'price' ? 'rgba(146,64,14,0.30)'  : 'rgba(14,116,144,0.30)';
 
   const fillColor = [
     'interpolate', ['linear'], ['get', 'norm'],
