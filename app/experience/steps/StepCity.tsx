@@ -31,8 +31,6 @@ export function StepCity({ inputs, patch, onAdvance }: Props) {
         monthlyRent: Math.round(suggestion.suggestedMonthlyRent),
       } : {}),
     });
-
-    onAdvance?.();
   }
 
   return (

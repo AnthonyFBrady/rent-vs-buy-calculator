@@ -72,9 +72,11 @@ interface Props {
   pendingSelection?: MapPending;
   /** Called when the user taps a province or city — sets pending state in page.tsx. */
   onPendingSelect?: (pending: MapPending) => void;
+  /** True once the user has clicked "Confirm what I'd buy" in HOME_COMPARE step. */
+  homeCompareBuyConfirmed?: boolean;
 }
 
-export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, onPendingSelect }: Props) {
+export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, onPendingSelect, homeCompareBuyConfirmed }: Props) {
   const mapRef = useRef<MapRef>(null);
   const { viewState, markers, mode, label, interactive, annotation, selectionCenter } = useMapState(step, inputs);
 
@@ -85,12 +87,14 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
   // Show the borough choropleth on these steps when in Toronto
   const showCityAreaLayer = isToronto && CITY_AREA_STEPS.has(step);
 
-  // Choropleth metric: price on buy-compare or home-price steps, rent on rent step or after buy answered
-  const buyAnswered = inputs.homeType !== undefined && inputs.buyBedrooms !== undefined;
+  // Choropleth metric: price during buy sub-phase of HOME_COMPARE, rent after confirm or on RENT step
   const cityAreaMetric: 'price' | 'rent' =
     step === STEP.RENT ? 'rent' :
-    step === STEP.HOME_COMPARE && buyAnswered ? 'rent' :
+    step === STEP.HOME_COMPARE && homeCompareBuyConfirmed ? 'rent' :
     'price';
+
+  // On HOME_COMPARE before buy is confirmed, show price markers (not rent-buy signal)
+  const effectiveMode = (step === STEP.HOME_COMPARE && !homeCompareBuyConfirmed) ? 'city-prices' : mode;
 
   const buyBedMult  = BED_PRICE_MULT[inputs.buyBedrooms  ?? 2] ?? 1;
   const rentBedMult = BED_RENT_MULT[ inputs.rentBedrooms ?? inputs.buyBedrooms ?? 2] ?? 1;
@@ -112,16 +116,18 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
     const rawMap = ref.getMap();
 
     let bounds: [[number, number], [number, number]] | null = null;
-    if (step === STEP.PROVINCE) {
+    if (step <= STEP.CITY) {
+      // Province and city steps: loose Canada bounds so fitBounds can show all province cities
+      // without being clipped by a tight province boundary box.
       bounds = CANADA_BOUNDS;
     } else if (showCityAreaLayer) {
       bounds = GTA_BOUNDS;
-    } else if (step > STEP.CITY && selectionCenter) {
+    } else if (selectionCenter) {
       const { lat, lng, radiusKm } = selectionCenter;
       const latPad = (radiusKm / 111.32) * 2.2;
       const lngPad = (radiusKm / (111.32 * Math.cos((lat * Math.PI) / 180))) * 2.2;
       bounds = [[lng - lngPad, lat - latPad], [lng + lngPad, lat + latPad]];
-    } else if (step > STEP.PROVINCE) {
+    } else {
       bounds = (PROVINCE_BOUNDS[inputs.province] as [[number, number], [number, number]]) ?? null;
     }
     rawMap?.setMaxBounds(bounds);
@@ -134,11 +140,8 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
         const lngs = metros.map(m => m.lng);
         const lats = metros.map(m => m.lat);
         ref.fitBounds(
-          [
-            [Math.min(...lngs) - 0.05, Math.min(...lats) - 0.05],
-            [Math.max(...lngs) + 0.05, Math.max(...lats) + 0.05],
-          ],
-          { padding: 60, maxZoom: 8.5, duration: 1200, essential: true, easing: easeInOutQuad },
+          [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+          { padding: 80, maxZoom: 8, duration: 1800, essential: true, easing: easeInOutQuad },
         );
         return;
       }
@@ -147,7 +150,7 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
     ref.flyTo({
       center: [viewState.longitude, viewState.latitude],
       zoom: viewState.zoom,
-      duration: 1000,
+      duration: 1500,
       essential: true,
       easing: easeInOutQuad,
     });
@@ -257,6 +260,20 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
     setCityAreaHoverPoint(null);
   }, []);
 
+  // Re-fit the city cluster whenever the map panel resizes (browser window resize, sidebar open/close).
+  // duration:0 snaps instantly — no animation mid-resize.
+  const handleMapResize = useCallback(() => {
+    if (step !== STEP.CITY || inputs.postalCode) return;
+    const metros = metrosForProvince(inputs.province);
+    if (!metros.length || !mapRef.current) return;
+    const lngs = metros.map(m => m.lng);
+    const lats = metros.map(m => m.lat);
+    mapRef.current.fitBounds(
+      [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+      { padding: 80, maxZoom: 8, duration: 0 },
+    );
+  }, [step, inputs.postalCode, inputs.province]);
+
   const provinceMarkers = markers.filter(m => m.type === 'province') as import('./useMapState').ProvinceMarker[];
   const metroMarkers    = markers.filter(m => m.type === 'metro')    as import('./useMapState').MetroMarker[];
 
@@ -311,6 +328,7 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
         onClick={isProvinceMode ? handleMapClick : undefined}
         onMouseMove={isProvinceMode || showCityAreaLayer ? handleMouseMove : undefined}
         onMouseLeave={isProvinceMode || showCityAreaLayer ? handleMouseLeave : undefined}
+        onResize={handleMapResize}
         cursor={
           (isProvinceMode && hoveredProvinceCode) || (showCityAreaLayer && hoveredCityAreaId)
             ? 'pointer'
@@ -337,7 +355,7 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
           />
         )}
 
-        {mode === 'city-prices' && !showCityAreaLayer && (
+        {effectiveMode === 'city-prices' && !showCityAreaLayer && (
           <PriceMarkerLayer
             markers={metroMarkers}
             onCityClick={step === STEP.CITY ? handleCityMarkerClick : undefined}
@@ -345,7 +363,7 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
           />
         )}
 
-        {(mode === 'city-rent-signal' || mode === 'stable') && !showCityAreaLayer && (
+        {(effectiveMode === 'city-rent-signal' || effectiveMode === 'stable') && !showCityAreaLayer && (
           <RentBuySignalLayer markers={metroMarkers} />
         )}
 
@@ -379,7 +397,7 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
             left: hoverPoint.x + 14,
             top: Math.max(8, hoverPoint.y - 60),
             zIndex: 20,
-            background: 'var(--color-surface-raised)',
+            background: 'rgba(15,15,14,0.82)',
             backdropFilter: 'blur(12px)',
             border: `1px solid ${VERDICT_COLOR[hoveredMetric.verdict] ?? 'var(--color-outline)'}50`,
             borderLeft: `3px solid ${VERDICT_COLOR[hoveredMetric.verdict] ?? 'var(--color-outline)'}`,
@@ -391,15 +409,15 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
             minWidth: '170px',
           }}
         >
-          <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-text)', marginBottom: '6px', letterSpacing: '-0.01em' }}>
+          <div style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.95)', marginBottom: '6px', letterSpacing: '-0.01em' }}>
             {hoveredMetric.label}
           </div>
-          <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', lineHeight: 1.7 }}>
-            <span style={{ color: 'var(--color-text)', fontWeight: 600 }}>{fmtChoroplethCAD.format(hoveredMetric.medianPrice)}</span>
+          <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.60)', lineHeight: 1.7 }}>
+            <span style={{ color: 'rgba(255,255,255,0.95)', fontWeight: 600 }}>{fmtChoroplethCAD.format(hoveredMetric.medianPrice)}</span>
             {' '}median (condo)
           </div>
-          <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', lineHeight: 1.7 }}>
-            <span style={{ color: 'var(--color-text)', fontWeight: 600 }}>{fmtChoroplethCAD.format(hoveredMetric.monthlyRent)}/mo</span>
+          <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.60)', lineHeight: 1.7 }}>
+            <span style={{ color: 'rgba(255,255,255,0.95)', fontWeight: 600 }}>{fmtChoroplethCAD.format(hoveredMetric.monthlyRent)}/mo</span>
             {' '}est. rent
           </div>
           {hoveredMetric.verdict && (
@@ -425,7 +443,7 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
             left: cityAreaHoverPoint.x + 14,
             top: Math.max(8, cityAreaHoverPoint.y - 80),
             zIndex: 20,
-            background: 'var(--color-surface-raised)',
+            background: 'rgba(15,15,14,0.82)',
             backdropFilter: 'blur(12px)',
             border: `1px solid ${cityAreaMetric === 'price' ? 'rgba(var(--brand-owner-rgb),0.35)' : 'rgba(var(--brand-renter-rgb),0.35)'}`,
             borderLeft: `3px solid ${cityAreaMetric === 'price' ? 'var(--color-owner)' : 'var(--color-renter)'}`,
@@ -437,15 +455,15 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
             minWidth: '160px',
           }}
         >
-          <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-text)', marginBottom: '6px', letterSpacing: '-0.01em' }}>
+          <div style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.95)', marginBottom: '6px', letterSpacing: '-0.01em' }}>
             {hoveredCityAreaData.label}
           </div>
-          <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', lineHeight: 1.7 }}>
-            <span style={{ color: 'var(--color-text)', fontWeight: 600 }}>{fmtCADShort.format(hoveredCityAreaData.price)}</span>
+          <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.60)', lineHeight: 1.7 }}>
+            <span style={{ color: 'rgba(255,255,255,0.95)', fontWeight: 600 }}>{fmtCADShort.format(hoveredCityAreaData.price)}</span>
             {' '}est. price
           </div>
-          <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', lineHeight: 1.7 }}>
-            <span style={{ color: 'var(--color-text)', fontWeight: 600 }}>{fmtCADShort.format(hoveredCityAreaData.rent)}/mo</span>
+          <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.60)', lineHeight: 1.7 }}>
+            <span style={{ color: 'rgba(255,255,255,0.95)', fontWeight: 600 }}>{fmtCADShort.format(hoveredCityAreaData.rent)}/mo</span>
             {' '}est. rent
           </div>
         </div>
@@ -459,7 +477,7 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
             bottom: '28px',
             left: '12px',
             zIndex: 10,
-            background: 'var(--color-surface-raised)',
+            background: 'rgba(15,15,14,0.82)',
             backdropFilter: 'blur(10px)',
             border: `1px solid ${annotation.accent}40`,
             borderLeft: `3px solid ${annotation.accent}`,
@@ -474,7 +492,7 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
           <div style={{ fontSize: '10px', fontWeight: 700, color: annotation.accent, marginBottom: '4px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
             {annotation.title}
           </div>
-          <div style={{ fontSize: '13px', color: 'var(--color-text)', lineHeight: 1.5 }}>
+          <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.95)', lineHeight: 1.5 }}>
             {annotation.body}
           </div>
         </div>

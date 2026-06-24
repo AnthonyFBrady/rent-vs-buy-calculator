@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { AnimatePresence, motion } from 'motion/react';
 import { simulate, simulateSensitivity, defaultInputsFor, buildWealthSeries, provinceFromPostalCode, suggestPriceAndRent } from '@/engine';
+import { metrosForProvince } from '@/engine/data/regions/coordinates';
 import type { CalculatorInputs, Province } from '@/engine';
 import { useCalculatorStore } from '@/lib/store';
 import type { SensitivityScenario } from '@/lib/store';
@@ -154,6 +155,7 @@ function ExperiencePageInner() {
   const [faqOpen, setFaqOpen] = useState(false);
   const [kbHintSeen, setKbHintSeen] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [homeCompareBuyConfirmed, setHomeCompareBuyConfirmed] = useState(false);
 
   const { phase, inputs, direction } = state;
 
@@ -243,6 +245,11 @@ function ExperiencePageInner() {
   const pastEssentials = phase >= EXPRESS_LAST_STEP;
   const primaryLabel   = pastEssentials ? 'See my result' : (CONTINUE_LABEL[phase] ?? 'Continue');
   const showRefine     = pastEssentials && !isLastStep;
+
+  const selectedCityName =
+    phase === STEP.CITY && inputs.postalCode && !mapPending
+      ? metrosForProvince(inputs.province).find(c => c.fsa === inputs.postalCode)?.metro
+      : undefined;
   const refineCount    = TOTAL_STEPS - 1 - phase;
 
   // Verdict signal — computed unconditionally, rendered below the input glass
@@ -402,7 +409,7 @@ function ExperiencePageInner() {
               <div className="input-glass">
                 {phase === STEP.PROVINCE     && <StepProvince    inputs={inputs} patch={patch} />}
                 {phase === STEP.CITY         && <StepCity        inputs={inputs} patch={patch} onAdvance={advance} />}
-                {phase === STEP.HOME_COMPARE && <StepHomeCompare inputs={inputs} patch={patch} />}
+                {phase === STEP.HOME_COMPARE && <StepHomeCompare inputs={inputs} patch={patch} onBuyConfirmed={() => setHomeCompareBuyConfirmed(true)} />}
                 {phase === STEP.HOME_PRICE   && <StepHomePrice   inputs={inputs} patch={patch} />}
                 {phase === STEP.RENT         && <StepRent        inputs={inputs} patch={patch} />}
                 {phase === STEP.HORIZON      && <StepHorizon     inputs={inputs} patch={patch} />}
@@ -472,7 +479,12 @@ function ExperiencePageInner() {
                       transition: 'background-color 0.3s, box-shadow 0.3s',
                     }}
                   >
-                    {mapPending ? `Use ${mapPending.label} →` : `${primaryLabel} →`}
+                    {mapPending
+                      ? `Use ${mapPending.label} →`
+                      : selectedCityName
+                        ? `Use ${selectedCityName} →`
+                        : `${primaryLabel} →`
+                    }
                   </motion.button>
                   {mapPending && (
                     <p style={{ fontSize: '12px', color: 'var(--color-text-dim)', textAlign: 'center', margin: 0, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
@@ -536,7 +548,7 @@ function ExperiencePageInner() {
         className="hidden lg:block absolute left-0 right-0 bottom-0"
         style={{ top: '52px', zIndex: 0 }}
       >
-        <LazyMapPanel step={phase} inputs={inputs} onPatch={patch} onAdvance={advance} pendingSelection={mapPending} onPendingSelect={setMapPending} />
+        <LazyMapPanel step={phase} inputs={inputs} onPatch={patch} onAdvance={advance} pendingSelection={mapPending} onPendingSelect={setMapPending} homeCompareBuyConfirmed={homeCompareBuyConfirmed} />
       </div>
 
     </motion.div>

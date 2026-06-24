@@ -63,7 +63,7 @@ export function NationalView({ markers, interactive, onProvinceClick }: Props) {
               onClick={interactive && onProvinceClick ? () => onProvinceClick(m.id) : undefined}
               title={`${m.label}${vLabel ? ' — ' + vLabel : ''}`}
               style={{
-                background: 'rgba(255,255,255,0.82)',
+                background: 'transparent',
                 color: vcolor,
                 border: `1.5px solid ${vcolor}`,
                 borderRadius: '4px',

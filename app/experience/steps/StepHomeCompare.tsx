@@ -9,6 +9,7 @@ import { ChoiceGroup } from '../components';
 interface Props {
   inputs: CalculatorInputs;
   patch: (p: Partial<CalculatorInputs>) => void;
+  onBuyConfirmed?: () => void;
 }
 
 const HOME_TYPE_LABEL: Record<HomeType, string> = {
@@ -41,7 +42,7 @@ function labelFor(type: HomeType | undefined, beds: number | undefined): string 
   return `${bedLabel} ${typeLabel}`;
 }
 
-export function StepHomeCompare({ inputs, patch }: Props) {
+export function StepHomeCompare({ inputs, patch, onBuyConfirmed }: Props) {
   // 'buy' phase shows first. Rent section appears after buy is answered.
   const [buyDone, setBuyDone] = useState(
     inputs.homeType !== undefined && inputs.buyBedrooms !== undefined,
@@ -66,7 +67,6 @@ export function StepHomeCompare({ inputs, patch }: Props) {
       propertyTaxPct: sug?.propertyTaxPct ?? inputs.propertyTaxPct,
       homePrice: Math.round(basePrice * mult),
     });
-    maybeRevealRent(ht, inputs.buyBedrooms);
   }
 
   function applyBuyBeds(bedsStr: string) {
@@ -79,7 +79,6 @@ export function StepHomeCompare({ inputs, patch }: Props) {
       buyBedrooms: beds,
       homePrice: Math.round(basePrice * mult),
     });
-    maybeRevealRent(inputs.homeType, beds);
   }
 
   function applyRentType(ht: HomeType) {
@@ -103,12 +102,6 @@ export function StepHomeCompare({ inputs, patch }: Props) {
       rentBedrooms: beds,
       monthlyRent: Math.round(baseRent * mult),
     });
-  }
-
-  function maybeRevealRent(ht: HomeType | undefined, beds: number | undefined) {
-    if (ht !== undefined && beds !== undefined && !buyDone) {
-      setBuyDone(true);
-    }
   }
 
   const rentRevealReady = buyDone;
@@ -163,6 +156,28 @@ export function StepHomeCompare({ inputs, patch }: Props) {
           <p style={{ marginTop: '10px', fontSize: '12px', color: 'var(--color-text-muted)', lineHeight: 1.5 }}>
             {labelFor(buyType, buyBeds)} — seeding at {fmtCAD.format(inputs.homePrice)}.
           </p>
+        )}
+
+        {buyType && buyBeds !== undefined && !buyDone && (
+          <motion.button
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            onClick={() => { setBuyDone(true); onBuyConfirmed?.(); }}
+            style={{
+              marginTop: '12px',
+              padding: '8px 20px',
+              borderRadius: '9999px',
+              backgroundColor: 'var(--color-owner)',
+              color: 'white',
+              border: 'none',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontFamily: 'var(--font-sans), system-ui, sans-serif',
+            }}
+          >
+            Confirm what I&apos;d buy →
+          </motion.button>
         )}
       </div>
 
