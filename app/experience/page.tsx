@@ -9,10 +9,7 @@ import { metrosForProvince } from '@/engine/data/regions/coordinates';
 import type { CalculatorInputs, Province } from '@/engine';
 import { useCalculatorStore } from '@/lib/store';
 import type { SensitivityScenario } from '@/lib/store';
-import { MethodologyContent } from '@/components/MethodologyContent';
-import { FaqContent } from '@/components/FaqContent';
-import { ReckonSignature } from '@/components/ReckonSignature';
-import { BottomSheet } from '@/components/BottomSheet';
+import { NavRail } from '@/app/components/NavRail';
 import {
   STEP,
   TOTAL_STEPS,
@@ -151,8 +148,6 @@ function ExperiencePageInner() {
     direction: 1 as const,
   }));
 
-  const [methodologyOpen, setMethodologyOpen] = useState(false);
-  const [faqOpen, setFaqOpen] = useState(false);
   const [kbHintSeen, setKbHintSeen] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const [homeCompareBuyConfirmed, setHomeCompareBuyConfirmed] = useState(false);
@@ -227,12 +222,6 @@ function ExperiencePageInner() {
     return () => window.removeEventListener('keydown', onKey);
   }, [phase, handleContinue, back]);
 
-  // Lock body scroll when any drawer is open
-  useEffect(() => {
-    document.body.style.overflow = (methodologyOpen || faqOpen) ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
-  }, [methodologyOpen, faqOpen]);
-
   const stepLabel   = STEP_HEADINGS[phase] ?? '';
   const whyCopy     = STEP_WHY[phase] ?? '';
   const isFirstStep = phase === 0;
@@ -274,6 +263,7 @@ function ExperiencePageInner() {
 
   return (
     <>
+    <NavRail />
     <motion.div
       initial={{ opacity: 0, scale: 0.97 }}
       animate={{ opacity: isNavigating ? 0 : 1, scale: isNavigating ? 0.97 : 1 }}
@@ -288,56 +278,9 @@ function ExperiencePageInner() {
       } as React.CSSProperties}
     >
 
-      {/* Full-width top nav */}
-      <nav
-        className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between"
-        style={{
-          height: '52px',
-          padding: '0 24px',
-          backgroundColor: 'var(--color-bg)',
-          borderBottom: '1px solid var(--color-outline)',
-        }}
-      >
-        <a href="/" style={{ textDecoration: 'none' }}>
-          <ReckonSignature color="var(--color-text)" width={68} />
-        </a>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <button
-            onClick={() => setMethodologyOpen(true)}
-            style={{
-              fontSize: '12px',
-              color: 'var(--color-text-muted)',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: 0,
-              fontFamily: 'var(--font-sans), system-ui, sans-serif',
-              letterSpacing: '-0.01em',
-            }}
-          >
-            How this works
-          </button>
-          <button
-            onClick={() => setFaqOpen(true)}
-            style={{
-              fontSize: '12px',
-              color: 'var(--color-text-muted)',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: 0,
-              fontFamily: 'var(--font-sans), system-ui, sans-serif',
-              letterSpacing: '-0.01em',
-            }}
-          >
-            FAQ
-          </button>
-        </div>
-      </nav>
-
-      {/* Left card — floats off left edge on desktop (lg:left-4), full-bleed on mobile */}
+      {/* Left card — shifted right of the nav rail on desktop */}
       <div
-        className="absolute left-0 top-[52px] bottom-0 w-full lg:left-4 lg:w-[400px] lg:top-[68px] lg:bottom-4 z-10 flex flex-col overflow-hidden rounded-none lg:rounded-xl"
+        className="absolute left-0 top-[52px] bottom-0 w-full lg:left-[56px] lg:w-[400px] lg:top-[16px] lg:bottom-4 z-10 flex flex-col overflow-hidden rounded-none lg:rounded-xl"
         style={{
           backgroundColor: 'var(--color-bg)',
           boxShadow: 'var(--shadow-float)',
@@ -546,20 +489,12 @@ function ExperiencePageInner() {
       {/* Map — fills viewport below the top nav */}
       <div
         className="hidden lg:block absolute left-0 right-0 bottom-0"
-        style={{ top: '52px', zIndex: 0 }}
+        style={{ top: 0, zIndex: 0 }}
       >
         <LazyMapPanel step={phase} inputs={inputs} onPatch={patch} onAdvance={advance} pendingSelection={mapPending} onPendingSelect={setMapPending} homeCompareBuyConfirmed={homeCompareBuyConfirmed} />
       </div>
 
     </motion.div>
-
-    {/* Drawers — outside motion.div so they aren't clipped by its bounds */}
-    <BottomSheet open={methodologyOpen} onClose={() => setMethodologyOpen(false)} eyebrow="Methodology" title="How this calculator thinks">
-      <MethodologyContent />
-    </BottomSheet>
-    <BottomSheet open={faqOpen} onClose={() => setFaqOpen(false)} eyebrow="FAQ" title="Frequently asked questions">
-      <FaqContent />
-    </BottomSheet>
     </>
   );
 }
