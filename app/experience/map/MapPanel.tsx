@@ -74,6 +74,7 @@ interface Props {
 
 export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, onPendingSelect, homeCompareBuyConfirmed }: Props) {
   const mapRef = useRef<MapRef>(null);
+  const prevStepRef = useRef(step);
   const { viewState, markers, mode, label, interactive, annotation, selectionCenter } = useMapState(step, inputs);
 
   const isProvinceMode = mode === 'province';
@@ -116,6 +117,12 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
     if (!ref) return;
     const rawMap = ref.getMap();
 
+    // Detect backward navigation for longer zoom-out animation
+    const isGoingBack = step < prevStepRef.current;
+    prevStepRef.current = step;
+    const fitDuration  = isGoingBack ? 2600 : 2000;
+    const flyDuration  = isGoingBack ? 2600 : 2200;
+
     // Set maxBounds before any camera move to prevent escape.
     let bounds: [[number, number], [number, number]] | null = null;
     if (step <= STEP.CITY) {
@@ -136,7 +143,7 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
     if (isProvinceMode || (step === STEP.CITY && !inputs.postalCode)) {
       ref.fitBounds(
         getProvinceBounds(),
-        { padding: 60, duration: 1800, essential: true, easing: easeInOutQuad },
+        { padding: 60, duration: fitDuration, essential: true, easing: easeInOutQuad },
       );
       return;
     }
@@ -144,7 +151,7 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
     ref.flyTo({
       center: [viewState.longitude, viewState.latitude],
       zoom: viewState.zoom,
-      duration: 1500,
+      duration: flyDuration,
       essential: true,
       easing: easeInOutQuad,
     });
@@ -215,7 +222,7 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
 
   const handleMouseMove = useCallback((e: MapLayerMouseEvent) => {
     const feature = e.features?.[0];
-    if (feature?.layer?.id === 'toronto-fsa-circles') {
+    if (feature?.layer?.id === 'toronto-fsa-fill') {
       const fsa = feature.properties?.fsa as string | undefined;
       setHoveredFSA(fsa ?? null);
       setFsaHoverPoint({ x: e.point.x, y: e.point.y });
@@ -309,7 +316,7 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
 
   const interactiveLayerIds = [
     ...(isProvinceMode    ? ['province-choropleth-fill'] : []),
-    ...(showCityAreaLayer ? ['city-area-fill', 'toronto-fsa-circles'] : []),
+    ...(showCityAreaLayer ? ['city-area-fill', 'toronto-fsa-fill'] : []),
   ];
 
   return (

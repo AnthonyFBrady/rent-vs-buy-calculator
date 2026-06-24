@@ -170,7 +170,17 @@ function ExperiencePageInner() {
     }
     dispatch({ type: 'ADVANCE' });
   }, [state.phase]);
-  const back    = useCallback(() => dispatch({ type: 'BACK' }), []);
+
+  const back = useCallback(() => {
+    const leavingPhase = state.phase;
+    dispatch({ type: 'BACK' });
+    // Clear the optional choice fields for the step we're leaving so it starts fresh if revisited.
+    if (leavingPhase === STEP.HOME_COMPARE) {
+      dispatch({ type: 'PATCH', payload: { homeType: undefined, buyBedrooms: undefined, rentBedrooms: undefined } });
+    }
+    if (leavingPhase >= STEP.HOME_COMPARE) setHomeCompareBuyConfirmed(false);
+  }, [state.phase]);
+
   const goto    = useCallback((p: number) => dispatch({ type: 'GOTO', phase: p }), []);
 
   const [mapPending, setMapPending] = useState<MapPending>(null);

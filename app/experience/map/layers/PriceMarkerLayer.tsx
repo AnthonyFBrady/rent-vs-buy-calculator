@@ -22,8 +22,11 @@ function markerRadius(price: number, maxPrice: number): number {
   return 6 + (price / maxPrice) * 22;
 }
 
-// White halo makes text readable on any map background without a pill box
-const TEXT_HALO = '0 0 3px #fff, 0 0 6px #fff, 0 0 10px rgba(255,255,255,0.7)';
+function fmtShort(n: number): string {
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000)     return `$${Math.round(n / 1_000)}K`;
+  return `$${Math.round(n)}`;
+}
 
 export function PriceMarkerLayer({ markers, onCityClick, pendingFSA }: Props) {
   const [hovered, setHovered] = useState<MetroMarker | null>(null);
@@ -50,23 +53,22 @@ export function PriceMarkerLayer({ markers, onCityClick, pendingFSA }: Props) {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: '4px',
+                gap: '3px',
                 cursor: onCityClick ? 'pointer' : 'default',
                 pointerEvents: 'all',
                 transition: 'opacity 0.25s ease',
-                opacity: dimmed ? 0.30 : 1,
+                opacity: dimmed ? 0.28 : 1,
               }}
             >
-              {/* City name — halo only, no pill box */}
+              {/* City name — no white halo, readable on light Positron basemap */}
               <div style={{
                 fontSize: '9px',
                 fontWeight: 700,
-                color: isActive ? MARKER_COLOR : '#111',
+                color: isActive ? MARKER_COLOR : '#1a1a1a',
                 whiteSpace: 'nowrap',
                 letterSpacing: '0.03em',
                 fontFamily: 'var(--font-sans), system-ui, sans-serif',
                 lineHeight: 1.3,
-                textShadow: TEXT_HALO,
               }}>
                 {m.metro}
               </div>
@@ -94,24 +96,36 @@ export function PriceMarkerLayer({ markers, onCityClick, pendingFSA }: Props) {
                   opacity: isActive ? 1 : 0.80,
                 }} />
               </div>
+
+              {/* Always-visible price label */}
+              <div style={{
+                fontSize: '8px',
+                fontWeight: 700,
+                color: isActive ? MARKER_COLOR : '#555',
+                letterSpacing: '0.01em',
+                fontFamily: 'var(--font-sans), system-ui, sans-serif',
+                lineHeight: 1,
+              }}>
+                {fmtShort(m.medianPrice)}
+              </div>
             </div>
           </Marker>
         );
       })}
 
-      {/* Dark tooltip on hover — no white box */}
+      {/* Dark tooltip on hover — shows full detail */}
       {hovered && (
         <Popup
           longitude={hovered.lng}
           latitude={hovered.lat}
           anchor="bottom"
-          offset={28}
+          offset={42}
           closeButton={false}
           closeOnClick={false}
           style={{ zIndex: 10 }}
         >
           <div style={{
-            background: 'rgba(16,16,16,0.84)',
+            background: 'rgba(16,16,16,0.88)',
             backdropFilter: 'blur(10px)',
             WebkitBackdropFilter: 'blur(10px)',
             borderRadius: '8px',
