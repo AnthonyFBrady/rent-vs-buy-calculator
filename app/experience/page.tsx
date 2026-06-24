@@ -408,7 +408,7 @@ function ExperiencePageInner() {
               {/* Input glass — white card with inputs only, no internal header */}
               <div className="input-glass">
                 {phase === STEP.PROVINCE     && <StepProvince    inputs={inputs} patch={patch} />}
-                {phase === STEP.CITY         && <StepCity        inputs={inputs} patch={patch} onAdvance={advance} />}
+                {phase === STEP.CITY         && <StepCity        inputs={inputs} patch={patch} onAdvance={advance} pendingFSA={mapPending?.kind === 'city' ? mapPending.fsa : undefined} onPendingSelect={(p) => setMapPending({ kind: 'city', ...p })} />}
                 {phase === STEP.HOME_COMPARE && <StepHomeCompare inputs={inputs} patch={patch} onBuyConfirmed={() => setHomeCompareBuyConfirmed(true)} />}
                 {phase === STEP.HOME_PRICE   && <StepHomePrice   inputs={inputs} patch={patch} />}
                 {phase === STEP.RENT         && <StepRent        inputs={inputs} patch={patch} />}

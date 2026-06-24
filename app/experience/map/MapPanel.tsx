@@ -15,13 +15,13 @@ import { RentBuySignalLayer } from './layers/RentBuySignalLayer';
 import { ProvinceChoroplethLayer, PROVINCE_METRICS, VERDICT_COLOR, fmtChoroplethCAD } from './layers/ProvinceChoroplethLayer';
 import { SelectedAreaLayer } from './layers/SelectedAreaLayer';
 import { CityAreaLayer, type CityAreaData, fsaToBoroughId } from './layers/CityAreaLayer';
+import { TorontoFSALayer, type FSAData } from './layers/TorontoFSALayer';
 import { BED_PRICE_MULT, BED_RENT_MULT } from '../steps/StepHomeCompare';
 
 // CartoDB Positron — clean light base, pairs with the light UI
 const MAP_STYLE = 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
 
 // Approximate bounding boxes per province [SW, NE] in [lng, lat].
-// Used to restrict pan/zoom after the user drills into a province or city.
 const PROVINCE_BOUNDS: Record<string, [[number, number], [number, number]]> = {
   ON: [[-95.2, 41.7],  [-74.4, 56.9]],
   BC: [[-139.1, 48.2], [-114.0, 60.1]],
@@ -66,13 +66,9 @@ interface Props {
   step: number;
   inputs: CalculatorInputs;
   onPatch: (p: Partial<CalculatorInputs>) => void;
-  /** Called after a province or city is confirmed (via the button bar confirm). */
   onAdvance?: () => void;
-  /** Current pending map selection — used to highlight the tapped province/city. */
   pendingSelection?: MapPending;
-  /** Called when the user taps a province or city — sets pending state in page.tsx. */
   onPendingSelect?: (pending: MapPending) => void;
-  /** True once the user has clicked "Confirm what I'd buy" in HOME_COMPARE step. */
   homeCompareBuyConfirmed?: boolean;
 }
 
@@ -82,43 +78,47 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
 
   const isProvinceMode = mode === 'province';
 
-  // Whether the selected city is Toronto (postalCode starts with 'M')
   const isToronto = !!(inputs.postalCode?.toUpperCase().startsWith('M'));
-  // Show the borough choropleth on these steps when in Toronto
   const showCityAreaLayer = isToronto && CITY_AREA_STEPS.has(step);
 
-  // Choropleth metric: price during buy sub-phase of HOME_COMPARE, rent after confirm or on RENT step
   const cityAreaMetric: 'price' | 'rent' =
     step === STEP.RENT ? 'rent' :
     step === STEP.HOME_COMPARE && homeCompareBuyConfirmed ? 'rent' :
     'price';
 
-  // On HOME_COMPARE before buy is confirmed, show price markers (not rent-buy signal)
   const effectiveMode = (step === STEP.HOME_COMPARE && !homeCompareBuyConfirmed) ? 'city-prices' : mode;
 
   const buyBedMult  = BED_PRICE_MULT[inputs.buyBedrooms  ?? 2] ?? 1;
   const rentBedMult = BED_RENT_MULT[ inputs.rentBedrooms ?? inputs.buyBedrooms ?? 2] ?? 1;
 
-  // Province hover state — used for choropleth tooltip
+  // Province hover state
   const [hoveredProvinceCode, setHoveredProvinceCode] = useState<Province | null>(null);
   const [hoverPoint, setHoverPoint] = useState<{ x: number; y: number } | null>(null);
 
-  // City area hover state — used for borough choropleth tooltip
+  // City borough hover state
   const [hoveredCityAreaId, setHoveredCityAreaId] = useState<string | null>(null);
   const [hoveredCityAreaData, setHoveredCityAreaData] = useState<CityAreaData | null>(null);
   const [cityAreaHoverPoint, setCityAreaHoverPoint] = useState<{ x: number; y: number } | null>(null);
 
-  // Merged effect: set maxBounds BEFORE flyTo to avoid the race condition where
-  // a stale tight-bounds constraint prevents flying to a wider Canada view on back-navigation.
+  // Toronto FSA hover state
+  const [hoveredFSA, setHoveredFSA] = useState<string | null>(null);
+  const [hoveredFSAData, setHoveredFSAData] = useState<FSAData | null>(null);
+  const [fsaHoverPoint, setFsaHoverPoint] = useState<{ x: number; y: number } | null>(null);
+
+  // Compute province bounds, used in both the step-change effect and resize handler.
+  const getProvinceBounds = useCallback((): [[number, number], [number, number]] => {
+    return (PROVINCE_BOUNDS[inputs.province] as [[number, number], [number, number]]) ?? CANADA_BOUNDS;
+  }, [inputs.province]);
+
+  // Main camera effect — runs when step, province, or viewState changes.
   useEffect(() => {
     const ref = mapRef.current;
     if (!ref) return;
     const rawMap = ref.getMap();
 
+    // Set maxBounds before any camera move to prevent escape.
     let bounds: [[number, number], [number, number]] | null = null;
     if (step <= STEP.CITY) {
-      // Province and city steps: loose Canada bounds so fitBounds can show all province cities
-      // without being clipped by a tight province boundary box.
       bounds = CANADA_BOUNDS;
     } else if (showCityAreaLayer) {
       bounds = GTA_BOUNDS;
@@ -128,23 +128,17 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
       const lngPad = (radiusKm / (111.32 * Math.cos((lat * Math.PI) / 180))) * 2.2;
       bounds = [[lng - lngPad, lat - latPad], [lng + lngPad, lat + latPad]];
     } else {
-      bounds = (PROVINCE_BOUNDS[inputs.province] as [[number, number], [number, number]]) ?? null;
+      bounds = getProvinceBounds();
     }
     rawMap?.setMaxBounds(bounds);
 
-    // On CITY step with no city selected yet, fit the viewport to all province cities
-    // so every market option is visible without any manual panning.
-    if (step === STEP.CITY && !inputs.postalCode) {
-      const metros = metrosForProvince(inputs.province);
-      if (metros.length > 0) {
-        const lngs = metros.map(m => m.lng);
-        const lats = metros.map(m => m.lat);
-        ref.fitBounds(
-          [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
-          { padding: 80, maxZoom: 8, duration: 1800, essential: true, easing: easeInOutQuad },
-        );
-        return;
-      }
+    // Province step OR entering city step with no city selected: show entire province.
+    if (isProvinceMode || (step === STEP.CITY && !inputs.postalCode)) {
+      ref.fitBounds(
+        getProvinceBounds(),
+        { padding: 60, duration: 1800, essential: true, easing: easeInOutQuad },
+      );
+      return;
     }
 
     ref.flyTo({
@@ -155,12 +149,11 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
       easing: easeInOutQuad,
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewState.longitude, viewState.latitude, viewState.zoom, step, selectionCenter, inputs.province, showCityAreaLayer, inputs.postalCode]);
+  }, [viewState.longitude, viewState.latitude, viewState.zoom, step, selectionCenter, inputs.province, showCityAreaLayer, inputs.postalCode, isProvinceMode]);
 
   const handleProvinceClick = useCallback(
     (province: Province) => {
       if (!interactive) return;
-      // Patch immediately so the chip in the card updates; advance is triggered by the Continue button
       const next = defaultInputsFor(province);
       onPatch({
         province,
@@ -188,7 +181,6 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
       const homeType = inputs.homeType ?? 'condo-apt';
       const suggestion = suggestPriceAndRent(marker.id, homeType);
       const provDefaults = defaultInputsFor(inputs.province);
-      // Set pending — user must confirm via the button bar before patch + advance
       onPendingSelect?.({
         kind: 'city',
         fsa: marker.id,
@@ -201,7 +193,6 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
     [inputs.homeType, inputs.province, onPendingSelect],
   );
 
-
   // Clear province hover when leaving province step
   useEffect(() => {
     if (!isProvinceMode) {
@@ -210,18 +201,38 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
     }
   }, [isProvinceMode]);
 
-  // Clear city area hover when leaving the choropleth steps
+  // Clear city area / FSA hover when leaving choropleth steps
   useEffect(() => {
     if (!showCityAreaLayer) {
       setHoveredCityAreaId(null);
       setHoveredCityAreaData(null);
       setCityAreaHoverPoint(null);
+      setHoveredFSA(null);
+      setHoveredFSAData(null);
+      setFsaHoverPoint(null);
     }
   }, [showCityAreaLayer]);
 
   const handleMouseMove = useCallback((e: MapLayerMouseEvent) => {
     const feature = e.features?.[0];
-    if (feature?.layer?.id === 'city-area-fill') {
+    if (feature?.layer?.id === 'toronto-fsa-circles') {
+      const fsa = feature.properties?.fsa as string | undefined;
+      setHoveredFSA(fsa ?? null);
+      setFsaHoverPoint({ x: e.point.x, y: e.point.y });
+      if (fsa) {
+        setHoveredFSAData({
+          fsa,
+          name: feature.properties?.name as string ?? fsa,
+          price: feature.properties?.price as number ?? 0,
+          rent: feature.properties?.rent as number ?? 0,
+        });
+      }
+      setHoveredCityAreaId(null);
+      setHoveredCityAreaData(null);
+      setCityAreaHoverPoint(null);
+      setHoveredProvinceCode(null);
+      setHoverPoint(null);
+    } else if (feature?.layer?.id === 'city-area-fill') {
       const id = feature.properties?.id as string | undefined;
       setHoveredCityAreaId(id ?? null);
       setCityAreaHoverPoint({ x: e.point.x, y: e.point.y });
@@ -234,6 +245,9 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
           rent:  feature.properties?.rent  as number ?? 0,
         });
       }
+      setHoveredFSA(null);
+      setHoveredFSAData(null);
+      setFsaHoverPoint(null);
       setHoveredProvinceCode(null);
       setHoverPoint(null);
     } else if (feature?.layer?.id === 'province-choropleth-fill') {
@@ -243,12 +257,18 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
       setHoveredCityAreaId(null);
       setHoveredCityAreaData(null);
       setCityAreaHoverPoint(null);
+      setHoveredFSA(null);
+      setHoveredFSAData(null);
+      setFsaHoverPoint(null);
     } else {
       setHoveredProvinceCode(null);
       setHoverPoint(null);
       setHoveredCityAreaId(null);
       setHoveredCityAreaData(null);
       setCityAreaHoverPoint(null);
+      setHoveredFSA(null);
+      setHoveredFSAData(null);
+      setFsaHoverPoint(null);
     }
   }, []);
 
@@ -258,21 +278,27 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
     setHoveredCityAreaId(null);
     setHoveredCityAreaData(null);
     setCityAreaHoverPoint(null);
+    setHoveredFSA(null);
+    setHoveredFSAData(null);
+    setFsaHoverPoint(null);
   }, []);
 
-  // Re-fit the city cluster whenever the map panel resizes (browser window resize, sidebar open/close).
-  // duration:0 snaps instantly — no animation mid-resize.
+  // Re-fit on map container resize so the view stays correct at any window size.
   const handleMapResize = useCallback(() => {
-    if (step !== STEP.CITY || inputs.postalCode) return;
-    const metros = metrosForProvince(inputs.province);
-    if (!metros.length || !mapRef.current) return;
-    const lngs = metros.map(m => m.lng);
-    const lats = metros.map(m => m.lat);
-    mapRef.current.fitBounds(
-      [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
-      { padding: 80, maxZoom: 8, duration: 0 },
-    );
-  }, [step, inputs.postalCode, inputs.province]);
+    const ref = mapRef.current;
+    if (!ref) return;
+    if (isProvinceMode || (step === STEP.CITY && !inputs.postalCode)) {
+      ref.fitBounds(getProvinceBounds(), { padding: 60, duration: 0 });
+    } else if (showCityAreaLayer) {
+      ref.fitBounds(GTA_BOUNDS, { padding: 20, duration: 0 });
+    } else {
+      ref.flyTo({
+        center: [viewState.longitude, viewState.latitude],
+        zoom: viewState.zoom,
+        duration: 0,
+      });
+    }
+  }, [isProvinceMode, step, inputs.postalCode, showCityAreaLayer, getProvinceBounds, viewState]);
 
   const provinceMarkers = markers.filter(m => m.type === 'province') as import('./useMapState').ProvinceMarker[];
   const metroMarkers    = markers.filter(m => m.type === 'metro')    as import('./useMapState').MetroMarker[];
@@ -280,6 +306,11 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
   const showChoropleth = !showCityAreaLayer && (isProvinceMode || mode === 'city-prices' || mode === 'city-rent-signal' || mode === 'stable');
 
   const hoveredMetric = hoveredProvinceCode ? PROVINCE_METRICS.get(hoveredProvinceCode) : null;
+
+  const interactiveLayerIds = [
+    ...(isProvinceMode    ? ['province-choropleth-fill'] : []),
+    ...(showCityAreaLayer ? ['city-area-fill', 'toronto-fsa-circles'] : []),
+  ];
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: 0 }}>
@@ -321,23 +352,20 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
         style={{ width: '100%', height: '100%' }}
         attributionControl={false}
         reuseMaps
-        interactiveLayerIds={[
-          ...(isProvinceMode   ? ['province-choropleth-fill'] : []),
-          ...(showCityAreaLayer ? ['city-area-fill'] : []),
-        ]}
+        interactiveLayerIds={interactiveLayerIds}
         onClick={isProvinceMode ? handleMapClick : undefined}
         onMouseMove={isProvinceMode || showCityAreaLayer ? handleMouseMove : undefined}
         onMouseLeave={isProvinceMode || showCityAreaLayer ? handleMouseLeave : undefined}
         onResize={handleMapResize}
         cursor={
-          (isProvinceMode && hoveredProvinceCode) || (showCityAreaLayer && hoveredCityAreaId)
+          (isProvinceMode && hoveredProvinceCode) ||
+          (showCityAreaLayer && (hoveredCityAreaId || hoveredFSA))
             ? 'pointer'
             : 'grab'
         }
       >
         <NavigationControl position="bottom-right" showCompass={false} />
 
-        {/* Province choropleth: full color on province step, dim context on others */}
         {showChoropleth && (
           <ProvinceChoroplethLayer
             selectedProvince={inputs.province}
@@ -346,7 +374,6 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
           />
         )}
 
-        {/* Province dot markers (province mode only — rendered on top of choropleth) */}
         {isProvinceMode && (
           <NationalView
             markers={provinceMarkers}
@@ -367,7 +394,6 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
           <RentBuySignalLayer markers={metroMarkers} />
         )}
 
-        {/* Dashed ring for selected city — hidden when borough choropleth takes over */}
         {selectionCenter && !showCityAreaLayer && (
           <SelectedAreaLayer
             lat={selectionCenter.lat}
@@ -376,7 +402,6 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
           />
         )}
 
-        {/* Toronto borough choropleth — HOME_COMPARE, HOME_PRICE, RENT steps */}
         {showCityAreaLayer && (
           <CityAreaLayer
             metric={cityAreaMetric}
@@ -385,6 +410,17 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
             rentBedMult={rentBedMult}
             hoveredId={hoveredCityAreaId}
             selectedFSA={inputs.postalCode}
+          />
+        )}
+
+        {/* FSA-level bubbles appear at zoom ≥ 11.5, on top of the borough choropleth */}
+        {showCityAreaLayer && (
+          <TorontoFSALayer
+            metric={cityAreaMetric}
+            homeType={inputs.homeType ?? 'condo-apt'}
+            buyBedMult={buyBedMult}
+            rentBedMult={rentBedMult}
+            hoveredFSA={hoveredFSA}
           />
         )}
       </Map>
@@ -436,7 +472,7 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
       )}
 
       {/* Toronto borough hover tooltip */}
-      {showCityAreaLayer && cityAreaHoverPoint && hoveredCityAreaData && (
+      {showCityAreaLayer && cityAreaHoverPoint && hoveredCityAreaData && !hoveredFSA && (
         <div
           style={{
             position: 'absolute',
@@ -464,6 +500,43 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
           </div>
           <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.60)', lineHeight: 1.7 }}>
             <span style={{ color: 'rgba(255,255,255,0.95)', fontWeight: 600 }}>{fmtCADShort.format(hoveredCityAreaData.rent)}/mo</span>
+            {' '}est. rent
+          </div>
+        </div>
+      )}
+
+      {/* Toronto FSA hover tooltip — shown at higher zoom when hovering FSA bubbles */}
+      {showCityAreaLayer && fsaHoverPoint && hoveredFSAData && (
+        <div
+          style={{
+            position: 'absolute',
+            left: fsaHoverPoint.x + 14,
+            top: Math.max(8, fsaHoverPoint.y - 80),
+            zIndex: 21,
+            background: 'rgba(15,15,14,0.88)',
+            backdropFilter: 'blur(12px)',
+            border: `1px solid ${cityAreaMetric === 'price' ? 'rgba(245,158,11,0.40)' : 'rgba(20,184,166,0.40)'}`,
+            borderLeft: `3px solid ${cityAreaMetric === 'price' ? '#F59E0B' : '#14B8A6'}`,
+            borderRadius: '8px',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+            padding: '10px 14px',
+            fontFamily: 'var(--font-sans), system-ui, sans-serif',
+            pointerEvents: 'none',
+            minWidth: '160px',
+          }}
+        >
+          <div style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.50)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>
+            {hoveredFSAData.fsa}
+          </div>
+          <div style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.95)', marginBottom: '6px', letterSpacing: '-0.01em' }}>
+            {hoveredFSAData.name}
+          </div>
+          <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.60)', lineHeight: 1.7 }}>
+            <span style={{ color: 'rgba(255,255,255,0.95)', fontWeight: 600 }}>{fmtCADShort.format(hoveredFSAData.price)}</span>
+            {' '}est. price
+          </div>
+          <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.60)', lineHeight: 1.7 }}>
+            <span style={{ color: 'rgba(255,255,255,0.95)', fontWeight: 600 }}>{fmtCADShort.format(hoveredFSAData.rent)}/mo</span>
             {' '}est. rent
           </div>
         </div>
