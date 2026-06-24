@@ -44,6 +44,11 @@ const CANADA_BOUNDS: [[number, number], [number, number]] = [[-145, 41.5], [-52,
 // Steps that show the Toronto borough choropleth
 const CITY_AREA_STEPS = new Set<number>([STEP.HOME_COMPARE, STEP.HOME_PRICE, STEP.RENT]);
 
+// The left step card is lg:left-4 (16px) lg:w-[400px] = 416px from the map edge.
+// All camera ops use asymmetric padding so the selection is centered in the visible strip.
+const MAP_PAD = { top: 60, bottom: 60, right: 60, left: 432 } as const;
+const MAP_PAD_CITY = { top: 40, bottom: 40, right: 40, left: 432 } as const;
+
 const fmtCADShort = new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 });
 
 function easeInOutQuad(t: number): number {
@@ -143,7 +148,7 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
     if (isProvinceMode || (step === STEP.CITY && !inputs.postalCode)) {
       ref.fitBounds(
         getProvinceBounds(),
-        { padding: 60, duration: fitDuration, essential: true, easing: easeInOutQuad },
+        { padding: MAP_PAD, duration: fitDuration, essential: true, easing: easeInOutQuad },
       );
       return;
     }
@@ -151,6 +156,7 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
     ref.flyTo({
       center: [viewState.longitude, viewState.latitude],
       zoom: viewState.zoom,
+      padding: MAP_PAD_CITY,
       duration: flyDuration,
       essential: true,
       easing: easeInOutQuad,
@@ -295,13 +301,14 @@ export function MapPanel({ step, inputs, onPatch, onAdvance, pendingSelection, o
     const ref = mapRef.current;
     if (!ref) return;
     if (isProvinceMode || (step === STEP.CITY && !inputs.postalCode)) {
-      ref.fitBounds(getProvinceBounds(), { padding: 60, duration: 0 });
+      ref.fitBounds(getProvinceBounds(), { padding: MAP_PAD, duration: 0 });
     } else if (showCityAreaLayer) {
-      ref.fitBounds(GTA_BOUNDS, { padding: 20, duration: 0 });
+      ref.fitBounds(GTA_BOUNDS, { padding: MAP_PAD_CITY, duration: 0 });
     } else {
       ref.flyTo({
         center: [viewState.longitude, viewState.latitude],
         zoom: viewState.zoom,
+        padding: MAP_PAD_CITY,
         duration: 0,
       });
     }
